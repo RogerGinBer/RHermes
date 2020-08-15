@@ -28,4 +28,6 @@ test_that("SOI methods work", {
                                     package = "RHermes"))
     myHermes <- SOIcleaner(myHermes, 1, 50000, TRUE)
     cos <- SOIcos(myHermes, 1)
+    myHermes <- removeSOI(myHermes, 1)
+    succeed()
 })
