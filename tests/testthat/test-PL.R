@@ -35,7 +35,44 @@ test_that("Labelled proc works",{
   myHermes <- FileProc(myHermes, system.file("extdata",
                                              "MS1TestData.mzML",
                                              package = "RHermes"),
-                        labelled = TRUE)
+                       labelled = TRUE)
   expect_equal(length(myHermes@data@PL), 1)
   expect_equal(nrow(myHermes@data@PL[[1]]@peaklist), 14571)
 })
+
+test_that("PL plot works", {
+  library(BiocParallel)
+  require(CHNOSZ)
+  require(magrittr)
+  library(data.table)
+  require(tidyverse)
+
+  myHermes <- RHermesExp()
+  myHermes <- setDB(myHermes, db = "hmdb")
+  myHermes@metadata@cluster <- BiocParallel::SnowParam(1)
+  myHermes <- FileProc(myHermes, system.file("extdata",
+                                             "MS1TestData.mzML",
+                                             package = "RHermes"))
+  p <- RHermes:::PlotlyPLPlot(myHermes, 1, "C6H12O6", rtrange = c(0,1500),
+                              dynamicaxis = TRUE, ads = c("M+Na"))
+  expect_true(is(p, "plotly"))
+})
+
+
+test_that("Coverage plot works", {
+  library(BiocParallel)
+  require(CHNOSZ)
+  require(magrittr)
+  library(data.table)
+  require(tidyverse)
+
+  myHermes <- RHermesExp()
+  myHermes <- setDB(myHermes, db = "hmdb")
+  myHermes@metadata@cluster <- BiocParallel::SnowParam(1)
+  myHermes <- FileProc(myHermes, system.file("extdata",
+                                             "MS1TestData.mzML",
+                                             package = "RHermes"))
+  p <- RHermes:::coveragePlot(myHermes, 1)
+  expect_true(is(p[[1]], "plotly") & is(p[[2]], "plotly"))
+})
+

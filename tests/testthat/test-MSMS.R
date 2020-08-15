@@ -1,5 +1,11 @@
 context("Functional MS2 identification")
 
+test_that("cosineSim works", {
+    cosine <- cosineSim(data.frame(rt = seq(1,10), rtiv = seq(1,10)^2),
+                    data.frame(rt = seq(1,10), rtiv = seq(1,10)^3))
+    expect_equal(cosine, 0.986387, tolerance = 1e-4)
+})
+
 test_that("Compounds are identified", {
     skip_on_bioc() #Depends on local databases and MS2 files, so we skip it
     skip_if(length(list.files("D:/ABrunner Plasma/MS2data",
@@ -22,4 +28,21 @@ test_that("Superspectra can be exported", {
     exportMSP(myHermes, 1, "test")
     file.remove(c("test.mgf", "test.msp"))
     succeed()
+})
+
+test_that("Mirror plot works", {
+    myHermes <- readRDS(system.file("extdata", "withIdent.rds",
+                                    package = "RHermes"))
+    p <- RHermes::PlotlyMirrorPlot(myHermes, 1, 1)
+    expect_true(is(p, "plotly"))
+})
+
+test_that("Raw MS2 plot works", {
+    myHermes <- readRDS(system.file("extdata", "withIdent.rds",
+                                    package = "RHermes"))
+    p <- RHermes::PlotlyRawMS2Plot(myHermes, ms2id = 1, entryid = 4,
+                                   bymz = TRUE)
+    p2 <- RHermes::PlotlyRawMS2Plot(myHermes, 1, 4, bymz = FALSE)
+    expect_true(is(p[[1]], "plotly") & is(p[[2]], "visNetwork"))
+    expect_true(is(p2[[1]], "plotly") & is(p2[[2]], "visNetwork"))
 })

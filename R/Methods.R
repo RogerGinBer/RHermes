@@ -643,7 +643,7 @@ setMethod("exportIL", c("RHermesExp", "numeric", "ANY", "ANY",
     if (length(struct@data@MS2Exp) == 0) {
         stop("This object doesn't have any ILs")
     }
-    if (!between(length(struct@data@MS2Exp), 1, id)) {
+    if (!between(id, 1, length(struct@data@MS2Exp))) {
         stop("Please enter a valid IL number")
     }
     IL <- struct@data@MS2Exp[[id]]@IL@IL
@@ -657,7 +657,7 @@ setMethod("exportIL", c("RHermesExp", "numeric", "ANY", "ANY",
                 "m/z")  #Setting column style for Thermo Xcalibur import
             p[, 1] <- p[, 1]/60
             p[, 2] <- p[, 2]/60
-            write.csv(p, file = paste0(folder, "/", x, ".csv"))
+            write.csv(p, file = paste0(folder, "/Injection_", x, ".csv"))
         }
     } else {
         plandf <- do.call(rbind, lapply(seq_along(plan), function(x) {
@@ -665,7 +665,7 @@ setMethod("exportIL", c("RHermesExp", "numeric", "ANY", "ANY",
             p$ID <- x
             return(p)
         }))
-        write.csv(plandf, paste0(folder, ".csv"))
+        write.csv(plandf, paste0(folder, "/ExportedIL.csv"))
     }
     return()
 })
@@ -687,12 +687,8 @@ setMethod("SOIcos", c("RHermesExp", "numeric"), function(struct,
     }
     SOI <- struct@data@SOI[[id]]@SoiList
     SOI <- SOI[order(SOI$start), ]
-    # m <- matrix(0, nrow = nrow(SOI), ncol = nrow(SOI))
-    iter <- 1000
-    m <- matrix(0, nrow = iter, ncol = iter)
-
-    for (i in seq_len(iter)) {
-        message(i)
+    m <- matrix(0, nrow = nrow(SOI), ncol = nrow(SOI))
+    for (i in seq_len(nrow(SOI))) {
         st <- SOI$start[i]
         end <- SOI$end[i]
         for (j in seq_len(i)) {

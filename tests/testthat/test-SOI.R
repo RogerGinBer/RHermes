@@ -38,12 +38,22 @@ test_that("Blank substraction is configured",{
          failure_message = "Model doesn't load")
 })
 
+test_that("SOI plot works", {
+  myHermes <- readRDS(system.file("extdata", "afterSOI.rds" ,
+                                  package = "RHermes"))
+  p <- RHermes::PlotlySoiPlot(myHermes, 1, "C6H12O6",
+                              rtrange = c(0,1500), dynamicaxis = TRUE,
+                              ads = "M+Na")
+  expect_true(is(p, "plotly"))
+})
+
 
 context("SOI cleanup works")
 test_that("SOI are filtered correctly", {
   myHermes <- readRDS(system.file("extdata", "afterSOI.rds" ,
                                   package = "RHermes"))
   myHermes <- SOIcleaner(myHermes, 1, 50000, TRUE)
-  succeed()
+  expect_equal(nrow(myHermes@data@SOI[[1]]@SoiList), 6)
 })
+
 
