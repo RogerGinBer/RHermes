@@ -69,7 +69,6 @@ exportSIRIUS <- function(struct, ID, folder) {
 }
 
 #' @title exportMSP
-#' @usage exportMSP(struct, id, fname = "output")
 #' @param struct RHermesExp object
 #' @param ID Index of the MS2Exp that you want to export
 #' @param fname Name of the output file, without the .msp termination
@@ -118,7 +117,6 @@ exportMSP <- function(struct, ID, fname) {
 
 
 #' @title exportMGF
-#' @usage exportMGF(struct, id, fname = "output")
 #' @param struct RHermesExp object
 #' @param ID Index of the MS2Exp that you want to export
 #' @param fname Name of the output file, without the .mgf termination

@@ -4,11 +4,10 @@
 #' that correspond to each entry. Then, it reads the MSMS info and finds consistent
 #' mass traces by sorting all data points by mz and using a Centwave-like algorithm.
 #'  The derived 'pure' spectra are called superspectra. A single IL entry can yield different
-#' superspectra.
+#' superspectra. This function is NOT to be used by itself. It forms part of the MSMS processing
+#' workflow.
 #' @return List of formulas and a list of purified MSMS (list of dataframes,
 #' one for each superspectra).
-#' @usage This function is NOT to be used by itself. It forms part of the MSMS processing
-#' workflow. Use \link[RHermes]{MS2Proc}.
 #' @import ggplot2
 CliqueMSMS <- function(MS2Exp, idx, plot = FALSE, contaminant = 173.5,
     delta = 0.1) {
