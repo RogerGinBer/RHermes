@@ -6,7 +6,7 @@
 <!-- badges: start -->
 
 [![Codecov test
-coverage](https://codecov.io/gh/RogerGinBer/Proves/branch/master/graph/badge.svg)](https://codecov.io/gh/RogerGinBer/Proves?branch=master)
+coverage](https://codecov.io/gh/RogerGinBer/RHermes/branch/master/graph/badge.svg)](https://codecov.io/gh/RogerGinBer/RHermes?branch=master)
 <!-- badges: end -->
 
 The goal of RHermes is to analyse LC-MS and LC-MS/MS files to identify
