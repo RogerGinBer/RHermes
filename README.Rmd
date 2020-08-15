@@ -20,9 +20,9 @@ knitr::opts_chunk$set(
 
 <!-- badges: end -->
 
-The goal of RHermes is to analyse LC-MS and LC-MS/MS files to identify compounds
-in biological or environmental samples. The RHermes workflow can work with
-either Orbitrap or q-TOF instrument data, but the former will yield best results.
+The goal of RHermes is to analyse LC-MS and LC-MS/MS data to identify compounds
+in biological or environmental samples. The RHermes workflow works with
+both Orbitrap and q-TOF instrument data.
 
 
 ## System requirements

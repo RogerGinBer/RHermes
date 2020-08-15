@@ -32,8 +32,7 @@ setGeneric("MS2Proc", function(struct, id, MS2files,
 setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
     "ANY", "ANY", "ANY", "ANY", "ANY"), function(struct, id,
     MS2files, referenceDB = "D:/sp_MassBankEU_20200316_203615.RData",
-    mincos = 0.6, plotting = FALSE, outpdf = "mirror.pdf",
-    outcsv = "./results.csv") {
+    mincos = 0.6) {
     #### MS2 Data Importation and Sorting within IL ####------------------------
     validObject(struct)
     MS2Exp <- struct@data@MS2Exp[[id]]
@@ -257,31 +256,29 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
         return(l)
     })
 
-    if (plotting) {
-        message("Plotting matches between your data and the reference spectra")
-        cairo_pdf(outpdf, onefile = TRUE)
-        n <- lapply(seq_len(nrow(info)), function(x) {
-            cur <- info[x, ]
-            mirrorPlot(cur$qMSMS, cur$patMSMS, title = cur$compound,
-                subtitle = paste("Score:", round(cur$score, 4),
-                  " Superspectra:", cur$ss, " IL_entry:", cur$IL_ID,
-                  " MaxInt:", round(cur$MaxInt, -2)), baseline = 1000,
-                maxint = max(cur$qMSMS[[1]][, "int"]), molecmass = cur$mass)
-        })
-        dev.off()
-    }
-    message(paste("Registering identifications in csv file:",
-        outcsv))
-    write.csv(info[, c(seq(1, 5), seq(7, 13))], file = outcsv)
+    # if (plotting) {
+    #     message("Plotting matches between your data and the reference spectra")
+    #     cairo_pdf(outpdf, onefile = TRUE)
+    #     n <- lapply(seq_len(nrow(info)), function(x) {
+    #         cur <- info[x, ]
+    #         mirrorPlot(cur$qMSMS, cur$patMSMS, title = cur$compound,
+    #             subtitle = paste("Score:", round(cur$score, 4),
+    #               " Superspectra:", cur$ss, " IL_entry:", cur$IL_ID,
+    #               " MaxInt:", round(cur$MaxInt, -2)), baseline = 1000,
+    #             maxint = max(cur$qMSMS[[1]][, "int"]), molecmass = cur$mass)
+    #     })
+    #     dev.off()
+    # }
+    # message(paste("Registering identifications in csv file:",
+    #     outcsv))
+    # write.csv(info[, c(seq(1, 5), seq(7, 13))], file = outcsv)
     message("Done!")
-    MS2Exp@Ident <- list(info, purifiedSpectra, retrievedMSMS,
-        idx)
+    MS2Exp@Ident <- list(info, purifiedSpectra, retrievedMSMS, idx)
     struct@data@MS2Exp[[id]] <- MS2Exp
     return(struct)
 })
 
 
-#'@export
 MSMSimporter <- function(IL, filelist) {
     ##Extract all MSMS file data (header and peaks)
     filesdata <- mapply(function(f, n) {
