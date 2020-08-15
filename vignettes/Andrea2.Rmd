@@ -1,0 +1,220 @@
+---
+title: "1st Andrea Brunner Workflow"
+output:
+  html_notebook: default
+  html_document:
+    df_print: paged
+    theme: lumen
+    toc: true
+    toc_float: true
+    toc_depth: 4
+  pdf_document: default
+vignette: >
+  %\VignetteIndexEntry{1st Andrea Brunner Workflow}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+# Context
+
+This is the second workflow corresponding to Andrea Brunner's analysis.
+We will use the new RHermes S4 classes and methods to illustrate its use.
+
+# MS1 Processing
+
+## Setting the parameters
+
+The first step is to generate an RHermesExp object and set the MS1 experimental 
+parameters. To ease the job for the end-user, 4 different templates are
+available for both Q-TOF and Orbitrap instruments. The user can also specify 
+custom parameters using ExpParam() instead of the template.
+
+New templat
+
+```{r "setup", include=FALSE}
+knitr::opts_knit$set(root.dir = "../")  # with something else than `getwd()`
+library(RHermes)
+require(enviPat)
+library(igraph)
+require(cliqueMS)
+require(mzR)
+require(magrittr)
+require(doParallel)
+require(CHNOSZ)
+require(ggplot2)
+require(viridis)
+require(tidyverse)
+library(extrafont)
+library(Cairo)
+library(gridExtra)
+library(gtools)
+library(RCy3)
+library(doSNOW)
+library(data.table)
+library(keras)
+
+```
+
+```{r warning=FALSE}
+# setwd("../") #For unknitted use of the chunk
+myHermes <- RHermesExp()
+myHermes <- setExpParam(myHermes, template = "orbi-pos", params = ExpParam(ppm = 2, instrument = "Orbitrap", res = "120000"))
+```
+
+Processing the RHermesExp object will set timestamps of the performed 
+operations. You can use readTime(object) to see them.
+```{r, message = 1}
+readTime(myHermes)
+```
+
+Now we will set the formulas and adducts to consider in our experiment. The
+default database is the Human Metabolome Database (HMDB), but NORMAN is also 
+available and is particularly useful for environmental pollutant profiling.
+
+The IDs to use for the two databases are, respectively, "hmdb", and "norman".
+
+RHermes directly checks the polarity used in the experiment (set in the 
+previous step) and selects the corresponding adducts.
+
+The user can also select the characteristics of the adducts considered, in 
+particular one can select the maximum charge (+, 2+, etc.) and the maximume
+multiplicity of the adducts (M, 2M, 3M, etc.). The defaults are 1 for both
+charge and multiplicity.
+
+```{r, message=seq(2,3), warning= FALSE}
+setwd("../") #For unknitted use of the chunk
+myHermes <- setDB(myHermes, "norman") #Default HMDB, single charged, monomeric adducts
+readTime(myHermes)
+```
+
+## File processing into PLs
+
+Once the basic parameters have been set it is time to process some files. To do
+this we just need to use the function FileProc with the names of the files we 
+want processed. There is the possibility to process labelled data so that all 
+possible C isotopes are searched but, in that case, the labelled files must be 
+processed in a separate function call (or just process everything in _labelled 
+mode_, just bear in mind it is significantly slower).
+
+```{r, message = 1, warning = FALSE}
+dir <- "D:/ABrunner"
+fil <- list.files(dir, pattern = ".*pos.*.mzML")[c(1,4,7)]
+fil <- paste(dir, fil, sep = "/")
+myHermes <- FileProc(myHermes, files = fil)
+```
+## SOI generation
+
+Once every file has been processed and all signals that match your F/A
+combinations have been registered into _Peak Lists_ the next step will be SOI
+detection.
+
+As described in the paper, RHermes detects SOI (_Scans of Interest_) by applying
+one or multiple filters to the data points registered in a PL. To provide an 
+almost hands-off experience, we have designed multiple filter templates that can
+be easily accessed and customized. They are:
+
+* _single_ and _single-x_
+* _double_ and _double-x_
+* _triple_ and _triple-x_
+
+Where the "-x" suffix means "extended" and is to be used when dealing with long
+chromatographic runs where compounds can elute during a long time. Double and
+triple filter modes use staggered, partially-overlapping time segments to avoid
+signal splitting.
+
+In case you need more filters or if you just want to customize them you can find
+the "SOITemplates.csv" file at /app/www in the RHermes package folder. Just add
+more lines with your desired parameters using the same ID in the first column
+and it will be available to getSOIpar().
+
+It is quite likely that you may want to test some filtering parameters before
+commiting to perform a set of MSMS runs. Having this in mind, SOIfinder() allows
+the input of multiple parameter objects in the form of a list (or c()). One 
+important thing to keep in mind is that, in the case the length of parameters is
+shorter than the number of SOI lists to generate, **only** the last parameter of
+the list will be recycled.
+
+Another crucial feature that RHermes offers is the possibility to select a PL as
+blank and _substract_ those signals when processing another PL. This step is 
+optional but really advisable, since it will reduce the number of MSMS 
+injections needed afterwards. It works like this:
+
+ * You can input a numeric vector telling the program which PLs you want to use
+ as blank. 
+ * If you don't enter anything it doesn't perform any substraction by
+ default, so don't worry.
+ * 0 means _No blank substraction_, and it is important because both the 
+ _fileID_ and _against_ vectors will be matched **one-to-one**.
+ 
+
+
+```{r , warning=FALSE}
+setwd("../") #For unknitted use of the chunk
+s <- getSOIpar("double")
+myHermes <- SOIfinder(myHermes, params = s, fileID = c(2,3),
+                      against = c(1,2))
+# myHermes <- SOIfinder(myHermes, params = s, fileID = c(1,2,3,3),
+#                       against = c(0,1,1,2))
+```
+
+## Quality control - Plotting
+```{r}
+copy <- myHermes #Just in case
+copy <- SOIcleaner(copy, 2, 10000, TRUE)
+```
+
+
+## Generating an Inclusion List
+Once you are satisfied with a SOI list it is time to generate an inclusion list
+to perform MSMS fragmentation of the SOI and proceed with the workflow.
+
+Select the desired SOI list and the IL parameters:
+
+ * **mode**: We offer three different inclusion list modes which offer some 
+flexibility when designing the number of MSMS injections. "Full" will use all
+SOIs, "only" will just pick the SOIs that are associated with a list of adducts
+ad and "priorizate" will, if possible, only pick the first adduct in ad for a
+certain formula, then the next, and so on. This last mode avoids fragmenting 
+redundant adduct signals.
+ * **ad**: The list of adducts to pick/prioritize. Check your 
+object@metadata@ExpParam@adlist to ensure proper spelling.
+ * **filtermz**: **Really** important, is the mz tolerance of your quadrupole filter.
+ It has to be properly set so that SOIs overlapping in a mz-rt neighborhood are 
+ grouped together into a single IL entry. Feel free to experiment, but larger mz
+ values can yield convoluted the MSMS spectra. 
+
+```{r}
+copy <- genIL(copy, id = 2, par = ILParam(priorization = "yes", ad = c("M+H", "M+NH4")))
+
+myHermes <- genIL(myHermes, id = 2, par = ILParam())
+```
+
+Creating an inclusion list will generate an instance of an MS2Exp, a container
+which will serve to store your IL, the MSMS data you will later acquire and the
+identifications that arise from said data.
+
+With the inclusion list ready you can just export it to a csv format that can be
+used as input for the MSMS experiment. Just select the IL to export, where to 
+save it, the maximum number of ions to monitor at the same time and whether
+you want to get separate csv files or just one csv.
+
+```{r}
+exportIL(myHermes, 1, folder = getwd(), maxOver = 5, sepFiles = FALSE)
+```
+
+# MS2 Processing
+
+After performing the MSMS runs with the exported IL you can process the
+generated data with RHermes and obtain compound identifications.
+
+## Using MS2Proc
+
+```{r}
+ms2f <- list.files("D:/ABrunner/MSMSdata", pattern = ".*pos.*.mzML")[seq(33,45)]
+ms2f <- paste0("D:/ABrunner/MSMSdata/", ms2f)
+myHermes <- MS2Proc(myHermes, 1, MS2files = ms2f)
+```
+
+
+
+

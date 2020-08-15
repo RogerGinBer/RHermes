@@ -1,0 +1,1041 @@
+
+#  PLPlotBlank <- function(Sample, Blank, filename = 'PL_Sample+Blank'){
+#   if(class(Sample) != 'rHERMES_PL' | class(Blank) != 'rHERMES_PL'){
+#     stop('Please input valid Sample and Blank objects')}
+#   cairo_pdf(filename = filename, width = 15, onefile = TRUE)
+#   setkey(Sample@peaklist, formv)
+#   setkey(Blank@peaklist, formv)
+#   pb <- txtProgressBar(min = 0, max = length(unlist(unique(Sample@peaklist[,formv]))),style = 3)
+#   count <- 1
+#   for(i in unlist(unique(Sample@peaklist[,formv]))){
+#     setTxtProgressBar(pb, count)
+#     count <- count + 1
+#     curSample <- Sample@peaklist[.(i)]
+#     curBlank <- Blank@peaklist[.(i)]
+#     curSample$ID <- 'Sample'
+#     curBlank$ID <- 'Blank'
+#     data <- rbind(curSample, curBlank)
+#     goodad <- vapply(unique(data$adduct), function(x){
+#       cur <- data[data$adduct == x, ]
+#       if(nrow(cur)>30){return(TRUE)}
+#       else{return(FALSE)}
+#     })
+#     goodad <- unique(data$adduct)[goodad]
+#     data <- data[data$adduct %in% goodad, ]
+#     if(nrow(data) < 30){next}
+#     print(ggplot(data) + geom_point(aes(x = rt, y = rtiv, color = isov),
+#                                     size = 0.05, alpha = 0.8) +
+#             labs(x = 'RT', y = 'Log Intensity', title = i) + scale_y_log10()+
+#             facet_grid(rows = vars(adduct), cols = vars(ID)) + theme_minimal())
+#   }
+#   dev.off()
+# }
+#
+# PLLabelled <- function(Labelled, Unlabelled, filename = 'PL_Labelled+Unlabelled.pdf'){
+#   if(class(Labelled) != 'rHERMES_PL' | class(Unlabelled) != 'rHERMES_PL'){
+#     stop('Please input valid Labelled and Unlabelled objects')}
+#   cairo_pdf(filename = filename, onefile = TRUE)
+#   setkey(Labelled@peaklist, formv)
+#   setkey(Unlabelled@peaklist, formv)
+#   pb <- txtProgressBar(min = 0, max = length(unlist(unique(Labelled@peaklist[,formv]))),style = 3)
+#   count <- 1
+#   for(i in unlist(unique(Labelled@peaklist[,formv]))){
+#     setTxtProgressBar(pb, count)
+#     count <- count + 1
+#     curLabelled <- Labelled@peaklist[.(i)]
+#     curUnlabelled <- Unlabelled@peaklist[.(i)]
+#     curLabelled$ID <- 'Labelled'
+#     curUnlabelled$ID <- 'Unlabelled'
+#     data <- rbind(curLabelled, curUnlabelled)
+#     goodad <- vapply(unique(data$adduct), function(x){
+#       cur <- data[data$adduct == x, ]
+#       if(nrow(cur)>30){return(TRUE)}
+#       else{return(FALSE)}
+#     })
+#     goodad <- unique(data$adduct)[goodad]
+#     data <- data[data$adduct %in% goodad, ]
+#     if(nrow(data) < 30){next}
+#     for(ad in goodad){
+#       addata <- data[data$adduct == ad, ]
+#       goodiso <-vapply(unique(addata$isov), function(x){
+#         cur <- addata[addata$isov == x, ]
+#         if(nrow(cur)>10){return(TRUE)}
+#         else{return(FALSE)}
+#       })
+#       goodiso <- unique(as.character(addata$isov))[goodiso]
+#       addata <- filter(addata, isov %in% goodiso)
+#       print(ggplot(addata) + geom_point(aes(x = rt, y = rtiv, color = ID),
+#                                         size = 0.05, alpha = 0.8) +
+#               scale_color_manual(values = c('#2d3561','#c05c7e','#f3826f'))+
+#               scale_y_log10()+
+#               facet_grid(rows = vars(isov)) + theme_minimal()+
+#               labs(x = '\nRetention time (s)', y = 'Log 10 (Intensity)\n',  title = paste(i, ad))+
+#               theme_minimal()+
+#               theme(plot.margin = unit(c(1,0.7,1,0.8), 'cm'), text = element_text(size = 12, family = 'Roboto Light')))
+#     }
+#   }
+#   dev.off()
+# }
+#
+# PLPlot <- function(Sample, filename = 'PL_Sample'){
+#   if(class(Sample) != 'rHERMES_PL'){
+#     stop('Please input a valid Sample object')}
+#   cairo_pdf(filename = filename, width = 10, onefile = TRUE)
+#   for(i in seq_len(nrow(Sample@params@DB))){
+#     cat(i, ' out of: ', nrow(Sample@params@DB),'\n')
+#     f <- as.character(Sample@params@DB[i, 2])
+#     data <- dplyr::filter(Sample@peaklist, formv == f)
+#     goodad <- vapply(unique(data$adduct), function(x){
+#       cur <- data[data$adduct == x, ]
+#       if(nrow(cur)>30){return(TRUE)}
+#       else{return(FALSE)}
+#     })
+#     goodad <- unique(data$adduct)[goodad]
+#     data <- data[data$adduct %in% goodad, ]
+#     if(nrow(data) < 30){next}
+#     print(ggplot(data) + geom_point(aes(x = rt, y = rtiv, color = isov),
+#                                     size = 0.05, alpha = 0.8) +
+#             labs(x = 'RT', y = 'Log Intensity', title = f) + scale_y_log10()+
+#             facet_grid(rows = vars(adduct)) + theme_minimal())
+#   }
+#   dev.off()
+# }
+# SOIPlotBlank <- function(SampleSOI, SamplePL, BlankPL, filename = 'SOI_Blank+Sample'){
+#   cairo_pdf(filename = filename, onefile = TRUE)
+#
+#   plist <- SampleSOI@PlotDF
+#   datafile <- SamplePL@peaklist
+#   blankfile <- BlankPL@peaklist
+#   setkey(plist, form)
+#   setkey(datafile, formv)
+#   setkey(blankfile, formv)
+#
+#   ##Main loop-----------------------------------------------------------
+#
+#   iter <- unique(plist$form)
+#   pb <- txtProgressBar(min = 0, max = length(iter), style = 3)
+#   count <- 1
+#   for (i in iter){
+#     setTxtProgressBar(pb, count)
+#     count <- count + 1
+#
+#     #Values from groups----------------------------------------------
+#     pks <- plist[.(i)]
+#     if(dim(pks)[1]==0){next}
+#     pks$categ <- 'GR'
+#     pks$sample <- 'Sample'
+#
+#     #Values from raw data--------------------------------------------
+#     praw <- datafile[.(i)] %>% filter(., isov == 'M0')
+#     praw$snr <- 0
+#     praw$categ <-'RAW'
+#     praw$sample <- 'Sample'
+#     praw <- praw[ ,c('rt','rtiv','formv','adduct','snr','isov','categ','sample')]
+#     names(praw) <- names(pks)
+#
+#
+#     #Values from blank raw data--------------------------------------
+#     bpraw <- blankfile[.(i)] %>% filter(., isov == 'M0')
+#     if(nrow(bpraw) != 0){
+#       bpraw$snr <- 0
+#       bpraw$categ <-'RAW'
+#       bpraw$sample <- 'Blank'
+#       bpraw <- bpraw[ ,c('rt','rtiv','formv','adduct','snr','isov','categ','sample')]
+#       names(bpraw) <- names(pks)
+#       pfull <- rbind(pks, praw, bpraw)
+#     }else{
+#       pfull <- rbind(pks, praw) #Case when there aren't any scans on the blank
+#     }
+#
+#     for(j in unique(pfull$ad)){ #Clear adducts with few scans
+#       if(length(which(pfull$ad == j)) < 5){
+#         pfull <- pfull[pfull$ad != j, ]
+#       }
+#     }
+#
+#
+#     if(dim(pfull)[1]>5){ #Check for minimum number of scans
+#       print(ggplot()+
+#               geom_point(data = pfull[pfull$categ == 'GR' & pfull$sample == 'Sample',],
+#                          mapping = aes(x = rt/60, y = log10(rtiv), colour = snr),
+#                          alpha=0.4, size=5,shape=20)+
+#               geom_point(data = pfull[pfull$categ == 'RAW' & pfull$sample == 'Sample',],
+#                          mapping = aes(x = rt/60, y = log10(rtiv)), colour = '#000000',
+#                          alpha=0.5,size=0.8,shape=15)+
+#               geom_point(data = pfull[pfull$sample == 'Blank',],
+#                          mapping = aes(x = rt/60, y = log10(rtiv)), colour = '#CC0000',
+#                          alpha=0.5,size=0.8,shape=15)+
+#               facet_grid(rows = vars(ad))+
+#               xlab('RT (min)')+ylab('Log 10 Intensity\n')+
+#               scale_color_continuous(type = 'viridis')+
+#               ggtitle(label = i)+
+#               theme_minimal()+
+#               theme(plot.margin = unit(c(1,0.4,1,1), 'cm'),
+#                     text = element_text(size = 12, family = 'Roboto Light')))
+#     }
+#     else {print(i)}
+#   }
+#   dev.off()
+# }
+#
+# SOIPlot <- function(SampleSOI, SamplePL, filename = 'SOI_Sample'){
+#   cairo_pdf(filename = filename, onefile = TRUE)
+#
+#   plist <- SampleSOI@PlotDF
+#   datafile <- SamplePL@peaklist
+#
+#   ##Main loop-----------------------------------------------------------
+#
+#   iter <- unique(plist$form)
+#   pb <- txtProgressBar(min = 0, max = length(iter), style = 3)
+#   count <- 1
+#   for (i in iter){
+#     setTxtProgressBar(pb, count)
+#     count <- count + 1
+#
+#     #Values from groups----------------------------------------------
+#     pks <- plist[plist$form == i, ]
+#     if(dim(pks)[1]==0){next}
+#     pks$categ <- 'GR'
+#
+#     #Values from raw data--------------------------------------------
+#     praw <- datafile[formv == i  & isov == 'M0',]
+#     praw$snr <- 0
+#     praw$categ <-'RAW'
+#     praw <- praw[ ,c('rt','rtiv','formv','adduct','snr','isov','categ')]
+#     names(praw) <- names(pks)
+#
+#     pfull <- rbind(pks, praw)
+#
+#     for(j in unique(pfull$ad)){ #Clear adducts with few scans
+#       if(length(which(pfull$ad == j)) < 5){
+#         pfull <- pfull[pfull$ad != j, ]
+#       }
+#     }
+#     pfull$sample <- 'Sample'
+#
+#     if(dim(pfull)[1]>5){ #Check for minimum number of scans
+#       print(ggplot()+
+#               geom_point(data = pfull[pfull$categ == 'GR' & pfull$sample == 'Sample',],
+#                          mapping = aes(x = rt/60, y = log10(rtiv), colour = snr),
+#                          alpha=0.4, size=5,shape=20)+
+#               geom_point(data = pfull[pfull$categ == 'RAW' & pfull$sample == 'Sample',],
+#                          mapping = aes(x = rt/60, y = log10(rtiv)), colour = '#000000',
+#                          alpha=0.5,size=0.8,shape=15)+
+#               facet_grid(rows = vars(ad))+
+#               xlab('RT (min)')+ylab('Log 10 Intensity\n')+
+#               scale_color_continuous(type = 'viridis')+
+#               ggtitle(label = i)+
+#               theme_minimal()+
+#               theme(plot.margin = unit(c(1,0.4,1,1), 'cm'),
+#                     text = element_text(size = 12, family = 'Roboto Light')))
+#     }
+#     else {print(i)}
+#   }
+#   dev.off()
+# }
+#
+#
+# ThermoPlot <- function(markedPL, SamplePL, SampleSOI, filename){
+#   cairo_pdf(filename = filename, onefile = TRUE)
+#   plist <- SampleSOI@PlotDF
+#   datafile <- SamplePL@peaklist
+#   markedfile <- markedPL@peaklist
+#
+#   ##Main loop-----------------------------------------------------------
+#   setkey(plist, form)
+#   setkey(datafile, formv)
+#   setkey(markedfile, formv)
+#
+#   formulas <- unique(plist$form)
+#   adducts <- unique(plist$ad)
+#   pb <- txtProgressBar(min = 0, max = length(formulas), style = 3)
+#   count <- 0
+#   for (i in formulas){
+#     setTxtProgressBar(pb, count)
+#     count <- count + 1
+#     for (j in adducts){
+#
+#
+#       #Values from groups----------------------------------------------
+#       pks <- plist[.(i)]
+#       pks <- pks[pks$ad == j & pks$isov == 'M0']
+#       if(dim(pks)[1]==0){next}
+#       pks$categ <- 'GR'
+#
+#       #Values from raw data--------------------------------------------
+#       praw <- datafile[.(i)]
+#       praw <- praw %>% filter(., adduct == j & isov == 'M0')
+#       praw$snr <- 0
+#       praw$categ <-'RAW'
+#       praw <- praw[ ,c('rt','rtiv','formv','adduct','snr','isov','categ')]
+#       names(praw) <- names(pks)
+#
+#       #Values from marked data-----------------------------------------
+#       pmarked <- markedfile[.(i)]
+#       pmarked <- pmarked %>% filter(., adduct == j & isov != 'M0')
+#       if(dim(pmarked)[1]==0){next}
+#       pmarked$snr <- 0
+#       pmarked$categ <- 'MAR'
+#       pmarked <- pmarked[ ,c('rt','rtiv','formv','adduct','snr','isov','categ')]
+#       for(j in unique(pmarked$isov)){ #Clear isotopes with few scans
+#         if(length(which(pmarked$isov == j)) < 5){
+#           pmarked <- pmarked[pmarked$isov != j, ]
+#         }
+#       }
+#
+#       pfull <- rbind(pks, praw, pmarked, use.names = FALSE)
+#
+#       for(j in unique(pfull$ad)){ #Clear adducts with few scans
+#         if(length(which(pfull$ad == j)) < 5){
+#           pfull <- pfull[pfull$ad != j, ]
+#         }
+#       }
+#       # pfull$sample <- 'Sample'
+#
+#       if(dim(pfull)[1]>5){ #Check for minimum number of scans
+#         print(ggplot()+
+#                 geom_point(data = pfull[pfull$categ == 'GR',],
+#                            mapping = aes(x = rt/60, y = log10(rtiv), colour = snr),
+#                            alpha=0.4, size=5,shape=20)+
+#                 geom_point(data = pfull[pfull$categ == 'RAW',],
+#                            mapping = aes(x = rt/60, y = log10(rtiv)), colour = '#000000',
+#                            alpha=0.5,size=0.8,shape=15)+
+#                 geom_point(data = pfull[pfull$categ == 'MAR',],
+#                            mapping = aes(x = rt/60, y = log10(rtiv)), colour = '#f05c15',
+#                            alpha=0.5,size=0.8,shape=15)+
+#                 facet_grid(rows = vars(isov))+
+#                 xlab('RT (min)')+ylab('Log 10 Intensity\n')+
+#                 scale_color_continuous(type = 'viridis')+
+#                 ggtitle(label = paste(i, j, sep = '-'))+
+#                 theme_minimal()+
+#                 theme(plot.margin = unit(c(1,0.4,1,1), 'cm'),
+#                       text = element_text(size = 12, family = 'Roboto Light')))
+#       }
+#       else {print(i)}
+#     }}
+#   dev.off()
+# }
+
+#'@export
+setGeneric("PlotlyMirrorPlot", function(struct, ms2id, entryid) {
+    standardGeneric("PlotlyMirrorPlot")
+})
+setMethod("PlotlyMirrorPlot", c("RHermesExp", "numeric", "numeric"),
+    function(struct, ms2id, entryid) {
+        # function(query, pattern, title = 'Mirror plot', subtitle = '', baseline = 1000, maxint = 0, molecmass = 200){
+        if (is.null(entryid)) {
+            return(ggplotly(ggplot()))
+        }
+        entry <- struct@data@MS2Exp[[ms2id]]@Ident[[1]][entryid,
+            ]
+        query <- entry$qMSMS[[1]]
+        pattern <- entry$patMSMS[[1]]
+        molecmass <- entry$mass
+        baseline <- 1000
+        maxint <- 0
+        title <- paste(entry$compound, entry$IL_ID, sep = "@")
+        subtitle <- ""
+        # if(is.list(query)){query <- query[[1]]}
+        # if(is.list(pattern)){pattern <- pattern[[1]]}
+        colnames(pattern) <- c("mz", "int")
+        pattern$int <- pattern$int/max(pattern$int) * 100
+
+        colnames(query) <- c("mz", "int")
+        query$int <- query$int/max(query$int) * 100
+        bestdf <- query[query$int > 10, ]
+        bestdf$mz <- round(bestdf$mz, 4)
+
+        baseline <- baseline/maxint * 100
+        bldf <- data.frame(xmin = min(c(pattern$mz, query$mz,
+            molecmass)) - 5, xmax = max(c(pattern$mz, query$mz,
+            molecmass) + 5), y = baseline)
+        moldf <- data.frame(mz = molecmass)
+        pl <- ggplot() + geom_segment(data = query, aes(x = mz,
+            xend = mz, y = 0, yend = int), color = "black") +
+            geom_segment(data = pattern, aes(x = mz, xend = mz,
+                y = 0, yend = -int), color = "red") + geom_segment(data = bldf,
+            aes(x = xmin, xend = xmax, y = y, yend = y), linetype = "dashed",
+            color = "black", alpha = 0.3) + geom_segment(data = bldf,
+            aes(x = xmin, xend = xmax, y = -y, yend = -y), linetype = "dashed",
+            color = "red", alpha = 0.3) + geom_point(data = moldf,
+            aes(x = mz, y = 0), shape = 17, size = 2) + theme_minimal() +
+            ylab("% Intensity") + scale_x_continuous(limits = c(min(c(pattern$mz,
+            query$mz, molecmass)) - 5, max(c(pattern$mz, query$mz,
+            molecmass)) + 5)) + theme(plot.margin = unit(c(1,
+            0.7, 1, 0.8), "cm"), text = element_text(size = 11,
+            family = "Segoe UI Light"), plot.title = element_text(hjust = 0.5)) +
+            geom_text(data = bestdf, aes(x = mz, y = int + 5,
+                label = mz), family = "Segoe UI Light", check_overlap = TRUE) +
+            ggtitle(title, subtitle)
+        return(ggplotly(pl))
+    })
+
+#'@export
+setGeneric("PlotlyPLPlot", function(struct, id, formula, rtrange,
+    dynamicaxis, ads) {
+    standardGeneric("PlotlyPLPlot")
+})
+setMethod("PlotlyPLPlot", c("RHermesExp", "numeric", "character",
+    "numeric", "logical", "character"), function(struct, id,
+    formula, rtrange, dynamicaxis, ads) {
+    # plist <- struct@data@SOI[[id]]@PlotDF
+    # filen <- struct@data@SOI[[id]]@filename
+    # plid <- which(vapply(struct@data@PL, function(x){return(x@filename == filen)}, logical(1)))
+    datafile <- struct@data@PL[[id]]@peaklist
+    FA_to_ion <- struct@metadata@ExpParam@ionF[[2]]
+    setkey(FA_to_ion, "f")
+
+    fs <- FA_to_ion[f == formula, ]
+    ions <- fs$ion
+    datafile <- filter(datafile, formv %in% ions)
+    if (nrow(datafile) == 0) {
+        return()
+    }
+    datafile <- filter(datafile, between(rt, rtrange[1], rtrange[2]))
+    if (nrow(datafile) == 0) {
+        return()
+    }
+
+    # toKeep <- vapply(unique(datafile$formv), function(f){
+    #   ifelse(length(which(datafile$formv == f)) > 10, T, F)
+    # }, logical(1))
+    # datafile <- datafile[datafile$formv %in% unique(datafile$formv)[toKeep], ]
+    # if(nrow(datafile) == 0){return()}
+
+    datafile$ad <- ""
+    for (f in unique(datafile$formv)) {
+        ad <- fs$an[fs$ion == f]
+        datafile$ad[datafile$formv == f] <- ad
+    }
+    datafile <- filter(datafile, ad %in% ads)
+    if (nrow(datafile) == 0) {
+        return()
+    }
+
+
+    return(ggplotly(ggplot() + geom_point(data = datafile, mapping = aes(x = rt,
+        y = rtiv, color = isov), size = 0.5, alpha = 0.6) + facet_grid(rows = vars(ad)) +
+        theme_minimal() + ggtitle(formula) + scale_color_brewer(palette = "Dark2"),
+        dynamicTicks = dynamicaxis))
+
+})
+
+
+#'@export
+setGeneric("PlotlySoiPlot", function(struct, id, formula, rtrange,
+    dynamicaxis, ads, blankid = NA) {
+    standardGeneric("PlotlySoiPlot")
+})
+setMethod("PlotlySoiPlot", c("RHermesExp", "numeric", "character",
+    "numeric", "logical", "character", "ANY"), function(struct, id,
+    formula, rtrange, dynamicaxis, ads, blankid = NA) {
+    plist <- struct@data@SOI[[id]]@PlotDF
+    filen <- struct@data@SOI[[id]]@filename
+    plid <- which(vapply(struct@data@PL, function(x) {
+        return(x@filename == filen)
+    }, logical(1)))
+
+
+
+    datafile <- struct@data@PL[[plid]]@peaklist
+    datafile <- datafile[datafile$isov == "M0", ]
+    datafile$Class <- "Sample"
+
+    if(!is.na(blankid)){
+        blankfile <- struct@data@PL[[blankid]]@peaklist
+        blankfile <- blankfile[blankfile$isov == "M0", ]
+        blankfile$Class <- "Blank"
+        datafile <- rbind(datafile, blankfile)
+    }
+
+    FA_to_ion <- struct@metadata@ExpParam@ionF[[2]]
+    setkey(FA_to_ion, "f")
+    fs <- FA_to_ion[f == formula, ]
+    ions <- fs$ion
+    datafile <- filter(datafile, formv %in% ions)
+    datafile <- filter(datafile, between(rt, rtrange[1], rtrange[2]))
+    soiinfo <- filter(plist, form %in% ions)
+    soiinfo <- filter(soiinfo, between(rt, rtrange[1], rtrange[2]))
+    if (nrow(soiinfo) == 0) {
+        return()
+    }
+    names(soiinfo)[names(soiinfo) == "form"] <- "formv"
+    names(soiinfo)[names(soiinfo) == "rtiv"] <- "Intensity"
+    names(datafile)[names(datafile) == "rtiv"] <- "Intensity"
+
+
+    # toKeep <- vapply(unique(datafile$formv), function(f){
+    #   ifelse(length(which(datafile$formv == f)) > 30, T, F)
+    # }, logical(1))
+    # datafile <- datafile[datafile$formv %in% unique(datafile$formv)[toKeep], ]
+
+    if (nrow(soiinfo) == 0) {
+        return()
+    }
+
+    datafile$ad <- ""
+    for (f in unique(datafile$formv)) {
+        ad <- fs$an[fs$ion == f]
+        datafile$ad[datafile$formv == f] <- ad
+    }
+
+    soiinfo$ad <- ""
+    for (f in unique(soiinfo$formv)) {
+        ad <- fs$an[fs$ion == f]
+        soiinfo$ad[soiinfo$formv == f] <- ad
+    }
+
+    datafile <- filter(datafile, ad %in% ads)
+    soiinfo <- filter(soiinfo, ad %in% ads)
+
+    if (nrow(soiinfo) == 0) {
+        return()
+    }
+    soiinfo$Class <- "Sample-SOI"
+    if(!is.na(blankid)){
+        return(ggplotly(ggplot() +
+                            geom_point(data = datafile[datafile$Class == "Sample", ],
+                                       mapping = aes(x = rt, y = Intensity, color = Class),
+                                       alpha = 0.4) +
+                            geom_point(data = datafile[datafile$Class == "Blank", ],
+                                       mapping = aes(x = rt, y = Intensity, color = Class),
+                                       alpha = 0.5)+
+                            geom_point(data = soiinfo, mapping = aes(x = rt, y = Intensity, color = Class),
+                                       alpha = 0.8) +
+                            scale_color_manual(breaks = c("Blank", "Sample", "Sample-SOI"),
+                                               values = c("#6D9503", "#8E032B", "#370B6B"))+
+                            facet_grid(rows = vars(ad)) + theme_minimal() +
+                            ggtitle(formula), dynamicTicks = dynamicaxis))
+    } else {
+        return(ggplotly(ggplot() +
+                            geom_point(data = datafile[datafile$Class == "Sample", ],
+                                       mapping = aes(x = rt, y = Intensity, color = Class),
+                                        alpha = 0.3)+
+                            geom_point(data = soiinfo, mapping = aes(x = rt, y = Intensity, color = Class),
+                                        alpha = 0.8) +
+                            scale_color_manual(breaks = c("Sample", "Sample-SOI"),
+                                               values = c("#8E032B", "#370B6B"))+
+                            facet_grid(rows = vars(ad)) + theme_minimal() +
+                            ggtitle(formula), dynamicTicks = dynamicaxis))
+    }
+
+
+})
+
+#'@export
+setGeneric("PlotlyRawMS2Plot", function(struct, ms2id, entryid,
+    bymz) {
+    standardGeneric("PlotlyRawMS2Plot")
+})
+setMethod("PlotlyRawMS2Plot", c("RHermesExp", "numeric", "numeric",
+    "logical"), function(struct, ms2id, entryid, bymz = TRUE) {
+    if (is.na(entryid)) {
+        return(list(ggplotly(ggplot()), NA))
+    }
+    ms2data <- struct@data@MS2Exp[[ms2id]]@MS2Data
+    data <- ms2data[[entryid]][[2]]
+
+    data <- do.call(rbind, lapply(unique(data$rt), function(t) {
+        maxi <- max(data[data$rt == t, "int"])
+        return(data[data$rt == t & data$int > 0.005 * maxi, ])
+    }))
+    if (nrow(data) == 0) {
+        return(list(ggplotly(ggplot()), NA))
+    }
+
+    ##Remove known contaminant signals
+    contaminant <- 173.5
+    delta <- 0.1
+    for (x in contaminant) {
+        data <- data[!between(data$mz, contaminant - delta, contaminant +
+            delta), ]
+    }
+    if (nrow(data) == 0) {
+        return(list(ggplotly(ggplot()), NA))
+    }
+    colnames(data)[colnames(data) == "int"] <- "rtiv"  #To match with cosineSim definition
+    rts <- unique(data$rt)
+    soi <- list()
+    avgmz <- c()
+    mu <- 20
+    pmin <- 5
+
+    for (i in rts) {
+        if (i == rts[1]) {
+            soi <- split(data[data$rt == i, ], data$mz[data$rt == i])
+            avgmz <- as.numeric(names(soi))
+        } else {
+            curdata <- data[data$rt == i, ]
+            for (j in unique(curdata$mz)) {
+                dist <- abs(avgmz - j)/j * 1e+06
+                if (any(dist < mu)) {
+                  idx <- which.min(dist)
+                  soi[[idx]] <- rbind(soi[[idx]], curdata[curdata$mz == j, ])
+                  avgmz[[idx]] <- mean(soi[[idx]]$mz)
+                } else {
+                  soi <- c(soi, list(curdata[curdata$mz == j, ]))
+                  avgmz <- c(avgmz, j)
+                }
+            }
+        }
+    }
+    good <- vapply(soi, function(x) {
+        nrow(x) > pmin
+    }, logical(1))
+    soi <- soi[good]
+    avgmz <- avgmz[good]
+
+    if (length(soi) == 0) {
+        return(list(ggplotly(ggplot()), NA))
+    }
+
+    #Tidying the regions
+    for (i in seq_along(avgmz)) {
+        soi[[i]]$mz <- round(avgmz[i], 3)
+        soi[[i]] <- soi[[i]][order(soi[[i]]$rt), ]
+    }
+
+
+    # plot_ly(x = soi$mz, z = soi$rtiv, y = soi$rt, size = 0.1, color = soi$peak)
+    # ggplotly(ggplot(soi)+geom_point(aes(x=rt, y = rtiv, color = as.factor(mz))))
+
+
+    ##Centwave peak-picking
+    soipks <- lapply(soi, function(x) {
+        suppressWarnings(df <- xcms::peaksWithCentWave(int = x$rtiv,
+            rt = x$rt, snthresh = 0, firstBaselineCheck = FALSE,
+            prefilter = c(0, 0), peakwidth = c(5, 60)))
+        df <- as.data.frame(df)
+        if (nrow(df) == 0) {
+            df <- data.frame(rt = 0, rtmin = min(x$rt), rtmax = max(x$rt),
+                into = 0, intb = 0, maxo = max(x$rtiv), sn = 0)
+            df$categ <- "Putative"
+        } else {
+            df$categ <- "Peak"
+            ##When a peak is found, consider the rest of fragment RT intervals as putative regions
+            dfinterv <- unlist(df[, c("rtmin", "rtmax")])
+            times <- c(min(x$rt), dfinterv[seq(1, length(dfinterv),
+                2)], dfinterv[seq(2, length(dfinterv), 2)], max(x$rt))
+            iter <- seq(1, length(times), 2)
+            maxo <- mapply(function(t1, t2) {
+                max(x$rtiv[between(x$rt, t1, t2)], na.rm = TRUE)
+            }, times[iter], times[iter + 1]) %>% unlist()
+            df <- rbind(df, data.frame(rt = 0, rtmin = times[iter],
+                rtmax = times[iter + 1], into = 0, intb = 0,
+                maxo = maxo, sn = 0, categ = "Putative"))
+        }
+        df$mz <- rep(x$mz[1], nrow(df))
+        return(df)
+    })
+    pks <- do.call(rbind, soipks)
+    if (nrow(pks) == 0) {
+        return(list(ggplotly(ggplot()), NA))
+    }
+
+    #Matching data to the peaks found
+    soi <- do.call(rbind, soi)
+    soi$peak <- 0
+    for (i in seq_len(nrow(pks))) {
+        soi$peak[soi$mz == pks$mz[i] & between(soi$rt, pks$rtmin[i],
+            pks$rtmax[i])] <- i
+    }
+
+
+    ##Deconvolution based on previous peak-picking -- Centwave-Propagation
+    repeat ({
+        rows_to_add <- data.frame(rt = numeric(0), rtmin = numeric(0),
+            rtmax = numeric(0), into = numeric(0), intb = numeric(0),
+            maxo = numeric(0), sn = numeric(0), categ = character(0),
+            mz = numeric(0))
+        for (i in which(pks$categ == "Peak")) {
+            cur_cos <- vapply(seq_len(nrow(pks)), function(y) {
+                score <- cosineSim(soi[soi$peak == i, ], soi[soi$peak == y, ])
+                if (is.na(score)) {
+                  score <- 0
+                }
+                score
+            }, numeric(1))
+            #Putative peaks that match really well with a confirmed Centwave peak
+            toconvert <- which(cur_cos > 0.8 & pks$categ == "Putative")
+            if (length(toconvert) != 0) {
+                for (j in toconvert) {
+                  dfinterv <- unlist(pks[i, c("rtmin", "rtmax")])
+                  x <- soi[soi$peak == j, ]
+                  #Define start-end pairs
+                  times <- c(min(x$rt), max(dfinterv[1], min(x$rt)),
+                    min(dfinterv[2], max(x$rt)), max(x$rt))
+                  iter <- seq(1, length(times), 2)
+                  maxo <- mapply(function(t1, t2) {
+                    max(x$rtiv[between(x$rt, t1, t2)], na.rm = TRUE)
+                  }, times[iter], times[iter + 1]) %>% unlist()
+                  pks[j, c("rtmin", "rtmax")] <- c(times[2],
+                    times[3])
+                  pks$maxo[j] <- max(x$rtiv[between(x$rt, times[2],
+                    times[3])])
+                  pks$categ[j] <- "Peak"
+                  rows_to_add <- rbind(rows_to_add, data.frame(rt = 0,
+                    rtmin = times[iter], rtmax = times[iter + 1],
+                    into = 0, intb = 0, maxo = maxo, sn = 0,
+                    categ = "Putative", mz = pks$mz[j]))
+                }
+            }
+        }
+        rows_to_add <- rows_to_add[rows_to_add$maxo != -Inf,
+            ]
+        pks <- rbind(pks, rows_to_add)
+
+        res <- RHermes:::reassign_and_check(pks, soi)
+        pks <- res[[1]]
+        soi <- res[[2]]
+
+        ##Split putative peaks with >5s gaps
+        for (i in which(pks$categ == "Putative")) {
+            cur <- soi[soi$peak == i, c("rt", "rtiv")]
+            times <- diff(cur$rt)
+            jumps <- times > 3
+            if (any(jumps)) {
+                jumps <- which(jumps)
+                splits <- data.frame(rt = numeric(0), rtmin = numeric(0),
+                  rtmax = numeric(0), into = numeric(0), intb = numeric(0),
+                  maxo = numeric(0), sn = numeric(0), categ = character(0),
+                  mz = numeric(0))
+                for (j in seq_along(jumps)) {
+                  if (jumps[j] == jumps[1]) {
+                    pks[i, c("rtmin", "rtmax")] <- c(cur$rt[1],
+                      cur$rt[jumps[j]])
+                    pks[i, "maxo"] <- max(cur$rtiv[seq_len(jumps[j])])
+                  } else {
+                    splits <- rbind(splits, data.frame(rt = 0,
+                      rtmin = cur$rt[jumps[j - 1] + 1], rtmax = cur$rt[jumps[j]],
+                      into = 0, intb = 0, maxo = max(cur$rtiv[seq_len(jumps[j])]),
+                      sn = 0, categ = "Putative", mz = pks$mz[i]))
+                  }
+                }
+                pks <- rbind(pks, splits, data.frame(rt = 0,
+                  rtmin = cur$rt[jumps[j] + 1], rtmax = max(cur$rt),
+                  into = 0, intb = 0, maxo = max(cur$rtiv[(jumps[j] +
+                    1):nrow(cur)]), sn = 0, categ = "Putative",
+                  mz = pks$mz[i]))
+            }
+        }
+        res <- RHermes:::reassign_and_check(pks, soi)
+        pks <- res[[1]]
+        soi <- res[[2]]
+
+        if (nrow(pks) == 0) {
+            break
+        }
+        if (nrow(rows_to_add) == 0) {
+            break
+        }
+    })
+    if (nrow(pks) == 0) {
+        return(list(ggplotly(ggplot()), NA))
+    }
+
+
+    ##Now calculate all similarities
+    cos <- lapply(seq_len(nrow(pks)), function(x) {
+        lapply(seq_len(nrow(pks)), function(y) {
+            score <- RHermes::pearsonSim(soi[soi$peak == x, ],
+                soi[soi$peak == y, ])
+            if (is.na(score)) {
+                score <- 0
+            }
+            ifelse(score > 0.3, score, 0)
+        })
+    }) %>% unlist(.)
+    cos <- matrix(cos, nrow = nrow(pks))
+
+    net <- graph_from_adjacency_matrix(cos, mode = "undirected",
+        weighted = TRUE, diag = FALSE)
+    # net <- graph_from_adjacency_matrix(cos, weighted = TRUE, mode = 'undirected', diag = FALSE)
+    # clust <- gen_edge_hierarchical(net)
+    # plot(clust)
+
+    # vertex_attr(net, 'name', index = V(net)) <- k$mz
+    net <- igraph::simplify(net, remove.multiple = TRUE, remove.loops = TRUE)
+
+    # wc <- igraph::cluster_edge_betweenness(net)
+    wc <- igraph::cluster_fast_greedy(net)
+
+    members <- igraph::membership(wc)
+
+    soi$member <- "Not considered"
+    for (i in unique(members)) {
+        soi$member[soi$peak %in% which(members == i)] <- as.character(i)
+    }
+    if (bymz) {
+        p1 <- ggplotly(ggplot(soi) + geom_point(aes(x = rt, y = rtiv,
+            color = as.factor(mz))))
+    } else {
+        p1 <- ggplotly(ggplot(soi) + geom_point(aes(x = rt, y = rtiv,
+            color = as.factor(member))))
+    }
+    net <- networkD3::igraph_to_networkD3(net, group = members)
+
+    net <- visNetwork(net$nodes %>% rename(label = name) %>%
+        mutate(id = seq_len(nrow(net$nodes)) - 1), net$links %>%
+        rename(from = source, to = target))
+
+    net %<>% visNodes(color = list(background = "lightblue")) %>%
+        visEdges(smooth = FALSE) %>% visPhysics(solver = "forceAtlas2Based",
+        forceAtlas2Based = list(gravitationalConstant = -100),
+        stabilization = FALSE)
+    return(list(p1, net))
+
+
+
+
+
+    # # intervals <- struct@data@MS2Exp[[ms2id]]@Ident[[2]][[3]]
+    # relat <- struct@data@MS2Exp[[ms2id]]@Ident[[4]]
+    # id2 <- which(relat == entryid)
+    #
+    # curint <- intervals[[id2]]
+    # df$ss <- '0'
+    # for(i in seq_along(curint)){
+    #  min <- curint[[i]][[1]]
+    #  max <- curint[[i]][[2]]
+    #  df$ss[with(df, between(rt, min, max))] <- as.character(i)
+    # }
+    # pl <- ggplot(df) + geom_point(aes(x=rt, y = int, color = ss, shape = ss),
+    #                               alpha = 0.7, size = 1) +
+    #   theme_minimal()+ scale_color_gradient(low = 'lightcyan2', high = 'royalblue4')
+    #
+    # if(length(curint)==0){return(list(ggplotly(pl), ggplotly(ggplot())))}
+    #
+    # vlines <- lapply(seq_along(curint), function(x){
+    #   data.frame(min = curint[[x]][[1]], max = curint[[x]][[2]], id = as.character(x))
+    # }) %>% do.call(rbind, .)
+    #
+    # pl <- pl + geom_vline(xintercept = vlines$min, alpha = 0.2, linetype = 'dashed') +
+    #   geom_vline(xintercept = vlines$max, alpha = 0.2, linetype = 'dashed')
+    # pl <- ggplotly(pl)
+    #
+    # superspectra <- struct@data@MS2Exp[[ms2id]]@Ident[[2]][[2]][[id2]]
+    # setupdf <- do.call(rbind, superspectra)
+    #
+    # ssplot <- lapply(superspectra, function(spec){
+    #   p <- ggplotly(ggplot(spec) + geom_segment(aes(x = mz, xend = mz, y=0, yend=int), color = 'black')+
+    #                   theme_minimal()+
+    #                   scale_x_continuous(limits = c(min(setupdf$mz)-5, max(setupdf$mz)+5)))
+    #   return(p)
+    # })
+    # pl2 <- subplot(ssplot, nrows = length(ssplot))
+    #
+    # return(list(pl, pl2))
+})
+
+
+#'@export
+setGeneric("PlotlyIsoFidelity", function(struct, soilist, entry,
+    plot = TRUE) {
+    standardGeneric("PlotlyIsoFidelity")
+})
+setMethod("PlotlyIsoFidelity", c("RHermesExp", "numeric", "numeric",
+    "ANY"), function(struct, soilist, entry, plot = TRUE) {
+    #Extract SOI and PL information from the selected SOI list
+    SOI <- struct@data@SOI[[soilist]]
+    fname <- SOI@filename
+    correspondingPL <- which(struct@metadata@filenames == fname)
+    PL <- struct@data@PL[[correspondingPL]]@peaklist
+
+    #Filter the PL to the selected SOI region
+    curSOI <- SOI@SoiList[entry, ]
+    PL <- filter(PL, formv == curSOI$formula)
+    PL <- filter(PL, data.table::between(rt, curSOI$start, curSOI$end))
+
+    if (plot) {
+        p <- ggplotly(ggplot(PL) + geom_point(aes(x = rt, y = rtiv,
+            color = isov)) + theme_minimal() + scale_color_brewer(palette = "Set2") +
+            xlab("RT(s)"))
+    }
+
+    #Carbon number check with M1 peak intensity pattern
+    maxpoint <- which.max(PL$rtiv[PL$isov == "M0"])
+    rt_at_max <- PL$rt[PL$isov == "M0"][maxpoint]
+    if (any(with(PL, isov == "M1" & rt == rt_at_max))) {
+        numC <- 100 * PL$rtiv[with(PL, isov == "M1" & rt == rt_at_max)][1]/(1.1 *
+            PL$rtiv[PL$isov == "M0"][maxpoint])
+    } else {
+        numC <- "Could not be defined. M1 not found below M0 max value"
+    }
+
+    f <- gsub(x = curSOI$formula, pattern = "[", replacement = "",
+        fixed = TRUE) %>% gsub(x = ., pattern = "]", replacement = "",
+        fixed = TRUE)
+
+    makeup <- CHNOSZ::makeup(f)
+    if (is.numeric(numC)) {
+        carbonCheck <- ifelse(round(numC) == makeup[["C"]], "M1 peak intensity pattern matches with the formula",
+            "M1 pattern doesn't quite match")
+    } else {
+        carbonCheck <- numC
+    }
+
+    #Generate the isopattern plots
+    isotopecode <- data.frame(name = c("13C", "17O", "18O", "2H",
+        "15N", "33S", "34S", "36S", "37Cl", "81Br", "41K", "6Li",
+        "10B", "21Ne", "22Ne", "25Mg", "26Mg", "29Si", "30Si",
+        "42Ca", "43Ca", "44Ca", "48Ca", "46Ti", "47Ti", "49Ti",
+        "50Ti", "50Cr", "53Cr", "54Cr", "54Fe", "57Fe", "58Fe",
+        "60Ni", "61Ni", "62Ni", "64Ni", "65Cu", "66Zn", "67Zn",
+        "68Zn", "70Zn", "76Se", "77Se", "78Se", "82Se", "84Sr",
+        "86Sr", "87Sr", "91Zr", "92Zr", "94Zr", "96Zr"), code = c("M",
+        "[17O]", "[18O]", "D", "[15N]", "[33S]", "[34S]", "[36S]",
+        "[37Cl]", "[81Br]", "[41K]", "[6Li]", "[10B]", "[21Ne]",
+        "[22Ne]", "[25Mg]", "[26Mg]", "[29Si]", "[30Si]", "[42Ca]",
+        "[43Ca]", "[44Ca]", "[48Ca]", "[46Ti]", "[47Ti]", "[49Ti]",
+        "[50Ti]", "[50Cr]", "[53Cr]", "[54Cr]", "[54Fe]", "[57Fe]",
+        "[58Fe]", "[60Ni]", "[61Ni]", "[62Ni]", "[64Ni]", "[65Cu]",
+        "[66Zn]", "[67Zn]", "[68Zn]", "[70Zn]", "[76Se]", "[77Se]",
+        "[78Se]", "[82Se]", "[84Sr]", "[86Sr]", "[87Sr]", "[91Zr]",
+        "[92Zr]", "[94Zr]", "[96Zr]"), stringsAsFactors = FALSE)
+    data("isotopes")
+    # pat <- enviPat::isopattern(isotopes = isotopes, chemforms = f, threshold = 10000/PL$rtiv[PL$isov == 'M0'][maxpoint])[[1]]
+
+    pat <- enviPat::isopattern(isotopes = isotopes, chemforms = f,
+        threshold = 0.1, verbose = F)[[1]]
+
+
+    pat <- rbind(t(apply(pat, 1, function(x) {
+        x[3:length(x)] <- x[3:length(x)] - pat[1, 3:ncol(pat)]
+        x
+    })))
+    pat[pat < 0] <- 0
+    cols <- which(colnames(pat) %in% isotopecode$name)
+    #Sort the cols in the order the iso appear on the list
+    idx <- vapply(cols, function(x) {
+        which(colnames(pat)[x] == isotopecode$name)[1]
+    }, numeric(1))
+    cols <- cols[order(idx)]
+
+    pat <- as.data.frame(pat)
+    pat$code <- ""
+    for (i in cols) {
+        different <- which(pat[, i] != 0)
+        pat$code[different] <- paste0(pat$code[different], rep(isotopecode$code[colnames(pat)[i] ==
+            isotopecode$name], length(different)), pat[different,
+            i])
+    }
+    pat$code[1] <- "M0"
+    pat$abundance <- pat$abundance * PL$rtiv[PL$isov == "M0"][maxpoint]/100
+    pat$class <- "Theoretical"
+
+    #Calculate isointensities at max M0 intensity peak
+    exp_int <- vapply(pat$code, function(iso) {
+        x <- PL$rtiv[PL$rt == rt_at_max & PL$isov == iso]
+        if (length(x) == 0) {
+            return(0)
+        } else {
+            return(x[1])
+        }
+    }, numeric(1)) %>% as.data.frame(x = .)
+    colnames(exp_int) <- "abundance"
+    pat$code <- factor(pat$code, levels = unique(pat$code[order(-pat$abundance)]))  #Sort by abundance
+
+    exp_int$code <- pat$code
+    exp_int$class <- "Experimental"
+
+    df <- rbind(pat[, c("abundance", "code", "class")], exp_int)
+
+    if (plot) {
+        p2 <- ggplotly(ggplot(df) + geom_col(aes(x = code, y = abundance,
+            fill = class), position = "dodge") + scale_fill_brewer(palette = "Set2") +
+            ylab("Expected intensities") + theme_minimal() +
+            theme(axis.text.x = element_text(angle = 90), plot.margin = unit(c(1,
+                1, 1, 1), "cm")))
+
+        # p2 <- p2 %>% style(p2, showlegend = FALSE, traces = 1:nrow(pat))
+        p3 <- subplot(p, p2, nrows = 2, which_layout = 2) %>%
+            layout(title = curSOI$formula)
+    }
+
+    #Calculate isotopic cosine score -We drop M0 to avoid bias-
+    tint <- pat$abundance[-1]
+    eint <- exp_int$abundance[-1]
+    tooWeak <- which(tint < 3000)
+    if (length(tooWeak) != 0) {
+        tint <- tint[-tooWeak]
+        eint <- eint[-tooWeak]
+    }
+    if (length(tint) == 0) {
+        cos <- 1  #Nothing that we could observe. Doesn't get penalized
+    } else if (sum(eint) == 0) {
+        cos <- 0  #No isotopes detected when there should be
+    } else {
+        cos <- sum((tint * eint))/(sqrt(sum(tint^2)) * sqrt(sum(eint^2)))
+    }
+
+    ##Other atom checks
+    toCheck <- c("37Cl", "81Br", "34S")
+    otherChecks <- lapply(toCheck, function(atom) {
+        if (any(grepl(pattern = atom, x = df$code))) {
+            isoname <- paste0("[", atom, "]", 1)
+            cur <- df[df$code == isoname, ]
+            th <- cur$abundance[cur$class == "Theoretical"]
+            if (th < 30000) {
+                return(NA)
+            }
+            exp <- cur$abundance[cur$class == "Experimental"]
+            return(data.table::between(exp, th * 0.5, th * 1.5))
+        } else {
+            return(NA)
+        }
+    })
+    names(otherChecks) <- toCheck
+
+
+
+
+    if (plot) {
+        return(list(p3, numC, carbonCheck, cos, otherChecks))
+    } else {
+        return(list(numC, carbonCheck, cos, otherChecks))
+    }
+})
+
+
+
+setGeneric("coveragePlot", function(struct, entry){standardGeneric("coveragePlot")})
+setMethod("coveragePlot", signature = c("RHermesExp", "numeric"), function(struct, entry){
+    pl <- struct@data@PL[[entry]]@peaklist[ ,c("rt", "rtiv", "mz")]
+    distinct_pl <- nrow(distinct(pl))
+    raw <- nrow(struct@data@PL[[entry]]@raw)
+    pieplot <- data.frame(Class = c("Covered", "Non-covered"),
+                          Value = c(distinct_pl, raw-distinct_pl))
+    colors <- c('rgb(211,94,96)', 'rgb(128,133,133)')
+    p1 <- plot_ly(data = pieplot, labels = ~Class, values = ~Value,
+                  type = "pie",
+                  insidetextfont = list(color = '#FFFFFF', size = 18),
+                  marker = list(colors = colors,
+                                line = list(color = '#FFFFFF', width = 1))
+    )
+    p1 <- p1 %>% layout(title = "Raw data points covered as PL entries")
+
+    barplot <- data.frame(Class = c("Total entries", "Distinct entries"),
+                          Value = c(nrow(pl), distinct_pl))
+    p2 <- plot_ly(data = barplot, x = ~Class, y = ~Value,
+                  type = "bar",
+                  insidetextfont = list(color = '#FFFFFF', size = 18),
+                  marker = list(color = colors,
+                                line = list(color = '#FFFFFF', width = 1))
+    )
+    p2 <- p2 %>% layout(title = "Distinct PL entries vs Total Number")
+
+    return(list(p1,p2))
+})
+
+
+
+
+
+
+
+
+
+
+
+

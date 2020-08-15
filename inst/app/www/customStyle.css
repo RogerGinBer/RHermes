@@ -1,0 +1,151 @@
+@import url('//fonts.googleapis.com/css?family=Open Sans');
+a {
+  color: #4d4263;
+  text-decoration: none;
+}
+body {
+	font-family:  Open Sans, -apple-system, BlinkMacSystemFont, Sans;
+ 	color: #202131;
+  font-size: 16px;
+}
+
+/*Navbar custom*/
+.skin-blue .main-header .logo {
+    	background-color: #4d4263;
+    	color: #fff;
+    	border-bottom: 0 solid transparent;
+}
+
+.skin-blue .main-header .navbar {
+      background-color: #3d344f;
+    }
+.main-header .navbar {
+    -webkit-transition: margin-left .3s ease-in-out;
+    -o-transition: margin-left .3s ease-in-out;
+    transition: margin-left .3s ease-in-out;
+    margin-bottom: 0;
+    margin-left: 230px;
+    border: none;
+    min-height: 50px;
+    border-radius: 0;
+    max-height: 50px;
+}
+.sidebar-menu {
+  font-size: 15px;
+}
+
+.skin-blue .main-header .logo:hover {
+    background-color: #4d4263;
+}
+
+.skin-blue .main-header .navbar .sidebar-toggle:hover {
+    background-color: #4d4263;
+    padding-bottom: 13px;
+}
+
+
+
+h2 {
+  font-family: Open Sans, -apple-system, BlinkMacSystemFont, Sans;
+  color: #202131;
+  text-align: center;
+}
+
+h1 {
+  font-family: Open Sans, -apple-system, BlinkMacSystemFont, Sans;
+  color: #271F30;
+  text-align: center;
+  font-size: 40px;
+}
+
+
+hr {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    border: 0;
+    border-top: 1px dashed #cf9ffc;
+}
+
+.well {
+    min-height: 20px;
+    padding: 19px;
+    margin-bottom: 20px;
+    background-color: #fefefe;
+    border: 1px solid #e3e3e3;
+    border-radius: 0px;
+    box-shadow: 1px 1px 6px 0px rgba(0,0,0,0.05);
+}
+
+.nav {
+    padding-left: 0;
+    margin-bottom: 20px;
+    list-style: none;
+}
+
+.btn-info {
+    margin-left: 5%;
+    background-color: #4d4263;
+    border-color: #3d344f;
+}
+
+.btn-info.hover, .btn-info:active, .btn-info:hover, .btn-info:focus, .btn-info.focus,
+ .btn-info:active:focus, .btn-info:active:hover{
+    background-color: #3d344f;
+    border-color: #3d344f;
+}
+
+.help {
+    border-radius: 100px;
+    background-color: transparent;
+    border-color: transparent;
+    display: contents;
+    padding: 0px 0px 0px 0px;
+}
+.help:hover, .help:active, .help:focus {
+  background-color: transparent;
+  border-color: transparent;
+}
+
+.help-header {
+  font-family: Open Sans, -apple-system, BlinkMacSystemFont, Sans;
+  color: #202131;
+  text-align: center;
+  font-size: 25px;
+}
+
+.fa-info-circle {
+  font-size: 2.5em;
+}
+
+
+
+
+#othercomp{
+  font-size:12px;
+  font-style:italic;
+  overflow-y:scroll;
+  max-height: 200px;
+  background: ghostwhite;
+}
+
+.bootstrap-select .dropdown-menu {
+    max-width: 100%;
+}
+
+.fa-power-off{
+  color: #b8c7ce;
+}
+
+
+.sw-show.sw-dropdown-content {
+  margin-top: 10px;
+}
+
+.modal-content {
+  min-width: 130%;
+}
+.modal-body {
+  padding: 20px 30px 20px 20px
+}
+
+

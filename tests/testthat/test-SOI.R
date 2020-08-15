@@ -1,0 +1,49 @@
+context("SOI are generated successfully")
+
+test_that("A SOI param class can be created",{
+  s <- RHermes:::SOIParam()
+  expect_s4_class(s, "SOIParam")
+  d <- getSOIpar()
+  expect_s4_class(d, "SOIParam")
+})
+
+test_that("SOI generation works",{
+  library(BiocParallel)
+  require(CHNOSZ)
+  require(magrittr)
+  library(data.table)
+  require(tidyverse)
+
+  myHermes <- RHermesExp()
+  myHermes <- setDB(myHermes, db = "hmdb")
+  myHermes@metadata@cluster <- BiocParallel::SnowParam(1)
+  myHermes <- FileProc(myHermes, system.file("extdata",
+                                             "MS1TestData.mzML",
+                                             package = "RHermes"))
+  myHermes <- SOIfinder(myHermes, getSOIpar(), 1)
+  expect_equal(nrow(myHermes@data@SOI[[1]]@SoiList), 165)
+})
+
+test_that("Blank substraction is configured",{
+  skip_on_bioc()
+  skip_on_covr()
+  library(reticulate)
+  library(keras)
+  skip_if(!py_available(initialize = TRUE))
+  expect(py_module_available("keras"), failure_message = "No Keras")
+  expect(py_module_available("tensorflow"), failure_message = "No TensorFlow")
+  model <- load_model_tf(system.file("extdata", "model",
+                                     package = "RHermes"))
+  expect(is(model, "python.builtin.object"),
+         failure_message = "Model doesn't load")
+})
+
+
+context("SOI cleanup works")
+test_that("SOI are filtered correctly", {
+  myHermes <- readRDS(system.file("extdata", "afterSOI.rds" ,
+                                  package = "RHermes"))
+  myHermes <- SOIcleaner(myHermes, 1, 50000, TRUE)
+  succeed()
+})
+
