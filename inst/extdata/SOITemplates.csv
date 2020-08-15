@@ -1,0 +1,13 @@
+name;binwidth;minscan;shift;maxlen;minint
+simple;5;0,3;0;30;1000
+double;5;0,3;0;30;1000
+double;5;0,3;2,5;30;1000
+triple;5;0,3;0;30;1000
+triple;5;0,3;1,67;30;1000
+triple;5;0,3;3,33;30;1000
+simple-x;15;0,3;0;60;1000
+double-x;15;0,3;0;60;1000
+double-x;15;0,3;2,5;60;1000
+triple-x;15;0,3;0;60;1000
+triple-x;15;0,3;5;60;1000
+triple-x;15;0,3;10;60;1000
