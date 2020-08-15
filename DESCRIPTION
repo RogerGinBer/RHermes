@@ -1,0 +1,46 @@
+Package: RHermes
+Title: Bringing Light to Metabolomics MS Data
+Version: 0.99.0
+Authors@R: person("Roger", "Gine", email = "alrgibe9@gmail.com", role = c("aut", "cre"))
+Description: RHermes is a untargeted metabolomics package to identify compounds
+  from biological and environmental samples exploring the whole space of formulas
+  and adducts given by the user.
+Depends: R (>= 3.6)
+License: GPLv3
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.1
+VignetteBuilder: knitr
+biocViews: MassSpectrometry, Metabolomics, NeuralNetwork
+Imports:
+	enviPat,
+	tidyverse,
+	mzR,
+	xcms,
+	doSNOW,
+	ggplot2,
+	igraph,
+	keras,
+	tensorflow,
+	dplyr,
+	plotly,
+	methods,
+	data.table,
+	foreach,
+	magrittr,
+	parallel,
+	CHNOSZ,
+	shiny (>= 1.5.0),
+	shinyWidgets,
+	shinydashboard,
+	networkD3,
+	visNetwork,
+	KEGGREST,
+	slickR,
+	DT,
+	BiocParallel
+Suggests:
+    readxl,
+    knitr,
+    testthat,
+    covr
