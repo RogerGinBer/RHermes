@@ -1,3 +1,8 @@
+for(i in list.files(system.file("app", package = "RHermes"), pattern = "UI",
+                    full.names = TRUE)){
+  source(i)
+}
+
 library(shiny)
 library(shinyFiles)
 library(shinydashboard)
@@ -91,13 +96,13 @@ body <- dashboardBody(
     tabItem(tabName = "Plots",
             verticalLayout(
               )),
-    tabItem(tabName = "PLplot",  RHermes:::PLPlotUI("PLPlotUI")),
-    tabItem(tabName = "SOIplot",  RHermes:::SOIPlotUI("SOIPlotUI")),
-    tabItem(tabName = "MS2plot",  RHermes:::MS2PlotUI("MS2PlotUI")),
-    tabItem(tabName = "ident", RHermes:::Ident_UI("Identifications")),
-    tabItem(tabName = "extra", RHermes:::ExtraInfo_UI("ExtraInfo_UI")),
-    tabItem(tabName = "sett", RHermes:::Settings_UI("Settings_UI")),
-    tabItem(tabName = "IO", RHermes:::IO_UI("IO_UI"))
+    tabItem(tabName = "PLplot",  PLPlotUI("PLPlotUI")),
+    tabItem(tabName = "SOIplot",  SOIPlotUI("SOIPlotUI")),
+    tabItem(tabName = "MS2plot", MS2PlotUI("MS2PlotUI")),
+    tabItem(tabName = "ident", Ident_UI("Identifications")),
+    tabItem(tabName = "extra", ExtraInfo_UI("ExtraInfo_UI")),
+    tabItem(tabName = "sett", Settings_UI("Settings_UI")),
+    tabItem(tabName = "IO", IO_UI("IO_UI"))
   )
 )
 
@@ -134,38 +139,38 @@ server <- function(input, output, session){
                           )
   )})
 
-  PLresults <- RHermes:::PLServer("PL_UI", struct = struct)
+  PLresults <- PLServer("PL_UI", struct = struct)
   observeEvent(PLresults$trigger, {
     struct$dataset <- PLresults$dataset
   }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
-  SOIresults <- RHermes:::SOIServer("SOI_UI", struct = struct)
+  SOIresults <- SOIServer("SOI_UI", struct = struct)
   observeEvent(SOIresults$trigger, {
     struct$dataset <- SOIresults$dataset
   }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
-  ILresults <- RHermes:::ILServer("IL_UI", struct = struct)
+  ILresults <- ILServer("IL_UI", struct = struct)
   observeEvent(ILresults$trigger, {
     struct$dataset <- ILresults$dataset
   }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
-  MS2results <- RHermes:::MS2Server("MS2_UI", struct)
+  MS2results <- MS2Server("MS2_UI", struct)
   observeEvent(MS2results$trigger, {
     struct$dataset <- MS2results$dataset
   }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
-  IOresults <- RHermes:::IOServer("IO_UI", struct = struct)
+  IOresults <- IOServer("IO_UI", struct = struct)
   observeEvent(IOresults$trigger, {
     struct$dataset <- IOresults$dataset
   }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
-  RHermes:::PLPlotServer("PLPlotUI", struct = struct)
-  RHermes:::SOIPlotServer("SOIPlotUI", struct = struct)
-  RHermes:::MS2PlotServer("MS2PlotUI", struct = struct)
-  RHermes:::IdentServer("Identifications", struct = struct)
-  RHermes:::ExtraInfoServer("ExtraInfo_UI", struct = struct)
+  PLPlotServer("PLPlotUI", struct = struct)
+  SOIPlotServer("SOIPlotUI", struct = struct)
+  MS2PlotServer("MS2PlotUI", struct = struct)
+  IdentServer("Identifications", struct = struct)
+  ExtraInfoServer("ExtraInfo_UI", struct = struct)
 
-  setResults <- RHermes:::SettingsServer("Settings_UI", struct = struct)
+  setResults <- SettingsServer("Settings_UI", struct = struct)
   observeEvent(setResults$trigger, {
     struct$dataset <- setResults$dataset
   }, ignoreNULL = TRUE, ignoreInit = TRUE)
