@@ -56,16 +56,13 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="articles/Andrea2.html">2nd Andrea Brunner Data Processing Workflow</a>
+      <a href="articles/Andrea2.html">1st Andrea Brunner Workflow</a>
     </li>
     <li>
-      <a href="articles/Comparison%20XCMS%20RHermes.html">Comparison between XCMS and RHermes</a>
+      <a href="articles/AndreaPlasma.html">Andrea Brunner Plasma Workflow</a>
     </li>
     <li>
-      <a href="articles/Optimization%20of%20ScanSearch.html">Optimization of ScanSearch</a>
-    </li>
-    <li>
-      <a href="articles/User%20Guide.html">Using RHermes for LC/MS sample characterization</a>
+      <a href="articles/RHermes%20User%20Guide.html">RHermes User Guide</a>
     </li>
   </ul>
 </li>
@@ -89,7 +86,7 @@
 <div class="page-header"><h1 class="hasAnchor">
 <a href="#rhermes" class="anchor"></a>RHermes</h1></div>
 <!-- badges: start -->
-<!-- badges: end -->
+
 <p>The goal of RHermes is to analyse LC-MS and LC-MS/MS files to identify compounds in biological or environmental samples. The RHermes workflow can work with either Orbitrap or q-TOF instrument data, but the former will yield best results.</p>
 <div id="system-requirements" class="section level2">
 <h2 class="hasAnchor">
@@ -98,6 +95,7 @@
 <ul>
 <li>At least a 4 core processor</li>
 <li>16 GB of RAM or more</li>
+<li>An internet connection to perform KEGG queries</li>
 </ul>
 </div>
 <div id="installation" class="section level2">
@@ -109,20 +107,46 @@
 <p>And the development version from <a href="https://github.com/">GitHub</a> with:</p>
 <div class="sourceCode" id="cb2"><pre class="r"><span class="co"># install.packages("devtools")</span>
 <span class="kw pkg">devtools</span><span class="kw ns">::</span><span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span>(<span class="st">"RogerGinBer/Proves"</span>)</pre></div>
+<p>(REMOVE LATER)</p>
+<p>There’s yet another way to install RHermes. Clone the RHermes repo and enter the .RProj file. Build the package with Ctrl+Shift+B and manually install the dependencies with either install.packages() for CRAN or BiocManager::install() for Bioconductor packages.</p>
+<p>Once you’ve installed all dependencies, build the package again and it will be installed.</p>
+</div>
+<div id="setup" class="section level2">
+<h2 class="hasAnchor">
+<a href="#setup" class="anchor"></a>Setup</h2>
+<p>RHermes can perform almost all its routines out of the box, but the SOI Blank Substraction step requires a valid Keras and Tensorflow installation, which rely on Python.</p>
+<div id="option-1-default-installation" class="section level3">
+<h3 class="hasAnchor">
+<a href="#option-1-default-installation" class="anchor"></a>Option 1: Default installation</h3>
+<p>In theory both Keras and Tensorflow can be configured with:</p>
+<div class="sourceCode" id="cb3"><pre class="r"><span class="kw pkg">reticulate</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/reticulate/man/install_miniconda.html">install_miniconda</a></span>()
+<span class="kw pkg">keras</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/keras/man/install_keras.html">install_keras</a></span>()
+<span class="kw pkg">tensorflow</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/tensorflow/man/install_tensorflow.html">install_tensorflow</a></span>()</pre></div>
+<p>After which you can check the following:</p>
+<div class="sourceCode" id="cb4"><pre class="r"><span class="kw pkg">tensorflow</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/tensorflow/man/tf_config.html">tf_config</a></span>()
+<span class="no">model</span> <span class="kw">&lt;-</span> <span class="kw pkg">keras</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/keras/man/save_model_tf.html">load_model_tf</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span>(<span class="st">"extdata"</span>, <span class="st">"model"</span>, <span class="kw">package</span> <span class="kw">=</span> <span class="st">"RHermes"</span>))</pre></div>
+<p>If both commands don’t yield any error (the “Your CPU supports …” warning is fine) you are set to go. If it fails (which can happen in some devices, try Option 2).</p>
+</div>
+<div id="option-2-dealing-with-the-installation-yourself" class="section level3">
+<h3 class="hasAnchor">
+<a href="#option-2-dealing-with-the-installation-yourself" class="anchor"></a>Option 2: Dealing with the Installation yourself</h3>
+<p>First install Miniconda:</p>
+<div class="sourceCode" id="cb5"><pre class="r"><span class="kw pkg">reticulate</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/reticulate/man/install_miniconda.html">install_miniconda</a></span>()</pre></div>
+<p>Now find the Miniconda Prompt in your computer. Instead of relying on the default r-reticulate environment, type the following to create a new environment:</p>
+<p>conda create -n newenv python=3.6 tensorflow keras</p>
+<p>When finished, type in R:</p>
+<div class="sourceCode" id="cb6"><pre class="r"><span class="kw pkg">reticulate</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/reticulate/man/use_python.html">use_condaenv</a></span>(<span class="st">"newenv"</span>, <span class="kw">required</span> <span class="kw">=</span> <span class="fl">TRUE</span>)
+<span class="kw pkg">tensorflow</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/tensorflow/man/tf_config.html">tf_config</a></span>()
+<span class="no">model</span> <span class="kw">&lt;-</span> <span class="kw pkg">keras</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/keras/man/save_model_tf.html">load_model_tf</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span>(<span class="st">"extdata"</span>, <span class="st">"model"</span>, <span class="kw">package</span> <span class="kw">=</span> <span class="st">"RHermes"</span>))</pre></div>
+<p>Everything should run smoothly. If not, try manually installing Anaconda from their website and letting reticulate know where to find the environment.</p>
+<p>Also check out Keras and Tensorflow R tutorials.</p>
+</div>
 </div>
 <div id="example" class="section level2">
 <h2 class="hasAnchor">
 <a href="#example" class="anchor"></a>Example</h2>
 <p>This is a basic example which shows you how to solve a common problem:</p>
-<div class="sourceCode" id="cb3"><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">RHermes</span>)
-<span class="co">#&gt; Warning in fun(libname, pkgname): mzR has been built against a different Rcpp version (1.0.2)</span>
-<span class="co">#&gt; than is installed on your system (1.0.4.6). This might lead to errors</span>
-<span class="co">#&gt; when loading mzR. If you encounter such issues, please send a report,</span>
-<span class="co">#&gt; including the output of sessionInfo() to the Bioc support forum at </span>
-<span class="co">#&gt; https://support.bioconductor.org/. For details see also</span>
-<span class="co">#&gt; https://github.com/sneumann/mzR/wiki/mzR-Rcpp-compiler-linker-issue.</span>
-<span class="co">#&gt; Warning: replacing previous import 'gtools::permute' by 'igraph::permute' when</span>
-<span class="co">#&gt; loading 'RHermes'</span>
+<div class="sourceCode" id="cb7"><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">RHermes</span>)
 <span class="co">#&gt; Warning: replacing previous import 'igraph::groups' by 'plotly::groups' when</span>
 <span class="co">#&gt; loading 'RHermes'</span>
 <span class="co">#&gt; Warning: replacing previous import 'ggplot2::last_plot' by 'plotly::last_plot'</span>
@@ -148,7 +172,13 @@
 </ul>
 </div>
 
-  </div>
+  <div class="dev-status">
+<h2>Dev status</h2>
+<ul class="list-unstyled">
+<li><a href="https://codecov.io/gh/RogerGinBer/RHermes?branch=master"><img src="https://codecov.io/gh/RogerGinBer/RHermes/branch/master/graph/badge.svg?token=HL73R4GHFJ" alt="Codecov test coverage"></a></li>
+</ul>
+</div>
+</div>
 </div>
 
 
