@@ -119,36 +119,6 @@ inclusionList <- function(struct, params, id) {
     return(GL)
 }
 
-GLisorem <- function(GL, rtmargin, ppm) {
-    rowstoremove <- numeric()
-    for (i in seq_len(nrow(GL))) {
-        isomasses <- GL[i, ]$isodf[[1]][, 2]
-        st <- GL[i, ]$start
-        end <- GL[i, ]$end
-        idx <- which(between(GL$start, st - rtmargin, st + rtmargin) &
-            between(GL$end, end - rtmargin, end + rtmargin))  #Entries in window
-        entrymass <- GL[idx, ]$mass
-        ol <- lapply(isomasses, function(x) {
-            thr <- c(x - ppm * 1e-06 * x, x + ppm * 1e-06 * x)
-            if (any(entrymass > thr[1] & entrymass < thr[2])) {
-                return(which(entrymass > thr[1] & entrymass <
-                  thr[2]))
-            }
-            return()
-        })
-        ol <- do.call(rbind, ol)
-        if (length(ol) != 0) {
-            idx <- idx[ol]
-            rowstoremove <- c(rowstoremove, idx)
-        }
-    }
-    if (length(rowstoremove) != 0) {
-        GL <- GL[-unique(rowstoremove)]
-    }
-    return(GL)
-}
-
-
 GLprior <- function(GL, ad) {
 
     originalrows <- seq_len(nrow(GL))

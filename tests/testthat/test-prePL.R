@@ -1,11 +1,25 @@
 context("Formula and adduct table functionality")
-test_that("The abridged HMDB formula df is loaded correctly", {
+test_that("Database importer works", {
   hmdb <- RHermes:::database_importer(template = "hmdb")
   expect_equal(nrow(hmdb), 59)
-})
-test_that("The abridged NORMAN formula df is loaded correctly", {
+
   norman <- RHermes:::database_importer(template = "norman")
   expect_equal(nrow(norman), 106)
+
+  custom <- RHermes:::database_importer(
+    template = "custom", filename = system.file("extdata", "hmdb.csv",
+                                                package = "RHermes"))
+  expect_equal(nrow(custom), 59)
+
+  custom2 <- RHermes:::database_importer(
+    template = "custom", filename = system.file("extdata", "norman.xls",
+                                                package = "RHermes"))
+  expect_equal(nrow(custom2), 106)
+
+  skip_if_offline()
+  kegg <- RHermes:::database_importer(template = "kegg_p",
+                                      keggpath = "hsa00010")
+  expect_equal(nrow(kegg), 24)
 })
 
 test_that("Adduct tables generate successfully",{
@@ -40,11 +54,12 @@ test_that("Isotopes generate nicely", {
   minmass <- 80
   maxmass <- 1050
   noiselevel <- 1e3
-  FWHM <- 120000 #Resolving power at full width half maximum at mz = 200 (RP = m/dm)
+  FWHM <- 120000
   ion <- "+"
   par <- ExpParam(ppm = ppm, res = FWHM, nthr = noiselevel,
                   minmz = minmass, maxmz = maxmass, ion = ion)
-  hmdb <- RHermes:::database_importer(template = "hmdb", minmass = 50, maxmass = 100)
+  hmdb <- RHermes:::database_importer(template = "hmdb", minmass = 50,
+                                      maxmass = 100)
   ad <- RHermes:::adductTables(1,1)
   colnames(hmdb)[c(2,3)] <- c("m","fms")
   test <- RHermes:::IonicForm(hmdb[1:5,], ad[[2]][1:5, ])
@@ -52,4 +67,15 @@ test_that("Isotopes generate nicely", {
   expect_length(IC, 2)
   expect_length(IC[[1]], 25)
   expect_equal(nrow(IC[[2]]), 5)
+})
+
+context("Parallel backend selection")
+test_that("setRHermescluster works", {
+  cl <- RHermes:::setRHermesCluster()
+  expect_true(is(cl, "BiocParallelParam"))
+  if(Sys.info()["sysname"] == "Windows"){
+    expect_true(is(cl, "SnowParam"))
+  } else {
+    expect_true(is(cl, "MulticoreParam"))
+  }
 })

@@ -19,8 +19,11 @@ database_importer <- function(template = "hmdb", filename = "./app/www/norman.xl
            'MolecularFormula' and 'Name' columns at least")
         }
     } else if (template == "kegg_p"){
-        comp <- lapply(split(seq_along(keggpath),
-                             seq_len(ceiling(length(keggpath)/10))), function(x){
+        suppressWarnings(
+            splitpath <- split(seq_along(keggpath),
+                               seq_len(ceiling(length(keggpath)/10)))
+        )
+        comp <- lapply(splitpath, function(x){
                                  pathdata <- keggGet(keggpath[x])
                                  lapply(pathdata, function(y){
                                      names(y$COMPOUND)

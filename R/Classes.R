@@ -148,28 +148,3 @@ RHermesData <- setClass("RHermesData", slots = list(PL = "list",
 RHermesExp <- setClass("RHermesExp", slots = list(metadata = "RHermesMeta",
     data = "RHermesData"))
 
-
-
-
-#'@export
-extractCompounds <- function(ILobject, entry, compoundDB) {
-    an <- ILobject@annotation[[entry]]
-    # apply(an, 1, function(anot){
-    f <- lapply(an$metadata, function(meta) {
-        fms <- mapply(function(f, a, m) {
-            f <- strsplit(x = as.character(f), ", ")
-            result <- lapply(f, function(form) {
-                # compoundDB[compoundDB$MolecularFormula == form, c(1:3,9)]
-                compoundDB[compoundDB$MOLECULAR_FORMULA == form,
-                  c(1, 2, 3, 9)]
-            })
-            result <- do.call(rbind, result)
-            result$adduct <- a
-            result$mass <- m
-            return(list(result))
-        }, meta$formula, meta$adduct, meta$mass)
-        return(do.call(rbind, fms))
-    })
-    return(f)
-    # })
-}
