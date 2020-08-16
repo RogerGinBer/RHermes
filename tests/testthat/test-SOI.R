@@ -24,9 +24,13 @@ test_that("SOI generation works",{
   expect_equal(nrow(myHermes@data@SOI[[1]]@SoiList), 165)
 })
 
-test_that("Blank substraction is configured",{
+test_that("Blank substraction is configured and works",{
   skip_on_bioc()
-  skip_on_covr()
+  library(BiocParallel)
+  require(CHNOSZ)
+  require(magrittr)
+  library(data.table)
+  require(tidyverse)
   library(reticulate)
   library(keras)
   skip_if(!py_available(initialize = TRUE))
@@ -36,6 +40,12 @@ test_that("Blank substraction is configured",{
                                      package = "RHermes"))
   expect(is(model, "python.builtin.object"),
          failure_message = "Model doesn't load")
+
+  myHermes <- readRDS(system.file("extdata", "afterSOI.rds" ,
+                                  package = "RHermes"))
+  myHermes@data@PL <- c(myHermes@data@PL, myHermes@data@PL)
+  myHermes@data@PL[[2]]@peaklist$rtiv <- myHermes@data@PL[[2]]@peaklist$rtiv*1e2
+  myHermes <- SOIfinder(myHermes, getSOIpar(), 2, 1)
 })
 
 test_that("SOI plot works", {
