@@ -434,7 +434,7 @@ setMethod("PlotlySoiPlot", c("RHermesExp", "numeric", "character",
     filen <- struct@data@SOI[[id]]@filename
     plid <- which(vapply(struct@data@PL, function(x) {
         return(x@filename == filen)
-    }, logical(1)))
+    }, logical(1)))[1]
 
 
 

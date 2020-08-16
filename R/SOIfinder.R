@@ -165,6 +165,7 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename,
     if (useblank) {
         Groups <- RHermes:::blankSubstraction(Groups, blankPL,
                                               BiocParallelParam)
+        if(nrow(Groups) == 0){return(RHermesSOI())}
     }
     ## Rest of characterization ## ---------------------------------------
     message("")
@@ -376,15 +377,13 @@ blankSubstraction <- function(Groups, blankPL, BiocParallelParam){
        reticulate::py_module_available("tensorflow")){
         model <- load_model_tf(system.file("extdata", "model",
                                            package = "RHermes"))  #ANN
-        Npoints <- 200
         setkeyv(blankPL, "formv")
+
         RES <- bplapply(seq_len(nrow(Groups)), prepareNetInput, Groups, blankPL,
                  BPPARAM = BiocParallelParam)
 
         Groups$MLdata <- RES
-        NAgroups <- do.call(rbind, lapply(RES,
-                                            function(x){is.na(x[1])
-                                          }))
+        NAgroups <- do.call(rbind, lapply(RES, function(x){is.na(x[1])}))
 
         if (any(NAgroups)) {
             Groups <- Groups[-which(NAgroups), ]
@@ -394,15 +393,18 @@ blankSubstraction <- function(Groups, blankPL, BiocParallelParam){
                                                function(x) {
                                                    return(c(x[1, ], x[2, ]))
                                                }))
-        # organizeddata <- keras::array_reshape(organizeddata,
-        # c(nrow(organizeddata), 2, 200, 1), order = 'C') #CNN input
-        organizeddata <- keras::array_reshape(organizeddata,
-                                              c(nrow(organizeddata), 400),
-                                              order = "C")  #ANN input
-        q <- model %>% keras::predict_classes(organizeddata)
+        if(nrow(organizeddata) != 0){
+            # organizeddata <- keras::array_reshape(organizeddata,
+            # c(nrow(organizeddata), 2, 200, 1), order = 'C') #CNN input
+            organizeddata <- keras::array_reshape(organizeddata,
+                                                  c(nrow(organizeddata), 400),
+                                                  order = "C")  #ANN input
+            q <- model %>% keras::predict_classes(organizeddata)
 
-        # Groups <- Groups[-which(q==1), ] #CNN output
-        Groups <- Groups[-which(q == 0), ]  #ANN output
+            # Groups <- Groups[-which(q==1), ] #CNN output
+            Groups <- Groups[-which(q == 0), ]  #ANN output
+            Groups <- Groups[, -c("MLdata")]
+        }
     } else {
         warning(paste0("A Keras installation was not found and blank",
                         "substraction was not performed"))
@@ -416,8 +418,9 @@ prepareNetInput <- function(i, Groups, blankPL){
     f <- cur$formula
     deltat <- 10
     peaks <- cur$peaks[[1]]
+    Npoints <- 200
     tryCatch({
-        if (nrow(peaks) <= 2 | unique(peaks$rt) <= 2) {
+        if (nrow(peaks) <= 2 | length(unique(peaks$rt)) <= 2) {
             return(NA)
         }
         smooth_pks <- data.frame(approx(x = peaks,
