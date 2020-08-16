@@ -16,9 +16,9 @@ test_that("Compounds are identified", {
     MS2files <- list.files("D:/ABrunner Plasma/MS2data",
                            pattern = ".*pos.*.mzML", full.names = TRUE)
     myHermes <- MS2Proc(myHermes, 1, MS2files,
-                        referenceDB = "D:/sp_MS2ID_RogerGB.RData")
+                        referenceDB = "D:/sp_MassBankEU_20200316_203615.RData")
 
-    expect_equal(nrow(myHermes@data@MS2Exp[[1]]@Ident[[1]]),  39)
+    expect_equal(nrow(myHermes@data@MS2Exp[[1]]@Ident[[1]]),  16)
 })
 
 test_that("Superspectra can be exported", {

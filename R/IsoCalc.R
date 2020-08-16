@@ -1,11 +1,3 @@
-#'@export
-Kcalc <- function(m1, m2, RP) {
-    # score <- as.numeric((RP/2)*(abs(m2-m1)/m1))
-    return(RP * ((m2 - m1)/m1))
-    # return(score)
-}
-
-#'@export
 #'@import doSNOW
 #'@import foreach
 #'@import parallel

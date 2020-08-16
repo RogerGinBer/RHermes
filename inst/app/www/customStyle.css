@@ -1,10 +1,13 @@
 @import url('//fonts.googleapis.com/css?family=Open Sans');
+@import url('//fonts.googleapis.com/css?family=Noto Sans');
+
 a {
   color: #4d4263;
   text-decoration: none;
 }
+
 body {
-	font-family:  Open Sans, -apple-system, BlinkMacSystemFont, Sans;
+	font-family: Noto Sans, Open Sans, -apple-system, BlinkMacSystemFont, Sans;
  	color: #202131;
   font-size: 16px;
 }

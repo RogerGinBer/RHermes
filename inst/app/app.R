@@ -1,6 +1,6 @@
 for(i in list.files(system.file("app", package = "RHermes"), pattern = "UI",
                     full.names = TRUE)){
-  source(i)
+  source(i, local = TRUE)
 }
 
 library(shiny)

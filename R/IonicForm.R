@@ -1,4 +1,3 @@
-#' @export
 IonicForm <- function(F_DB, Ad_DB, BiocParallelParam = SerialParam()) {
     suppressWarnings({
         RES <- bplapply(seq_len(nrow(F_DB)), RHermes:::calculate_ionic_forms,

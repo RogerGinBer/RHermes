@@ -190,7 +190,7 @@ setMethod("setDB", signature = c("RHermesExp", "ANY", "ANY",
         stop("Please input a valid DB name"))
     struct@metadata@ExpParam@DB <- dbdata
     #Set corresponding adduct table
-    ad <- adductTables(adcharge, admult)
+    ad <- RHermes:::adductTables(adcharge, admult)
     ion <- struct@metadata@ExpParam@ion
     if (ion == "+") {
         struct@metadata@ExpParam@adlist <- ad[[2]]
@@ -417,8 +417,7 @@ setMethod("exportIL", c("RHermesExp", "numeric", "ANY", "ANY",
         stop("Please enter a valid IL number")
     }
     IL <- struct@data@MS2Exp[[id]]@IL@IL
-    plan <- injectionPlanner(IL, 10, maxOver, byMaxInt = TRUE,
-        stats = FALSE, returnAll = TRUE)
+    plan <- injectionPlanner(IL, 10, maxOver, byMaxInt = TRUE, returnAll = TRUE)
     if (sepFiles) {
         for (x in seq_along(plan)) {
             p <- plan[[x]]

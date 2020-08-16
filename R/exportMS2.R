@@ -1,78 +1,79 @@
-exportSIRIUS <- function(struct, ID, folder) {
-    adlist <- struct@metadata@ExpParam@adlist
-
-    MS2Exp <- struct@data@MS2Exp[[ID]]
-    purSpec <- MS2Exp@Ident[[2]]
-    MSMS <- purSpec[[2]]
-    withMSMSdata <- MS2Exp@Ident[[4]]
-
-    #Filter empty spectra
-    withSS <- vapply(MSMS, function(x) {
-        return(length(x) != 0)
-    }, logical(1))
-    MSMS <- MSMS[withSS]
-
-    withMSMSdata <- withMSMSdata[withSS]
-    IL <- MS2Exp@IL@IL[withMSMSdata, ]
-
-    adcodes <- data.frame(expr = c("IsoProp", "DMSO", "ACN"),
-        equiv = c("CH4O", "C2H6SO", "C2H3N"))
-
-
-    #Generate a file for each IL entry with superspectra
-    for (i in seq_along(MSMS)) {
-        curMSMS <- MSMS[i]
-
-        #Turn anotations into a F-Ad. dataframe
-        anot <- IL$entrynames[i]
-        anot <- strsplit(anot, "#")
-        anot <- unlist(lapply(anot, function(x) {
-            strsplit(x, "$", fixed = TRUE)
-        }))
-        anot <- matrix(anot, byrow = TRUE, ncol = 2)
-        colnames(anot) <- c("f", "ad")
-        anot <- as.data.frame(anot)
-        anot <- distinct(anot)
-        anot$ad <- as.character(anot$ad)
-
-        #Sanitize input adducts
-        anot$ad <- lapply(anot$ad, function(ad) {
-            badads <- which(vapply(adcodes$expr, function(x) {
-                grepl(x, ad)
-            }, logical(1)))
-            if (length(badads != 0)) {
-                for (i in badads) {
-                  ad <- gsub(adcodes$expr[i], adcodes$equiv[i],
-                    ad)
-                }
-            } else {
-                return(ad)
-            }
-        })
-
-        #Write into the .ms file
-        sink(file = paste0("IL_", ILidx, ".ms"))
-        for (j in seq_along(curMSMS)) {
-            comp <- paste("IL", idxIL[i], form, a, sep = "_")
-            cat(">compound", comp, "\n")
-            cat(">formula", form, "\n")
-            cat(">ionization", aA, "\n")
-            cat(">ms2", "\n")
-            for (j in seq_len(nrow(msms))) {
-                cat(as.numeric(msms[j, ]), "\n")
-            }
-            cat("\n")
-        }
-        sink()
-
-    }
-}
+# exportSIRIUS <- function(struct, ID, folder) {
+#     adlist <- struct@metadata@ExpParam@adlist
+#
+#     MS2Exp <- struct@data@MS2Exp[[ID]]
+#     purSpec <- MS2Exp@Ident[[2]]
+#     MSMS <- purSpec[[2]]
+#     withMSMSdata <- MS2Exp@Ident[[4]]
+#
+#     #Filter empty spectra
+#     withSS <- vapply(MSMS, function(x) {
+#         return(length(x) != 0)
+#     }, logical(1))
+#     MSMS <- MSMS[withSS]
+#
+#     withMSMSdata <- withMSMSdata[withSS]
+#     IL <- MS2Exp@IL@IL[withMSMSdata, ]
+#
+#     adcodes <- data.frame(expr = c("IsoProp", "DMSO", "ACN"),
+#         equiv = c("CH4O", "C2H6SO", "C2H3N"))
+#
+#
+#     #Generate a file for each IL entry with superspectra
+#     for (i in seq_along(MSMS)) {
+#         curMSMS <- MSMS[i]
+#
+#         #Turn anotations into a F-Ad. dataframe
+#         anot <- IL$entrynames[i]
+#         anot <- strsplit(anot, "#")
+#         anot <- unlist(lapply(anot, function(x) {
+#             strsplit(x, "$", fixed = TRUE)
+#         }))
+#         anot <- matrix(anot, byrow = TRUE, ncol = 2)
+#         colnames(anot) <- c("f", "ad")
+#         anot <- as.data.frame(anot)
+#         anot <- distinct(anot)
+#         anot$ad <- as.character(anot$ad)
+#
+#         #Sanitize input adducts
+#         anot$ad <- lapply(anot$ad, function(ad) {
+#             badads <- which(vapply(adcodes$expr, function(x) {
+#                 grepl(x, ad)
+#             }, logical(1)))
+#             if (length(badads != 0)) {
+#                 for (i in badads) {
+#                   ad <- gsub(adcodes$expr[i], adcodes$equiv[i],
+#                     ad)
+#                 }
+#             } else {
+#                 return(ad)
+#             }
+#         })
+#
+#         #Write into the .ms file
+#         sink(file = paste0("IL_", ILidx, ".ms"))
+#         for (j in seq_along(curMSMS)) {
+#             comp <- paste("IL", idxIL[i], form, a, sep = "_")
+#             cat(">compound", comp, "\n")
+#             cat(">formula", form, "\n")
+#             cat(">ionization", aA, "\n")
+#             cat(">ms2", "\n")
+#             for (j in seq_len(nrow(msms))) {
+#                 cat(as.numeric(msms[j, ]), "\n")
+#             }
+#             cat("\n")
+#         }
+#         sink()
+#
+#     }
+# }
 
 #' @title exportMSP
 #' @param struct RHermesExp object
 #' @param ID Index of the MS2Exp that you want to export
 #' @param fname Name of the output file, without the .msp termination
 #' @description  Exports the superspectra of a given MS2Exp into an .msp format file
+#' @return An .msp file
 #' @examples
 #'   if(FALSE){
 #'        exportMSP(myHermes, 1, "output")
@@ -121,6 +122,7 @@ exportMSP <- function(struct, ID, fname) {
 #' @param ID Index of the MS2Exp that you want to export
 #' @param fname Name of the output file, without the .mgf termination
 #' @description  Exports the superspectra of a given MS2Exp into an .mgf format file
+#' @return An .msf file
 #' @examples
 #'   if(FALSE){
 #'        exportMGF(myHermes, 1, "output")

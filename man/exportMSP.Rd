@@ -13,6 +13,9 @@ exportMSP(struct, ID, fname)
 
 \item{fname}{Name of the output file, without the .msp termination}
 }
+\value{
+An .msp file
+}
 \description{
 Exports the superspectra of a given MS2Exp into an .msp format file
 }

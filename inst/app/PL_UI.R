@@ -125,7 +125,7 @@ PLServer <- function(id, struct){
             input$admult
             input$ion
         },{
-            adtable <- adductTables(as.numeric(input$adcharge),
+            adtable <- RHermes:::adductTables(as.numeric(input$adcharge),
                                     as.numeric(input$admult))
             if(input$ion == "-"){
                 adductlist <- adtable[[1]]$adduct

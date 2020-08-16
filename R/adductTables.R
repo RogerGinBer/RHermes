@@ -1,6 +1,5 @@
-#'@export
 adductTables <- function(ch_max = 1, mult_max = 1) {
-    data(adducts, package = "enviPat")
+    data(adducts, package = "enviPat", envir = environment())
     adducts$Mass[49] <- adducts$Mass[49] * (-1)  #Fixed wrong one
     negative.envi <- adducts[which(adducts$Ion_mode == "negative"),
         ]

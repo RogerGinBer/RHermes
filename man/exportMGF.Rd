@@ -13,6 +13,9 @@ exportMGF(struct, ID, fname)
 
 \item{fname}{Name of the output file, without the .mgf termination}
 }
+\value{
+An .msf file
+}
 \description{
 Exports the superspectra of a given MS2Exp into an .mgf format file
 }
