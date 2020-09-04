@@ -40,7 +40,8 @@ test_that("Mirror plot works", {
 test_that("Raw MS2 plot works", {
     myHermes <- readRDS(system.file("extdata", "withIdent.rds",
                                     package = "RHermes"))
-    p <- RHermes::PlotlyRawMS2Plot(myHermes, ms2id = 1, entryid = 4,
+
+    p <- RHermes::PlotlyRawMS2Plot(myHermes, ms2id = 1, entryid = 22,
                                    bymz = TRUE)
     p2 <- RHermes::PlotlyRawMS2Plot(myHermes, 1, 4, bymz = FALSE)
     expect_true(is(p[[1]], "plotly") & is(p[[2]], "visNetwork"))

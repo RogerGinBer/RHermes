@@ -324,11 +324,8 @@ setGeneric("PlotlyMirrorPlot", function(struct, ms2id, entryid) {
 setMethod("PlotlyMirrorPlot", c("RHermesExp", "numeric", "numeric"),
     function(struct, ms2id, entryid) {
         # function(query, pattern, title = 'Mirror plot', subtitle = '', baseline = 1000, maxint = 0, molecmass = 200){
-        if (is.null(entryid)) {
-            return(ggplotly(ggplot()))
-        }
-        entry <- struct@data@MS2Exp[[ms2id]]@Ident[[1]][entryid,
-            ]
+        if (is.null(entryid)) {return(ggplotly(ggplot()))}
+        entry <- struct@data@MS2Exp[[ms2id]]@Ident[[1]][entryid, ]
         query <- entry$qMSMS[[1]]
         pattern <- entry$patMSMS[[1]]
         molecmass <- entry$mass
@@ -389,13 +386,9 @@ setMethod("PlotlyPLPlot", c("RHermesExp", "numeric", "character",
     fs <- FA_to_ion[f == formula, ]
     ions <- fs$ion
     datafile <- filter(datafile, formv %in% ions)
-    if (nrow(datafile) == 0) {
-        return()
-    }
+    if (nrow(datafile) == 0) {return()}
     datafile <- filter(datafile, between(rt, rtrange[1], rtrange[2]))
-    if (nrow(datafile) == 0) {
-        return()
-    }
+    if (nrow(datafile) == 0) {return()}
 
     # toKeep <- vapply(unique(datafile$formv), function(f){
     #   ifelse(length(which(datafile$formv == f)) > 10, T, F)
@@ -409,10 +402,7 @@ setMethod("PlotlyPLPlot", c("RHermesExp", "numeric", "character",
         datafile$ad[datafile$formv == f] <- ad
     }
     datafile <- filter(datafile, ad %in% ads)
-    if (nrow(datafile) == 0) {
-        return()
-    }
-
+    if (nrow(datafile) == 0) {return()}
 
     return(ggplotly(ggplot() + geom_point(data = datafile, mapping = aes(x = rt,
         y = rtiv, color = isov), size = 0.5, alpha = 0.6) + facet_grid(rows = vars(ad)) +
@@ -457,9 +447,7 @@ setMethod("PlotlySoiPlot", c("RHermesExp", "numeric", "character",
     datafile <- filter(datafile, between(rt, rtrange[1], rtrange[2]))
     soiinfo <- filter(plist, form %in% ions)
     soiinfo <- filter(soiinfo, between(rt, rtrange[1], rtrange[2]))
-    if (nrow(soiinfo) == 0) {
-        return()
-    }
+    if (nrow(soiinfo) == 0) {return()}
     names(soiinfo)[names(soiinfo) == "form"] <- "formv"
     names(soiinfo)[names(soiinfo) == "rtiv"] <- "Intensity"
     names(datafile)[names(datafile) == "rtiv"] <- "Intensity"
@@ -470,9 +458,7 @@ setMethod("PlotlySoiPlot", c("RHermesExp", "numeric", "character",
     # }, logical(1))
     # datafile <- datafile[datafile$formv %in% unique(datafile$formv)[toKeep], ]
 
-    if (nrow(soiinfo) == 0) {
-        return()
-    }
+    if (nrow(soiinfo) == 0) {return()}
 
     datafile$ad <- ""
     for (f in unique(datafile$formv)) {
@@ -489,9 +475,7 @@ setMethod("PlotlySoiPlot", c("RHermesExp", "numeric", "character",
     datafile <- filter(datafile, ad %in% ads)
     soiinfo <- filter(soiinfo, ad %in% ads)
 
-    if (nrow(soiinfo) == 0) {
-        return()
-    }
+    if (nrow(soiinfo) == 0) {return()}
     soiinfo$Class <- "Sample-SOI"
     if(!is.na(blankid)){
         return(ggplotly(ggplot() +
@@ -530,9 +514,7 @@ setGeneric("PlotlyRawMS2Plot", function(struct, ms2id, entryid,
 })
 setMethod("PlotlyRawMS2Plot", c("RHermesExp", "numeric", "numeric",
     "logical"), function(struct, ms2id, entryid, bymz = TRUE) {
-    if (is.na(entryid)) {
-        return(list(ggplotly(ggplot()), NA))
-    }
+    if (is.na(entryid)) { return(list(ggplotly(ggplot()), NA))}
     ms2data <- struct@data@MS2Exp[[ms2id]]@MS2Data
     data <- ms2data[[entryid]][[2]]
 
@@ -540,9 +522,7 @@ setMethod("PlotlyRawMS2Plot", c("RHermesExp", "numeric", "numeric",
         maxi <- max(data[data$rt == t, "int"])
         return(data[data$rt == t & data$int > 0.005 * maxi, ])
     }))
-    if (nrow(data) == 0) {
-        return(list(ggplotly(ggplot()), NA))
-    }
+    if (nrow(data) == 0) {return(list(ggplotly(ggplot()), NA))}
 
     ##Remove known contaminant signals
     contaminant <- 173.5
@@ -551,9 +531,7 @@ setMethod("PlotlyRawMS2Plot", c("RHermesExp", "numeric", "numeric",
         data <- data[!between(data$mz, contaminant - delta, contaminant +
             delta), ]
     }
-    if (nrow(data) == 0) {
-        return(list(ggplotly(ggplot()), NA))
-    }
+    if (nrow(data) == 0) {return(list(ggplotly(ggplot()), NA))}
     colnames(data)[colnames(data) == "int"] <- "rtiv"  #To match with cosineSim definition
     rts <- unique(data$rt)
     soi <- list()
@@ -681,8 +659,7 @@ setMethod("PlotlyRawMS2Plot", c("RHermesExp", "numeric", "numeric",
                 }
             }
         }
-        rows_to_add <- rows_to_add[rows_to_add$maxo != -Inf,
-            ]
+        rows_to_add <- rows_to_add[rows_to_add$maxo != -Inf, ]
         pks <- rbind(pks, rows_to_add)
 
         res <- RHermes:::reassign_and_check(pks, soi)
@@ -723,16 +700,10 @@ setMethod("PlotlyRawMS2Plot", c("RHermesExp", "numeric", "numeric",
         pks <- res[[1]]
         soi <- res[[2]]
 
-        if (nrow(pks) == 0) {
-            break
-        }
-        if (nrow(rows_to_add) == 0) {
-            break
-        }
+        if (nrow(pks) == 0) {break}
+        if (nrow(rows_to_add) == 0) {break}
     })
-    if (nrow(pks) == 0) {
-        return(list(ggplotly(ggplot()), NA))
-    }
+    if (nrow(pks) == 0) {return(list(ggplotly(ggplot()), NA))}
 
 
     ##Now calculate all similarities

@@ -26,6 +26,7 @@ library(plotly)
 library(visNetwork)
 library(KEGGREST)
 library(slickR)
+library(BiocParallel)
 
 header <- dashboardHeader(
   title = p("RHermes", style = "font-family: Open Sans, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial; font-size: 22px"),

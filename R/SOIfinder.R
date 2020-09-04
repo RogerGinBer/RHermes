@@ -133,7 +133,6 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename,
     GR <- apply(params, 1, function(x) {
         RHermes:::densityProc(x, DataPL, h, BiocParallelParam)
     })
-
     ## Grouping different filtered results ## -----------------------------
     message("Now Grouping:")
     Groups <- GR[[1]]
@@ -231,10 +230,9 @@ densityProc <- function(x, DataPL, h, BiocParallelParam){
     #would be included)
     cutoff[cutoff < 1] <- median(cutoff[cutoff > 1])
     message("Running Density Interpreter")
-
     nwork <- BiocParallelParam$workers
     uf <- unique(DataPL$formv)
-    suppressWarnings({uf <- split(uf, nwork)})
+    suppressWarnings({uf <- split(uf, seq_len(nwork))})
     id <- cumsum(vapply(c(0, uf), length, numeric(1))) - 1
 
     RES <- bplapply(seq_along(uf), RHermes:::parallelInterpreter, uf, cutoff,

@@ -48,9 +48,9 @@ test_that("Blank substraction is configured and works",{
     rnorm(100)^2
   myHermes <- SOIfinder(myHermes, getSOIpar(), 1, 2)
 
-  p <- RHermes::PlotlySoiPlot(struct = myHermes, id = 1, formula = "C2H7NO3S",
+  p <- RHermes::PlotlySoiPlot(struct = myHermes, id = 2, formula = "C2H7NO3S",
                               blankid = 2, rtrange = c(0,1500),
-                              dynamicaxis = TRUE, ads = "M+Na")
+                              dynamicaxis = TRUE, ads = "M+H")
   expect_true(is(p, "plotly"))
 })
 

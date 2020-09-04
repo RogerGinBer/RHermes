@@ -9,8 +9,7 @@
 #' @return List of formulas and a list of purified MSMS (list of dataframes,
 #' one for each superspectra).
 #' @import ggplot2
-CliqueMSMS <- function(MS2Exp, idx, plot = FALSE, contaminant = 173.5,
-    delta = 0.1) {
+CliqueMSMS <- function(MS2Exp, idx, contaminant = 173.5, delta = 0.1) {
     IL <- MS2Exp@IL
     MS2list <- MS2Exp@MS2Data[idx]
     ## Parsing formulas from annotation for every IL entry
@@ -19,30 +18,26 @@ CliqueMSMS <- function(MS2Exp, idx, plot = FALSE, contaminant = 173.5,
             lapply(x, function(y) {
                 res <- strsplit(y, split = "$", fixed = TRUE)[[1]][[1]]
                 return(sub(pattern = " ", replacement = "", x = res))
-            }) %>% unlist()
+            }) %>% unlist() %>% unique()
         })
 
     #Main loop
-    RES <- lapply(seq_along(idx), function(i) {
-        header <- MS2list[[i]][[1]]
-        data <- MS2list[[i]][[2]]
+    RES <- lapply(seq_along(idx), function(curentry) {
+        header <- MS2list[[curentry]][[1]]
+        data <- MS2list[[curentry]][[2]]
         ## Remove weak signals (<0.5% of the most intense point)
         data <- do.call(rbind, lapply(unique(data$rt), function(t) {
             maxi <- max(data[data$rt == t, "int"])
             return(data[data$rt == t & data$int > 0.005 * maxi,
                 ])
         }))
-        if (nrow(data) == 0) {
-            return(list())
-        }
+        if (nrow(data) == 0) {return()}
         ##Remove known contaminant signals
         for (x in contaminant) {
             data <- data[!between(data$mz, contaminant - delta,
                 contaminant + delta), ]
         }
-        if (nrow(data) == 0) {
-            return(list())
-        }
+        if (nrow(data) == 0) {return()}
         colnames(data)[colnames(data) == "int"] <- "rtiv"  #To match with cosineSim definition
 
         ##Find mass traces like CentWave
@@ -60,9 +55,9 @@ CliqueMSMS <- function(MS2Exp, idx, plot = FALSE, contaminant = 173.5,
                 for (j in unique(curdata$mz)) {
                   dist <- abs(avgmz - j)/j * 1e+06
                   if (any(dist < mu)) {
-                    idx <- which.min(dist)
-                    soi[[idx]] <- rbind(soi[[idx]], curdata[curdata$mz == j, ])
-                    avgmz[[idx]] <- mean(soi[[idx]]$mz)
+                    id <- which.min(dist)
+                    soi[[id]] <- rbind(soi[[id]], curdata[curdata$mz == j, ])
+                    avgmz[[id]] <- mean(soi[[id]]$mz)
                   } else {
                     soi <- c(soi, list(curdata[curdata$mz == j, ]))
                     avgmz <- c(avgmz, j)
@@ -70,22 +65,19 @@ CliqueMSMS <- function(MS2Exp, idx, plot = FALSE, contaminant = 173.5,
                 }
             }
         }
-        good <- vapply(soi, function(x) {
-            nrow(x) > pmin
-        }, logical(1))
+        good <- vapply(soi, function(x) {nrow(x) > pmin}, logical(1))
         soi <- soi[good]
         avgmz <- avgmz[good]
-        if (length(soi) == 0) {
-            return(list())
-        }
-        if (length(soi) == 1) {
-            return(list(data.frame(mz = avgmz[[1]], int = max(soi[[1]]$rtiv))))
-        }
+        if (length(soi) == 0) return()
+        # if (length(soi) == 1) {
+        #     return(list(data.frame(mz = avgmz[[1]], int = max(soi[[1]]$rtiv))))
+        # }
         ##Tidying the regions
         for (i in seq_along(avgmz)) {
             soi[[i]]$mz <- round(avgmz[i], 3)
             soi[[i]] <- soi[[i]][order(soi[[i]]$rt), ]
         }
+
         ##Centwave peak-picking
         soipks <- lapply(soi, function(x) {
             suppressWarnings(df <- xcms::peaksWithCentWave(int = x$rtiv,
@@ -100,24 +92,23 @@ CliqueMSMS <- function(MS2Exp, idx, plot = FALSE, contaminant = 173.5,
                 df$categ <- "Peak"
                 ##When a peak is found, consider the rest of fragment RT intervals as putative regions
                 dfinterv <- unlist(df[, c("rtmin", "rtmax")])
-                times <- c(min(x$rt), dfinterv[seq(1, length(dfinterv),
-                  2)], dfinterv[seq(2, length(dfinterv), 2)],
-                  max(x$rt))
+                times <- c(min(x$rt), dfinterv[seq(1, length(dfinterv),2)],
+                            dfinterv[seq(2, length(dfinterv), 2)],
+                            max(x$rt))
                 iter <- seq(1, length(times), 2)
                 maxo <- mapply(function(t1, t2) {
-                  max(x$rtiv[between(x$rt, t1, t2)], na.rm = TRUE)
+                    max(x$rtiv[between(x$rt, t1, t2)], na.rm = TRUE)
                 }, times[iter], times[iter + 1]) %>% unlist()
                 df <- rbind(df, data.frame(rt = 0, rtmin = times[iter],
-                  rtmax = times[iter + 1], into = 0, intb = 0,
-                  maxo = maxo, sn = 0, categ = "Putative"))
+                    rtmax = times[iter + 1], into = 0, intb = 0,
+                    maxo = maxo, sn = 0, categ = "Putative"))
             }
             df$mz <- rep(x$mz[1], nrow(df))
             return(df)
         })
         pks <- do.call(rbind, soipks)
-        if (nrow(pks) == 0) {
-            return(list())
-        }
+        if (nrow(pks) == 0) return()
+
         ##Matching data to the peaks found
         soi <- do.call(rbind, soi)
         soi$peak <- 0
@@ -129,18 +120,14 @@ CliqueMSMS <- function(MS2Exp, idx, plot = FALSE, contaminant = 173.5,
         results <- centwavePropag(pks, soi)
         pks <- results[[1]]
         soi <- results[[2]]
-        if (nrow(pks) == 0) {
-            return(list())
-        }
+        if (nrow(pks) == 0) return()
+
         ##Now calculate all similarities
         cos <- lapply(seq_len(nrow(pks)), function(x) {
             lapply(seq_len(nrow(pks)), function(y) {
                 score <- pearsonSim(soi[soi$peak == x, ], soi[soi$peak == y, ])
-                if (is.na(score)) {
-                  score <- 0
-                }
+                if (is.na(score)) {score <- 0}
                 ifelse(score > 0.3, score, 0)
-
             })
         }) %>% unlist(.)
         cos <- matrix(cos, nrow = nrow(pks))
@@ -152,13 +139,31 @@ CliqueMSMS <- function(MS2Exp, idx, plot = FALSE, contaminant = 173.5,
         wc <- igraph::cluster_fast_greedy(net)
 
         members <- igraph::membership(wc)
-        ss <- lapply(unique(members), function(id) {
+        n_mem <- length(unique(members))
+        ss <- data.frame(start = numeric(n_mem), end = numeric(n_mem),
+                         apex = numeric(n_mem), ILentry = numeric(n_mem),
+                         precmass = numeric(n_mem))
+        ss$start <- lapply(unique(members), function(id) {
+            min(pks$rtmin[which(members == id)])
+        })
+        ss$end <- lapply(unique(members), function(id) {
+            max(pks$rtmax[which(members == id)])
+        })
+        ss$apex <- lapply(unique(members), function(id) {
+            apex <- which.max(soi$rtiv[soi$peak %in% which(members == id)])
+            soi$rt[which(soi$peak %in% which(members == id))[apex]]
+        })
+        ss$ssdata <- lapply(unique(members), function(id) {
             return(data.frame(mz = pks$mz[which(members == id)],
                 int = pks$maxo[which(members == id)]))
         })
+        ss$precmass <- rep(header$precursorMZ[1], nrow(ss))
+        ss$ILentry <- rep(idx[curentry], nrow(ss))
+        ss$anot <- rep(fs[curentry], nrow(ss))
         return(ss)
     })
-    return(list(fs, RES))
+    RES <- do.call(rbind, RES)
+    return(RES)
 }
 
 reassign_and_check <- function(pks, soi) {
@@ -283,13 +288,8 @@ centwavePropag <- function(pks, soi){
     res <- RHermes:::reassign_and_check(pks, soi)
     pks <- res[[1]]
     soi <- res[[2]]
-
-    if (nrow(pks) == 0) {
-        break
-    }
-    if (nrow(rows_to_add) == 0) {
-        break
-    }
+    if (nrow(pks) == 0) {break}
+    if (nrow(rows_to_add) == 0) {break}
     })
     return(list(pks, soi))
 }

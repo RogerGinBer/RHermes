@@ -471,7 +471,9 @@ setMethod("SOIcos", c("RHermesExp", "numeric"), function(struct,
             if (st > SOI$end[j]) {
                 next
             }
-            m[i, j] <- cosineSim(SOI$peaks[[i]], SOI$peaks[[j]])
+            # m[i, j] <- cosineSim(SOI$peaks[[i]], SOI$peaks[[j]])
+            m[i, j] <- RHermes:::pearsonSim(SOI$peaks[[i]], SOI$peaks[[j]])
+
             m[j, i] <- m[i, j]
         }
     }

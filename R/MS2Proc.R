@@ -47,9 +47,10 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
     if (length(idx) == length(MS2Exp@MS2Data)) {
         message("It seems that all IL entries were covered. Nice!")
     } else {
-        message("A total of ", length(MS2Exp@MS2Data) - length(idx),
-            " entries were not covered in the experiment")
-        message("Don't worry, they will be listed in a .txt report later on")
+        message("A total of ", length(MS2Exp@MS2Data) - length(idx)," (",
+            round((length(MS2Exp@MS2Data) - length(idx))/
+                      length(MS2Exp@MS2Data)*100, digits = 2),
+            "%) entries were not covered in the experiment")
     }
 
     if (length(idx) == 0) {
@@ -58,8 +59,8 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
 
     #### Superspectra Generation ####-------------------------------------------
     message("Starting superspectra generation. This may take a while...")
+    purifiedSpectra <- CliqueMSMS(MS2Exp, idx)
 
-    purifiedSpectra <- CliqueMSMS(MS2Exp, idx, plot = FALSE)
     #### Database Query ####----------------------------------------------------
 
     # Catching possible user errors
@@ -68,9 +69,6 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
     }, error = function(cond) {
         stop("The referenceDB input isn't valid")
     })
-    # if(c('df_BD', 'df_EspectreMetabolit', 'df_metaespectres', 'df_metametabolits',
-    # 'list_fragments') %in% ls()){ stop('You're missing some fields in the
-    # referenceDB') }
 
     # Data.tables for faster indexing
     metaesp <- as.data.table(df_metaespectres)
@@ -88,10 +86,12 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
     polarity <- ifelse(struct@metadata@ExpParam@ion == "+", "POSITIVE",
         "NEGATIVE")
 
+
+    allf <- purifiedSpectra$anot %>% unlist() %>% unique()
+
     # Retrieving spectra
     message("Retrieving MS2 spectra from the reference database")
-    retrievedMSMS <- lapply(purifiedSpectra[[1]], function(flist) {
-        lapply(flist, function(f) {
+    retrievedMSMS <- lapply(allf, function(f) {
             idmet <- metamet[.(f), ]$idmetabolit
             if (is.na(idmet[1])) {
                 return(list())
@@ -119,161 +119,76 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
                     ]$smiles[-novalidspec], sep = "#")
 
             } else {
-                names(RES) <- paste(rep(f, times = nrow(metamet[.(f),
-                  ])), metamet[.(f), ]$idmetabolit, lapply(metamet[.(f),
-                  ]$nommetabolit, function(x) {
-                  x[[1]]
-                }) %>% unlist(), metamet[.(f), ]$smiles, sep = "#")
+                names(RES) <- paste(rep(f, times = nrow(metamet[.(f),])),
+                                    metamet[.(f), ]$idmetabolit,
+                                    lapply(metamet[.(f), ]$nommetabolit,
+                                        function(x) {x[[1]]}
+                                    ) %>% unlist(),
+                                    metamet[.(f), ]$smiles,
+                                    sep = "#")
             }
-
             return(RES)
-        }) %>% unlist(., recursive = FALSE)  #To remove formula level
     })
+    names(retrievedMSMS) <- allf
+
     message("Calculating Cosine similarities")
+
+    corresponding <- lapply(purifiedSpectra$anot, function(x){
+        which(allf %in% x)
+    })
     cos_list <- mapply(function(entry, reference) {
-        if (length(entry) == 0 | length(reference) == 0) {
-            return(list())
-        }
-        rapply(reference, function(compound) {
-            lapply(entry, function(ss) {
-                MSMScosineSim(ss, t(compound), minhits = 1, mode = "full")
-            }) %>% unlist() %>% as.matrix(nrow = 1)
-
+        curspec <- retrievedMSMS[reference]
+        cos <- rapply(curspec, function(compound) {
+            MSMScosineSim(entry, t(compound), minhits = 1, mode = "full")
         }, classes = "matrix", how = "replace")
-
-    }, purifiedSpectra[[2]], retrievedMSMS)
+        cos[which(lapply(cos, length) != 0)]
+    }, purifiedSpectra$ssdata, corresponding)
 
     #### Output formatting ####------------------------------------------------
-    results <- lapply(cos_list, function(x) {
-        if (length(x) == 0) {
-            return("Invalid Pattern or Missing spectra")
-        }
+    purifiedSpectra$results <- lapply(cos_list, function(x) {
+        if (length(x) == 0) {return("Missing reference spectra")}
 
-        isValidhit <- any(rapply(x, function(cos) {
-            cos > mincos
-        }, "matrix", "unlist"))
-        if (!isValidhit) {
-            return("No significant hits")
-        }
+        isValidhit <- any(rapply(x, function(cos) {cos > mincos},
+                                 "numeric", "unlist"))
+        if (!isValidhit) {return("No significant hits")}
 
         # Extracting cosines for each superspectra
         withcosines <- which(vapply(x, function(x) {
             length(x) != 0
         }, logical(1)))
-        nquery <- length(x[[withcosines[1]]][[1]])
-        goodss <- which(vapply(seq_len(nquery), function(ss) {
-            any(rapply(x, function(cos) {
-                cos[ss] > mincos
-            }, "matrix", "unlist"))
+
+        #Formula entries that have a good match
+        goodf <- which(vapply(x, function(f){
+            any(unlist(f) > mincos)
         }, logical(1)))
 
-        RES <- lapply(goodss, function(ss) {
-            #Detect which formulas have a hit for that ss
-            goodf <- which(vapply(x, function(coslist) {
+        RES <- lapply(goodf, function(f) {
+            #Detect which spectra have a hit for that formula
+            goodf <- which(vapply(x[[f]], function(coslist) {
                 any(vapply(coslist, function(cos) {
-                  cos[ss] > mincos
+                  cos > mincos
                 }, logical(1)))
             }, logical(1)))
-            fnames <- names(x[goodf])
+            fnames <- names(x[[f]][goodf])
             resdf <- data.frame(formula = fnames, cos = numeric(length(fnames)),
-                id = numeric(length(fnames)), ss = rep(ss, length(fnames)),
+                id = numeric(length(fnames)),
                 stringsAsFactors = FALSE)
             for (i in seq_along(goodf)) {
-                coslist <- x[[goodf[i]]]
+                coslist <- x[[f]][[goodf[i]]]
                 resdf$id[i] <- which.max(vapply(coslist, function(cos) {
-                  cos[[ss]]
+                  cos[1]
                 }, numeric(1)))
-                resdf$cos[i] <- coslist[[resdf$id[i]]][[ss]]
+                resdf$cos[i] <- coslist[[resdf$id[i]]]
             }
             return(resdf)
 
         }) %>% do.call(rbind, .)
         return(RES)
     })
-
-    MS2Exp@IL@IL$identification <- ""
-    MS2Exp@IL@IL$identification[idx] <- results
-    ##Entries that have a cosine > mincos are considered good enough
-    conf_identif <- idx[which(vapply(results, function(x) {
-        if (is.null(x)) {
-            return(FALSE)
-        }
-        if (is.character(x)) {
-            return(FALSE)
-        }
-        return(ifelse(any(as.numeric(x[, 2]) > mincos), TRUE,
-            FALSE))
-    }, logical(1)))]
-    good <- MS2Exp@IL@IL[conf_identif, ]
-    an <- MS2Exp@IL@annotation[conf_identif]
-
-    message("Retrieving corresponding SOIs")
-    ##SOI retrieval
-    info <- lapply(seq_len(nrow(good)), function(x) {
-        cur <- good$identification[[x]]
-        cur <- cur[cur[, 2] > mincos, ]
-        fa <- do.call(rbind, lapply(cur[, 1], function(y) {
-            return(strsplit(y[[1]], split = "#", )[[1]])
-        }))
-
-        res <- lapply(seq_len(nrow(fa)), function(f) {
-            curf <- fa[f, 1]
-            soi <- do.call(rbind, lapply(an[[x]]$metadata, function(ILsubentry){
-                ILsubentry[ILsubentry$f == curf, c(seq(1, 7))]  #Removed useless columns
-            }))
-            soi$compound <- fa[f, 3]
-            soi$originalID <- fa[f, 2]
-            soi$score <- cur[f, 2]
-            soi$idspec <- cur[f, 3]
-            soi$ss <- cur[f, 4]
-            soi$IL_ID <- conf_identif[x]
-            soi$smiles <- fa[f, 4]
-            return(soi)
-        })
-        return(res)
-    })
-    info <- do.call(rbind, unlist(info, recursive = FALSE))
-    info$qMSMS <- lapply(seq_len(nrow(info)), function(x) {
-        cur <- info[x, ]
-        purifiedSpectra[[2]][[which(idx == cur$IL_ID)]][[cur$ss]]
-    })
-    info$patMSMS <- lapply(seq_len(nrow(info)), function(x) {
-        cur <- info[x, ]
-        l <- retrievedMSMS[[which(idx == cur$IL_ID)]]
-        l <- l[[which(grepl(x = names(l), pattern = paste(cur$originalID,
-            cur$compound, sep = "#"), fixed = TRUE))[1]]][[cur$idspec]]
-        if (ncol(l) != 2) {
-            l <- t(l)
-        }
-
-        if (!is.null(dimnames(l)[[1]][1])) {
-            if (dimnames(l)[[1]][1] == "mass-charge") {
-                l <- t(l)
-            }
-        }
-
-        l <- as.data.frame(l)
-        return(l)
-    })
-
-    # if (plotting) {
-    #     message("Plotting matches between your data and the reference spectra")
-    #     cairo_pdf(outpdf, onefile = TRUE)
-    #     n <- lapply(seq_len(nrow(info)), function(x) {
-    #         cur <- info[x, ]
-    #         mirrorPlot(cur$qMSMS, cur$patMSMS, title = cur$compound,
-    #             subtitle = paste("Score:", round(cur$score, 4),
-    #               " Superspectra:", cur$ss, " IL_entry:", cur$IL_ID,
-    #               " MaxInt:", round(cur$MaxInt, -2)), baseline = 1000,
-    #             maxint = max(cur$qMSMS[[1]][, "int"]), molecmass = cur$mass)
-    #     })
-    #     dev.off()
-    # }
-    # message(paste("Registering identifications in csv file:",
-    #     outcsv))
-    # write.csv(info[, c(seq(1, 5), seq(7, 13))], file = outcsv)
+    MS2Exp@Ident <- list(MS2Features = purifiedSpectra,
+                         DatabaseSpectra = retrievedMSMS,
+                         MS2_correspondance = corresponding)
     message("Done!")
-    MS2Exp@Ident <- list(info, purifiedSpectra, retrievedMSMS, idx)
     struct@data@MS2Exp[[id]] <- MS2Exp
     return(struct)
 })
