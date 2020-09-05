@@ -318,10 +318,10 @@
 # }
 
 #'@export
-setGeneric("PlotlyMirrorPlot", function(struct, ms2id, ssnumber, patform) {
+setGeneric("MirrorPlot", function(struct, ms2id, ssnumber, patform) {
     standardGeneric("PlotlyMirrorPlot")
 })
-setMethod("PlotlyMirrorPlot", c("RHermesExp", "numeric", "numeric"),
+setMethod("MirrorPlot", c("RHermesExp", "numeric", "numeric"),
     function(struct, ms2id, ssnumber, patform) {
         # function(query, pattern, title = 'Mirror plot', subtitle = '', baseline = 1000, maxint = 0, molecmass = 200){
         if (is.null(entryid)) {return(ggplotly(ggplot()))}
@@ -397,11 +397,11 @@ setMethod("PlotlyMirrorPlot", c("RHermesExp", "numeric", "numeric"),
     })
 
 #'@export
-setGeneric("PlotlyPLPlot", function(struct, id, formula, rtrange,
+setGeneric("PLPlot", function(struct, id, formula, rtrange,
     dynamicaxis, ads) {
-    standardGeneric("PlotlyPLPlot")
+    standardGeneric("PLPlot")
 })
-setMethod("PlotlyPLPlot", c("RHermesExp", "numeric", "character",
+setMethod("PLPlot", c("RHermesExp", "numeric", "character",
     "numeric", "logical", "character"), function(struct, id,
     formula, rtrange, dynamicaxis, ads) {
     # plist <- struct@data@SOI[[id]]@PlotDF
@@ -441,11 +441,11 @@ setMethod("PlotlyPLPlot", c("RHermesExp", "numeric", "character",
 
 
 #'@export
-setGeneric("PlotlySoiPlot", function(struct, id, formula, rtrange,
+setGeneric("SoiPlot", function(struct, id, formula, rtrange,
     dynamicaxis, ads, blankid = NA) {
-    standardGeneric("PlotlySoiPlot")
+    standardGeneric("SoiPlot")
 })
-setMethod("PlotlySoiPlot", c("RHermesExp", "numeric", "character",
+setMethod("SoiPlot", c("RHermesExp", "numeric", "character",
     "numeric", "logical", "character", "ANY"), function(struct, id,
     formula, rtrange, dynamicaxis, ads, blankid = NA) {
     plist <- struct@data@SOI[[id]]@PlotDF
@@ -536,12 +536,11 @@ setMethod("PlotlySoiPlot", c("RHermesExp", "numeric", "character",
 })
 
 #'@export
-setGeneric("PlotlyRawMS2Plot", function(struct, ms2id, entryid,
-    bymz) {
-    standardGeneric("PlotlyRawMS2Plot")
+setGeneric("RawMS2Plot", function(struct, ms2id, entryid, bymz) {
+    standardGeneric("RawMS2Plot")
 })
-setMethod("PlotlyRawMS2Plot", c("RHermesExp", "numeric", "numeric",
-    "logical"), function(struct, ms2id, entryid, bymz = TRUE) {
+setMethod("RawMS2Plot", c("RHermesExp", "numeric", "numeric","logical"),
+          function(struct, ms2id, entryid, bymz = TRUE) {
     if (is.na(entryid)) { return(list(ggplotly(ggplot()), NA))}
     ms2data <- struct@data@MS2Exp[[ms2id]]@MS2Data
     data <- ms2data[[entryid]][[2]]
@@ -829,11 +828,11 @@ setMethod("PlotlyRawMS2Plot", c("RHermesExp", "numeric", "numeric",
 
 
 #'@export
-setGeneric("PlotlyIsoFidelity", function(struct, soilist, entry,
+setGeneric("IsoFidelity", function(struct, soilist, entry,
     plot = TRUE) {
-    standardGeneric("PlotlyIsoFidelity")
+    standardGeneric("IsoFidelity")
 })
-setMethod("PlotlyIsoFidelity", c("RHermesExp", "numeric", "numeric",
+setMethod("IsoFidelity", c("RHermesExp", "numeric", "numeric",
     "ANY"), function(struct, soilist, entry, plot = TRUE) {
     #Extract SOI and PL information from the selected SOI list
     SOI <- struct@data@SOI[[soilist]]
@@ -985,9 +984,6 @@ setMethod("PlotlyIsoFidelity", c("RHermesExp", "numeric", "numeric",
         }
     })
     names(otherChecks) <- toCheck
-
-
-
 
     if (plot) {
         return(list(p3, numC, carbonCheck, cos, otherChecks))
