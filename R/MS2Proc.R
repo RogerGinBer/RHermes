@@ -15,9 +15,6 @@
 #'@param referenceDB Character, where to find the MSMS database to query against.
 #'@param mincos Numeric, between 0 and 1, the minimum spectral cosine between query and
 #'reference spectrum for a match to be reported (see the paper for more detail on this).
-#'@param plotting Logical, whether you want mirror plots to be generated.
-#'@param outpdf Character, where you want to store the plots (see plotting).
-#'@param outcsv Character, where to store a summary csv of the identifications.
 #'@return An RHermesExp object with the identifications set in the used MS2Exp slot.
 #'@examples
 #'MS2Proc(myHermes, 1, c('C:/myFolder/File1.mzML', 'C:/myFolder/File2.mzML'))
@@ -25,8 +22,7 @@
 #' @export
 setGeneric("MS2Proc", function(struct, id, MS2files,
     referenceDB = "D:/sp_MassBankEU_20200316_203615.RData",
-    mincos = 0.6, plotting = FALSE, outpdf = "mirror.pdf",
-    outcsv = "./results.csv") {
+    mincos = 0.6) {
     standardGeneric("MS2Proc")
 })
 setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
@@ -39,7 +35,6 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
     message("Starting MS/MS data importation, merging and sorting within the IL entries")
 
     MS2Exp@MS2Data <- MSMSimporter(MS2Exp@IL, MS2files)  #Fills in the MS2data slot
-
     idx <- vapply(MS2Exp@MS2Data, function(x) {
         return(length(x) != 0)
     }, logical(1))  #Which IL entries are covered by at least 1 scan
@@ -49,7 +44,7 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
     } else {
         message("A total of ", length(MS2Exp@MS2Data) - length(idx)," (",
             round((length(MS2Exp@MS2Data) - length(idx))/
-                      length(MS2Exp@MS2Data)*100, digits = 2),
+                length(MS2Exp@MS2Data)*100, digits = 2),
             "%) entries were not covered in the experiment")
     }
 
@@ -59,7 +54,7 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
 
     #### Superspectra Generation ####-------------------------------------------
     message("Starting superspectra generation. This may take a while...")
-    purifiedSpectra <- CliqueMSMS(MS2Exp, idx)
+    purifiedSpectra <- RHermes:::CliqueMSMS(MS2Exp, idx)
 
     #### Database Query ####----------------------------------------------------
 
@@ -176,18 +171,17 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
             for (i in seq_along(goodf)) {
                 coslist <- x[[f]][[goodf[i]]]
                 resdf$id[i] <- which.max(vapply(coslist, function(cos) {
-                  cos[1]
+                    cos[1]
                 }, numeric(1)))
                 resdf$cos[i] <- coslist[[resdf$id[i]]]
             }
             return(resdf)
-
         }) %>% do.call(rbind, .)
         return(RES)
     })
     MS2Exp@Ident <- list(MS2Features = purifiedSpectra,
-                         DatabaseSpectra = retrievedMSMS,
-                         MS2_correspondance = corresponding)
+                        DatabaseSpectra = retrievedMSMS,
+                        MS2_correspondance = corresponding)
     message("Done!")
     struct@data@MS2Exp[[id]] <- MS2Exp
     return(struct)
