@@ -318,54 +318,82 @@
 # }
 
 #'@export
-setGeneric("PlotlyMirrorPlot", function(struct, ms2id, entryid) {
+setGeneric("PlotlyMirrorPlot", function(struct, ms2id, ssnumber, patform) {
     standardGeneric("PlotlyMirrorPlot")
 })
 setMethod("PlotlyMirrorPlot", c("RHermesExp", "numeric", "numeric"),
-    function(struct, ms2id, entryid) {
+    function(struct, ms2id, ssnumber, patform) {
         # function(query, pattern, title = 'Mirror plot', subtitle = '', baseline = 1000, maxint = 0, molecmass = 200){
         if (is.null(entryid)) {return(ggplotly(ggplot()))}
-        entry <- struct@data@MS2Exp[[ms2id]]@Ident[[1]][entryid, ]
-        query <- entry$qMSMS[[1]]
-        pattern <- entry$patMSMS[[1]]
-        molecmass <- entry$mass
-        baseline <- 1000
-        maxint <- 0
-        title <- paste(entry$compound, entry$IL_ID, sep = "@")
-        subtitle <- ""
-        # if(is.list(query)){query <- query[[1]]}
-        # if(is.list(pattern)){pattern <- pattern[[1]]}
-        colnames(pattern) <- c("mz", "int")
-        pattern$int <- pattern$int/max(pattern$int) * 100
-
-        colnames(query) <- c("mz", "int")
+        entry <- struct@data@MS2Exp[[ms2id]]@Ident$MS2Features[ssnumber,]
+        query <- entry$ssdata[[1]]
+        ref <- struct@data@MS2Exp[[ms2id]]@Ident$MS2_correspondance[[ssnumber]]
+        pattern <- struct@data@MS2Exp[[ms2id]]@Ident$DatabaseSpectra[ref]
+        pattern <- unlist(pattern, recursive = FALSE)
+        maxint <- max(query$int)
         query$int <- query$int/max(query$int) * 100
         bestdf <- query[query$int > 10, ]
         bestdf$mz <- round(bestdf$mz, 4)
 
+        molecmass <- entry$precmass
+        baseline <- 1000
+        subtitle <- ""
+        title <- ""
         baseline <- baseline/maxint * 100
-        bldf <- data.frame(xmin = min(c(pattern$mz, query$mz,
-            molecmass)) - 5, xmax = max(c(pattern$mz, query$mz,
-            molecmass) + 5), y = baseline)
-        moldf <- data.frame(mz = molecmass)
-        pl <- ggplot() + geom_segment(data = query, aes(x = mz,
-            xend = mz, y = 0, yend = int), color = "black") +
-            geom_segment(data = pattern, aes(x = mz, xend = mz,
-                y = 0, yend = -int), color = "red") + geom_segment(data = bldf,
-            aes(x = xmin, xend = xmax, y = y, yend = y), linetype = "dashed",
-            color = "black", alpha = 0.3) + geom_segment(data = bldf,
-            aes(x = xmin, xend = xmax, y = -y, yend = -y), linetype = "dashed",
-            color = "red", alpha = 0.3) + geom_point(data = moldf,
-            aes(x = mz, y = 0), shape = 17, size = 2) + theme_minimal() +
-            ylab("% Intensity") + scale_x_continuous(limits = c(min(c(pattern$mz,
-            query$mz, molecmass)) - 5, max(c(pattern$mz, query$mz,
-            molecmass)) + 5)) + theme(plot.margin = unit(c(1,
-            0.7, 1, 0.8), "cm"), text = element_text(size = 11,
-            family = "Segoe UI Light"), plot.title = element_text(hjust = 0.5)) +
-            geom_text(data = bestdf, aes(x = mz, y = int + 5,
-                label = mz), family = "Segoe UI Light", check_overlap = TRUE) +
-            ggtitle(title, subtitle)
-        return(ggplotly(pl))
+
+        mirrplot <- lapply(patform, function(x){
+
+            refspec <- pattern[[x]][[entry$results[[1]]$id[which(entry$results[[1]]$formula == x)]]]
+            refspec <- as.data.frame(t(refspec))
+            colnames(refspec) <- c("mz", "int")
+            refspec$int <- refspec$int/max(refspec$int) * 100
+
+             bldf <- data.frame(xmin = min(c(refspec$mz, query$mz,
+                                molecmass)) - 5, xmax = max(c(refspec$mz,
+                                                              query$mz,
+                                molecmass) + 5), y = baseline)
+
+             moldf <- data.frame(mz = molecmass)
+
+
+             pl <- ggplot() + geom_segment(data = query, aes(x = mz,
+                xend = mz, y = 0, yend = int), color = "black") +
+                geom_segment(data = refspec, aes(x = mz, xend = mz,
+                             y = 0, yend = -int), color = "red") +
+                geom_segment(data = bldf, aes(x = xmin, xend = xmax, y = y,
+                                              yend = y), linetype = "dashed",
+                             color = "black", alpha = 0.3) +
+                geom_segment(data = bldf, aes(x = xmin, xend = xmax, y = -y,
+                                              yend = -y), linetype = "dashed",
+                             color = "red", alpha = 0.3) +
+                geom_point(data = moldf, aes(x = mz, y = 0), shape = 17,
+                           size = 2) + theme_minimal() + ylab("% Intensity") +
+                scale_x_continuous(limits = c(min(c(refspec$mz,
+                                                    query$mz, molecmass)) - 5,
+                                              max(c(refspec$mz, query$mz,
+                                                    molecmass)) + 5)) +
+                theme(plot.margin = unit(c(1, 0.7, 1, 0.8), "cm"),
+                      text = element_text(size = 11, family = "Segoe UI Light"),
+                      plot.title = element_text(hjust = 0.5)) +
+                geom_text(data = bestdf, aes(x = mz, y = int + 5, label = mz),
+                          family = "Segoe UI Light", check_overlap = TRUE) +
+                ggtitle(title, subtitle)
+
+              ggplotly(pl)
+            })
+
+
+
+        #title <- paste(entry$compound, entry$IL_ID, sep = "@")
+
+        # if(is.list(query)){query <- query[[1]]}
+        # if(is.list(pattern)){pattern <- pattern[[1]]}
+        #colnames(pattern) <- c("mz", "int")
+
+
+
+
+        return(subplot(mirrplot, nrows = length(mirrplot)))
     })
 
 #'@export
