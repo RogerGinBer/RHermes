@@ -81,22 +81,11 @@ body <- dashboardBody(
               style = "padding : 20px 50px 50px 50px")
     ),
 
-    # Second tab content
-    tabItem(tabName = "mz2PL",
-      PL_UI("PL_UI")
-    ),
-    tabItem(tabName = "SOIdet",
-      SOI_UI("SOI_UI"),
-    ),
-    tabItem(tabName = "IL",
-      IL_UI("IL_UI"),
-    ),
-    tabItem(tabName = "MSMS",
-      MS2_UI("MS2_UI")
-            ),
-    tabItem(tabName = "Plots",
-            verticalLayout(
-              )),
+    tabItem(tabName = "mz2PL", PL_UI("PL_UI")),
+    tabItem(tabName = "SOIdet", SOI_UI("SOI_UI")),
+    tabItem(tabName = "IL", IL_UI("IL_UI")),
+    tabItem(tabName = "MSMS", MS2_UI("MS2_UI")),
+    tabItem(tabName = "Plots", verticalLayout()),
     tabItem(tabName = "PLplot",  PLPlotUI("PLPlotUI")),
     tabItem(tabName = "SOIplot",  SOIPlotUI("SOIPlotUI")),
     tabItem(tabName = "MS2plot", MS2PlotUI("MS2PlotUI")),
@@ -115,24 +104,24 @@ server <- function(input, output, session){
                            hasIL = FALSE, hasMS2 = FALSE)
 
   observe({
-    struct$hasPL <- ifelse(length(struct$dataset@data@PL)!=0, TRUE, FALSE)
-    struct$hasSOI <- ifelse(length(struct$dataset@data@SOI)!=0, TRUE, FALSE)
-    struct$hasIL <- ifelse(length(struct$dataset@data@MS2Exp)!=0, TRUE, FALSE)
-    if(struct$hasIL){
-      struct$hasMS2 <- any(vapply(struct$dataset@data@MS2Exp, function(x){
-        length(x@Ident)!=0
-      }, logical(1)))    }
+      struct$hasPL <- ifelse(length(struct$dataset@data@PL)!=0, TRUE, FALSE)
+      struct$hasSOI <- ifelse(length(struct$dataset@data@SOI)!=0, TRUE, FALSE)
+      struct$hasIL <- ifelse(length(struct$dataset@data@MS2Exp)!=0, TRUE, FALSE)
+      if(struct$hasIL){
+        struct$hasMS2 <- any(vapply(struct$dataset@data@MS2Exp, function(x){
+          length(x@Ident)!=0
+        }, logical(1)))    }
   })
 
   output$dropdown_m <- renderMenu({
-    dropdownMenu(type = "tasks", badgeStatus = "primary",
+        dropdownMenu(type = "tasks", badgeStatus = "primary",
                  taskItem(value = ifelse(struct$hasPL, 100, 0), color = "green",
                           "The object has PL/s"
                           ),
                  taskItem(value = ifelse(struct$hasSOI, 100, 0), color = "aqua",
                           "The object has SOI list/s"
                           ),
-                 taskItem(value = ifelse(struct$hasIL, 100, 0), color = "yellow",
+                 taskItem(value = ifelse(struct$hasIL, 100, 0),color = "yellow",
                           "The object has IL/s"
                           ),
                  taskItem(value = ifelse(struct$hasMS2, 100, 0), color = "red",
@@ -142,7 +131,7 @@ server <- function(input, output, session){
 
   PLresults <- PLServer("PL_UI", struct = struct)
   observeEvent(PLresults$trigger, {
-    struct$dataset <- PLresults$dataset
+      struct$dataset <- PLresults$dataset
   }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
   SOIresults <- SOIServer("SOI_UI", struct = struct)
@@ -178,13 +167,5 @@ server <- function(input, output, session){
 
   observeEvent(input$shutdown, {shiny::stopApp()})
 }
-
-# setmessage <- function(mobj, m){
-#   mobj <- rbind(mobj, data.frame(from = "The Developer", message = m, date = as.character(date()),
-#                                   stringsAsFactors = FALSE))
-#   return(mobj)
-# }
-# popmessage <- function(mobj){return(mobj[-1,])}
-
 
 shinyApp(ui, server)
