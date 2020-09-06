@@ -26,7 +26,7 @@ setGeneric("MS2Proc", function(struct, id, MS2files,
     standardGeneric("MS2Proc")
 })
 setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
-    "ANY", "ANY", "ANY", "ANY", "ANY"), function(struct, id,
+    "ANY", "ANY"), function(struct, id,
     MS2files, referenceDB = "D:/sp_MassBankEU_20200316_203615.RData",
     mincos = 0.6) {
     #### MS2 Data Importation and Sorting within IL ####------------------------

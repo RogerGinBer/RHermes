@@ -4,7 +4,13 @@
 \alias{CliqueMSMS}
 \title{CliqueMSMS}
 \usage{
-CliqueMSMS(MS2Exp, idx, plot = FALSE, contaminant = 173.5, delta = 0.1)
+CliqueMSMS(
+  MS2Exp,
+  idx,
+  contaminant = 173.5,
+  delta = 0.1,
+  BPPARAM = BiocParallel::SerialParam()
+)
 }
 \value{
 List of formulas and a list of purified MSMS (list of dataframes,

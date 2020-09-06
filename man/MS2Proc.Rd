@@ -9,10 +9,7 @@ MS2Proc(
   id,
   MS2files,
   referenceDB = "D:/sp_MassBankEU_20200316_203615.RData",
-  mincos = 0.6,
-  plotting = FALSE,
-  outpdf = "mirror.pdf",
-  outcsv = "./results.csv"
+  mincos = 0.6
 )
 }
 \arguments{
@@ -26,12 +23,6 @@ MS2Proc(
 
 \item{mincos}{Numeric, between 0 and 1, the minimum spectral cosine between query and
 reference spectrum for a match to be reported (see the paper for more detail on this).}
-
-\item{plotting}{Logical, whether you want mirror plots to be generated.}
-
-\item{outpdf}{Character, where you want to store the plots (see plotting).}
-
-\item{outcsv}{Character, where to store a summary csv of the identifications.}
 }
 \value{
 An RHermesExp object with the identifications set in the used MS2Exp slot.

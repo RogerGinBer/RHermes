@@ -319,12 +319,11 @@
 
 #'@export
 setGeneric("MirrorPlot", function(struct, ms2id, ssnumber, patform) {
-    standardGeneric("PlotlyMirrorPlot")
+    standardGeneric("MirrorPlot")
 })
 setMethod("MirrorPlot", c("RHermesExp", "numeric", "numeric"),
     function(struct, ms2id, ssnumber, patform) {
         # function(query, pattern, title = 'Mirror plot', subtitle = '', baseline = 1000, maxint = 0, molecmass = 200){
-        if (is.null(entryid)) {return(ggplotly(ggplot()))}
         entry <- struct@data@MS2Exp[[ms2id]]@Ident$MS2Features[ssnumber,]
         query <- entry$ssdata[[1]]
         ref <- struct@data@MS2Exp[[ms2id]]@Ident$MS2_correspondance[[ssnumber]]
@@ -342,9 +341,10 @@ setMethod("MirrorPlot", c("RHermesExp", "numeric", "numeric"),
         baseline <- baseline/maxint * 100
 
         mirrplot <- lapply(patform, function(x){
-
             refspec <- pattern[[x]][[entry$results[[1]]$id[which(entry$results[[1]]$formula == x)]]]
+            if(is.null(refspec)){return(ggplotly(ggplot()))}
             refspec <- as.data.frame(t(refspec))
+
             colnames(refspec) <- c("mz", "int")
             refspec$int <- refspec$int/max(refspec$int) * 100
 
@@ -369,9 +369,9 @@ setMethod("MirrorPlot", c("RHermesExp", "numeric", "numeric"),
                 geom_point(data = moldf, aes(x = mz, y = 0), shape = 17,
                            size = 2) + theme_minimal() + ylab("% Intensity") +
                 scale_x_continuous(limits = c(min(c(refspec$mz,
-                                                    query$mz, molecmass)) - 5,
+                                                    query$mz, molecmass)) - 20,
                                               max(c(refspec$mz, query$mz,
-                                                    molecmass)) + 5)) +
+                                                    molecmass)) + 20)) +
                 theme(plot.margin = unit(c(1, 0.7, 1, 0.8), "cm"),
                       text = element_text(size = 11, family = "Segoe UI Light"),
                       plot.title = element_text(hjust = 0.5)) +
@@ -379,21 +379,11 @@ setMethod("MirrorPlot", c("RHermesExp", "numeric", "numeric"),
                           family = "Segoe UI Light", check_overlap = TRUE) +
                 ggtitle(title, subtitle)
 
-              ggplotly(pl)
+              ggplotly(pl, height = ifelse(length(patform)<5, 300, 200)*
+                           length(patform))
             })
-
-
-
-        #title <- paste(entry$compound, entry$IL_ID, sep = "@")
-
-        # if(is.list(query)){query <- query[[1]]}
-        # if(is.list(pattern)){pattern <- pattern[[1]]}
-        #colnames(pattern) <- c("mz", "int")
-
-
-
-
-        return(subplot(mirrplot, nrows = length(mirrplot)))
+        return(subplot(mirrplot, nrows = length(mirrplot), shareX = TRUE,
+                       which_layout = 1))
     })
 
 #'@export
@@ -539,238 +529,31 @@ setMethod("SoiPlot", c("RHermesExp", "numeric", "character",
 setGeneric("RawMS2Plot", function(struct, ms2id, entryid, bymz) {
     standardGeneric("RawMS2Plot")
 })
-setMethod("RawMS2Plot", c("RHermesExp", "numeric", "numeric","logical"),
+setMethod("RawMS2Plot", c("RHermesExp", "ANY", "ANY", "ANY"),
           function(struct, ms2id, entryid, bymz = TRUE) {
     if (is.na(entryid)) { return(list(ggplotly(ggplot()), NA))}
+
     ms2data <- struct@data@MS2Exp[[ms2id]]@MS2Data
-    data <- ms2data[[entryid]][[2]]
-
-    data <- do.call(rbind, lapply(unique(data$rt), function(t) {
-        maxi <- max(data[data$rt == t, "int"])
-        return(data[data$rt == t & data$int > 0.005 * maxi, ])
-    }))
-    if (nrow(data) == 0) {return(list(ggplotly(ggplot()), NA))}
-
-    ##Remove known contaminant signals
-    contaminant <- 173.5
-    delta <- 0.1
-    for (x in contaminant) {
-        data <- data[!between(data$mz, contaminant - delta, contaminant +
-            delta), ]
-    }
-    if (nrow(data) == 0) {return(list(ggplotly(ggplot()), NA))}
-    colnames(data)[colnames(data) == "int"] <- "rtiv"  #To match with cosineSim definition
-    rts <- unique(data$rt)
-    soi <- list()
-    avgmz <- c()
-    mu <- 20
-    pmin <- 5
-
-    for (i in rts) {
-        if (i == rts[1]) {
-            soi <- split(data[data$rt == i, ], data$mz[data$rt == i])
-            avgmz <- as.numeric(names(soi))
-        } else {
-            curdata <- data[data$rt == i, ]
-            for (j in unique(curdata$mz)) {
-                dist <- abs(avgmz - j)/j * 1e+06
-                if (any(dist < mu)) {
-                  idx <- which.min(dist)
-                  soi[[idx]] <- rbind(soi[[idx]], curdata[curdata$mz == j, ])
-                  avgmz[[idx]] <- mean(soi[[idx]]$mz)
-                } else {
-                  soi <- c(soi, list(curdata[curdata$mz == j, ]))
-                  avgmz <- c(avgmz, j)
-                }
-            }
-        }
-    }
-    good <- vapply(soi, function(x) {
-        nrow(x) > pmin
-    }, logical(1))
-    soi <- soi[good]
-    avgmz <- avgmz[good]
-
-    if (length(soi) == 0) {
-        return(list(ggplotly(ggplot()), NA))
-    }
-
-    #Tidying the regions
-    for (i in seq_along(avgmz)) {
-        soi[[i]]$mz <- round(avgmz[i], 3)
-        soi[[i]] <- soi[[i]][order(soi[[i]]$rt), ]
-    }
-
-
-    # plot_ly(x = soi$mz, z = soi$rtiv, y = soi$rt, size = 0.1, color = soi$peak)
-    # ggplotly(ggplot(soi)+geom_point(aes(x=rt, y = rtiv, color = as.factor(mz))))
-
-
-    ##Centwave peak-picking
-    soipks <- lapply(soi, function(x) {
-        suppressWarnings(df <- xcms::peaksWithCentWave(int = x$rtiv,
-            rt = x$rt, snthresh = 0, firstBaselineCheck = FALSE,
-            prefilter = c(0, 0), peakwidth = c(5, 60)))
-        df <- as.data.frame(df)
-        if (nrow(df) == 0) {
-            df <- data.frame(rt = 0, rtmin = min(x$rt), rtmax = max(x$rt),
-                into = 0, intb = 0, maxo = max(x$rtiv), sn = 0)
-            df$categ <- "Putative"
-        } else {
-            df$categ <- "Peak"
-            ##When a peak is found, consider the rest of fragment RT intervals as putative regions
-            dfinterv <- unlist(df[, c("rtmin", "rtmax")])
-            times <- c(min(x$rt), dfinterv[seq(1, length(dfinterv),
-                2)], dfinterv[seq(2, length(dfinterv), 2)], max(x$rt))
-            iter <- seq(1, length(times), 2)
-            maxo <- mapply(function(t1, t2) {
-                max(x$rtiv[between(x$rt, t1, t2)], na.rm = TRUE)
-            }, times[iter], times[iter + 1]) %>% unlist()
-            df <- rbind(df, data.frame(rt = 0, rtmin = times[iter],
-                rtmax = times[iter + 1], into = 0, intb = 0,
-                maxo = maxo, sn = 0, categ = "Putative"))
-        }
-        df$mz <- rep(x$mz[1], nrow(df))
-        return(df)
-    })
-    pks <- do.call(rbind, soipks)
-    if (nrow(pks) == 0) {
-        return(list(ggplotly(ggplot()), NA))
-    }
-
-    #Matching data to the peaks found
-    soi <- do.call(rbind, soi)
-    soi$peak <- 0
-    for (i in seq_len(nrow(pks))) {
-        soi$peak[soi$mz == pks$mz[i] & between(soi$rt, pks$rtmin[i],
-            pks$rtmax[i])] <- i
-    }
-
-
-    ##Deconvolution based on previous peak-picking -- Centwave-Propagation
-    repeat ({
-        rows_to_add <- data.frame(rt = numeric(0), rtmin = numeric(0),
-            rtmax = numeric(0), into = numeric(0), intb = numeric(0),
-            maxo = numeric(0), sn = numeric(0), categ = character(0),
-            mz = numeric(0))
-        for (i in which(pks$categ == "Peak")) {
-            cur_cos <- vapply(seq_len(nrow(pks)), function(y) {
-                score <- cosineSim(soi[soi$peak == i, ], soi[soi$peak == y, ])
-                if (is.na(score)) {
-                  score <- 0
-                }
-                score
-            }, numeric(1))
-            #Putative peaks that match really well with a confirmed Centwave peak
-            toconvert <- which(cur_cos > 0.8 & pks$categ == "Putative")
-            if (length(toconvert) != 0) {
-                for (j in toconvert) {
-                  dfinterv <- unlist(pks[i, c("rtmin", "rtmax")])
-                  x <- soi[soi$peak == j, ]
-                  #Define start-end pairs
-                  times <- c(min(x$rt), max(dfinterv[1], min(x$rt)),
-                    min(dfinterv[2], max(x$rt)), max(x$rt))
-                  iter <- seq(1, length(times), 2)
-                  maxo <- mapply(function(t1, t2) {
-                    max(x$rtiv[between(x$rt, t1, t2)], na.rm = TRUE)
-                  }, times[iter], times[iter + 1]) %>% unlist()
-                  pks[j, c("rtmin", "rtmax")] <- c(times[2],
-                    times[3])
-                  pks$maxo[j] <- max(x$rtiv[between(x$rt, times[2],
-                    times[3])])
-                  pks$categ[j] <- "Peak"
-                  rows_to_add <- rbind(rows_to_add, data.frame(rt = 0,
-                    rtmin = times[iter], rtmax = times[iter + 1],
-                    into = 0, intb = 0, maxo = maxo, sn = 0,
-                    categ = "Putative", mz = pks$mz[j]))
-                }
-            }
-        }
-        rows_to_add <- rows_to_add[rows_to_add$maxo != -Inf, ]
-        pks <- rbind(pks, rows_to_add)
-
-        res <- RHermes:::reassign_and_check(pks, soi)
-        pks <- res[[1]]
-        soi <- res[[2]]
-
-        ##Split putative peaks with >5s gaps
-        for (i in which(pks$categ == "Putative")) {
-            cur <- soi[soi$peak == i, c("rt", "rtiv")]
-            times <- diff(cur$rt)
-            jumps <- times > 3
-            if (any(jumps)) {
-                jumps <- which(jumps)
-                splits <- data.frame(rt = numeric(0), rtmin = numeric(0),
-                  rtmax = numeric(0), into = numeric(0), intb = numeric(0),
-                  maxo = numeric(0), sn = numeric(0), categ = character(0),
-                  mz = numeric(0))
-                for (j in seq_along(jumps)) {
-                  if (jumps[j] == jumps[1]) {
-                    pks[i, c("rtmin", "rtmax")] <- c(cur$rt[1],
-                      cur$rt[jumps[j]])
-                    pks[i, "maxo"] <- max(cur$rtiv[seq_len(jumps[j])])
-                  } else {
-                    splits <- rbind(splits, data.frame(rt = 0,
-                      rtmin = cur$rt[jumps[j - 1] + 1], rtmax = cur$rt[jumps[j]],
-                      into = 0, intb = 0, maxo = max(cur$rtiv[seq_len(jumps[j])]),
-                      sn = 0, categ = "Putative", mz = pks$mz[i]))
-                  }
-                }
-                pks <- rbind(pks, splits, data.frame(rt = 0,
-                  rtmin = cur$rt[jumps[j] + 1], rtmax = max(cur$rt),
-                  into = 0, intb = 0, maxo = max(cur$rtiv[(jumps[j] +
-                    1):nrow(cur)]), sn = 0, categ = "Putative",
-                  mz = pks$mz[i]))
-            }
-        }
-        res <- RHermes:::reassign_and_check(pks, soi)
-        pks <- res[[1]]
-        soi <- res[[2]]
-
-        if (nrow(pks) == 0) {break}
-        if (nrow(rows_to_add) == 0) {break}
-    })
-    if (nrow(pks) == 0) {return(list(ggplotly(ggplot()), NA))}
-
-
-    ##Now calculate all similarities
-    cos <- lapply(seq_len(nrow(pks)), function(x) {
-        lapply(seq_len(nrow(pks)), function(y) {
-            score <- RHermes::pearsonSim(soi[soi$peak == x, ],
-                soi[soi$peak == y, ])
-            if (is.na(score)) {
-                score <- 0
-            }
-            ifelse(score > 0.3, score, 0)
-        })
-    }) %>% unlist(.)
-    cos <- matrix(cos, nrow = nrow(pks))
-
-    net <- graph_from_adjacency_matrix(cos, mode = "undirected",
-        weighted = TRUE, diag = FALSE)
-    # net <- graph_from_adjacency_matrix(cos, weighted = TRUE, mode = 'undirected', diag = FALSE)
-    # clust <- gen_edge_hierarchical(net)
-    # plot(clust)
-
-    # vertex_attr(net, 'name', index = V(net)) <- k$mz
-    net <- igraph::simplify(net, remove.multiple = TRUE, remove.loops = TRUE)
-
-    # wc <- igraph::cluster_edge_betweenness(net)
-    wc <- igraph::cluster_fast_greedy(net)
-
-    members <- igraph::membership(wc)
+    ss <- RHermes:::generate_ss(entryid, MS2list = ms2data, contaminant = 173.5,
+                      delta = 0.1, fs = chracter(), idx = numeric(),
+                      to_plot = TRUE)
+    soi <- ss$soi
+    members <- ss$members
+    net <- ss$net
+    data <- ss$data
+    pks <- ss$pks
+    pks$members <- members
 
     soi$member <- "Not considered"
     for (i in unique(members)) {
         soi$member[soi$peak %in% which(members == i)] <- as.character(i)
     }
-    if (bymz) {
-        p1 <- ggplotly(ggplot(soi) + geom_point(aes(x = rt, y = rtiv,
-            color = as.factor(mz))))
-    } else {
-        p1 <- ggplotly(ggplot(soi) + geom_point(aes(x = rt, y = rtiv,
-            color = as.factor(member))))
-    }
+
+    p_bymz <- ggplotly(ggplot(soi) + geom_point(aes(x = rt, y = rtiv,
+                color = as.factor(mz))))
+    p_bygroup <- ggplotly(ggplot(soi) + geom_point(aes(x = rt, y = rtiv,
+                color = as.factor(member))))
+
     net <- networkD3::igraph_to_networkD3(net, group = members)
 
     net <- visNetwork(net$nodes %>% rename(label = name) %>%
@@ -781,49 +564,7 @@ setMethod("RawMS2Plot", c("RHermesExp", "numeric", "numeric","logical"),
         visEdges(smooth = FALSE) %>% visPhysics(solver = "forceAtlas2Based",
         forceAtlas2Based = list(gravitationalConstant = -100),
         stabilization = FALSE)
-    return(list(p1, net))
-
-
-
-
-
-    # # intervals <- struct@data@MS2Exp[[ms2id]]@Ident[[2]][[3]]
-    # relat <- struct@data@MS2Exp[[ms2id]]@Ident[[4]]
-    # id2 <- which(relat == entryid)
-    #
-    # curint <- intervals[[id2]]
-    # df$ss <- '0'
-    # for(i in seq_along(curint)){
-    #  min <- curint[[i]][[1]]
-    #  max <- curint[[i]][[2]]
-    #  df$ss[with(df, between(rt, min, max))] <- as.character(i)
-    # }
-    # pl <- ggplot(df) + geom_point(aes(x=rt, y = int, color = ss, shape = ss),
-    #                               alpha = 0.7, size = 1) +
-    #   theme_minimal()+ scale_color_gradient(low = 'lightcyan2', high = 'royalblue4')
-    #
-    # if(length(curint)==0){return(list(ggplotly(pl), ggplotly(ggplot())))}
-    #
-    # vlines <- lapply(seq_along(curint), function(x){
-    #   data.frame(min = curint[[x]][[1]], max = curint[[x]][[2]], id = as.character(x))
-    # }) %>% do.call(rbind, .)
-    #
-    # pl <- pl + geom_vline(xintercept = vlines$min, alpha = 0.2, linetype = 'dashed') +
-    #   geom_vline(xintercept = vlines$max, alpha = 0.2, linetype = 'dashed')
-    # pl <- ggplotly(pl)
-    #
-    # superspectra <- struct@data@MS2Exp[[ms2id]]@Ident[[2]][[2]][[id2]]
-    # setupdf <- do.call(rbind, superspectra)
-    #
-    # ssplot <- lapply(superspectra, function(spec){
-    #   p <- ggplotly(ggplot(spec) + geom_segment(aes(x = mz, xend = mz, y=0, yend=int), color = 'black')+
-    #                   theme_minimal()+
-    #                   scale_x_continuous(limits = c(min(setupdf$mz)-5, max(setupdf$mz)+5)))
-    #   return(p)
-    # })
-    # pl2 <- subplot(ssplot, nrows = length(ssplot))
-    #
-    # return(list(pl, pl2))
+    return(list(p_bymz = p_bymz, p_bygroup = p_bygroup, net = net, pks = pks))
 })
 
 
@@ -846,9 +587,11 @@ setMethod("IsoFidelity", c("RHermesExp", "numeric", "numeric",
     PL <- filter(PL, data.table::between(rt, curSOI$start, curSOI$end))
 
     if (plot) {
-        p <- ggplotly(ggplot(PL) + geom_point(aes(x = rt, y = rtiv,
-            color = isov)) + theme_minimal() + scale_color_brewer(palette = "Set2") +
-            xlab("RT(s)"))
+        p <- ggplotly(ggplot(PL) +
+                        geom_point(aes(x = rt, y = rtiv, color = isov)) +
+                        theme_minimal() +
+                        scale_color_brewer(palette = "Set2") +
+                        xlab("RT(s)"))
     }
 
     #Carbon number check with M1 peak intensity pattern
