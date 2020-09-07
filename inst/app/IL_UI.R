@@ -84,7 +84,9 @@ ILServer <- function(id, struct){
               radioButtons(ns("ILidx"), "Select which IL you want to export: ", choices = numIL(), selected = numIL()[1]),
               numericInput(ns("maxover"), "Maximum number of entries to monitor at the same time: ",
                            min = 1, max = 50, value = 5, step = 1,),
-              actionButton(ns("exportIL"), "Export the selected IL")
+              tags$div(actionButton(ns("exportIL"), "Export the selected IL",
+                                    style = "background-color: #4d4263; color: #F0F0F0"),
+                       style = "text-align: center;")
             )
           })
         } else {

@@ -44,9 +44,22 @@ MS2Server <- function(id, struct){
         output$whenIL <- renderUI(tagList(
           radioButtons(ns("selectIL"), "Select the IL from which the MS2 files were generated:",
                        choices = seq_along(struct$dataset@data@MS2Exp), selected = "1"),
-          actionButton(ns("startMS2"), "Start MS2 data processing")
+          uiOutput(ns("startMS2_box"))
         ))
       }, ignoreInit = TRUE, ignoreNULL = TRUE)
+
+      observeEvent(input$files , {
+        if(nrow(parseFilePaths(roots,input$files)) == 0){
+          output$startMS2_box <- renderUI({})
+        } else {
+          output$startMS2_box <- renderUI({
+            tags$div(actionButton(ns("startMS2"), "Start MS2 processing",
+                                  style = "background-color: #4d4263; color: #F0F0F0"),
+                     style = "text-align: center;")})
+        }
+      }, ignoreNULL = TRUE, ignoreInit = TRUE
+      )
+
 
       toReturn <- reactiveValues(dataset = RHermesExp(), trigger = 0)
       observeEvent(input$startMS2, {
