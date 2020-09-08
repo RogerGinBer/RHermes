@@ -8,15 +8,17 @@ ExtraInfo_UI <- function(id){
                     )
                ),
       tabPanel("Peak List",
-                div(radioButtons(inputId = ns("PLfiles"), label = "Select PL:",
-                             choices = "", selected = ""), style = "margin-left: 5%; margin-top: 3%"),
-                plotlyOutput(outputId = ns("coveragePlot1")),
-                plotlyOutput(outputId = ns("coveragePlot2"))
+                sidebarPanel(
+                  div(radioButtons(inputId = ns("PLfiles"), label = "Select PL:",
+                                   choices = "", selected = ""), style = "margin-left: 5%; margin-top: 3%"), width = "AUTO"),
+                sidebarPanel(
+                  plotlyOutput(outputId = ns("coveragePlot1")),
+                  plotlyOutput(outputId = ns("coveragePlot2")), width = "AUTO")
                ),
       tabPanel("SOI List",
                sidebarPanel(div(radioButtons(inputId = ns("SOIfiles"), label = "Select SOI List:",
                                 choices = "", selected = ""), style = "margin-left: 5%; margin-top: 3%"),width = "AUTO"),
-               sidebarPanel(DT::dataTableOutput(ns("SOItable"), width = "auto"), width = "auto")
+               sidebarPanel(DT::dataTableOutput(ns("SOItable"), width = "auto"), width = "AUTO")
                ),
       tabPanel("MS2 Data")
 

@@ -158,7 +158,7 @@ server <- function(input, output, session){
   PLPlotServer("PLPlotUI", struct = struct)
   SOIPlotServer("SOIPlotUI", struct = struct)
   MS2PlotServer("MS2PlotUI", struct = struct)
-  # IdentServer("Identifications", struct = struct)
+  IdentServer("Identifications", struct = struct)
   ExtraInfoServer("ExtraInfo_UI", struct = struct)
 
   setResults <- SettingsServer("Settings_UI", struct = struct)

@@ -1,80 +1,83 @@
 Ident_UI <- function(id) {
     ns <- NS(id)
     tagList(
-        conditionalPanel(condition = "input.id != 'nothing'",
-        ns = ns,
-        sidebarPanel(width = "AUTO",
-            fluidRow(
-                column(width = 4,
-                    radioButtons(ns("id"), "Select MS2Exp:", choices = "nothing",
-                    selected = "nothing", inline = TRUE)),
-                column(width = 4,
-                    tags$b("Export identifications:"),
-                    div(downloadButton(outputId = ns("savecsv"),
-                                    label = "Export as CSV", style = "margin-top: 10px"))),
-                column(width = 4, radioButtons(ns("format"),
-                                               label = "Superspectra export format:",
-                                               choices = c("msp", "mgf"), selected = "msp"),
-                    shinySaveButton(id = ns("saveselector"),
-                                    label = "Select folder",
-                                    title = "Save superspectra", style = "margin-bottom: 10px"),
-                    verbatimTextOutput(ns("savepath"), placeholder = TRUE),
-                    actionButton(ns("savebutton"), "Save your super spectra",
-                                icon("save"),
-                                style = "display: block; margin: 0 auto;")
-                ))),
-        sidebarPanel(width = "AUTO", dataTableOutput(ns("ms2table")))),
-                    conditionalPanel(condition = "input.id == 'nothing'",
-                                    ns = ns,
-                    sidebarPanel(width = "AUTO", h2("Load your MS2 data first",
-                                style = "text-align: center;"))))
+        sidebarPanel(width = "AUTO", h2("Identification Table",
+                                        style = "text-align: center;"),
+                     hr(style = "border-top : 1px dashed #C9B29B"), 
+                     uiOutput(ns("identTable"))
+        )
+    )
 }
 
 IdentServer <- function(id, struct) {
     moduleServer(id, function(input, output, session) {
+        ns <- session$ns
+        
         ####Updates to buttons, selections, etc.####
         observeEvent({
             struct$hasMS2
             struct$dataset@data@MS2Exp
         }, {
-            if (struct$hasMS2) {
-                #Determine which have ms2 data
-                whichMS2 <- vapply(struct$dataset@data@MS2Exp,
-                  function(ms2) {
-                    return(length(ms2@MS2Data) != 0)
-                  }, logical(1))
-                whichMS2 <- which(whichMS2)
-                #Update accordingly
-                updateRadioButtons(session, "id", choices = whichMS2,
-                  selected = whichMS2[1])
-            } else {
-                #Hide panels again
-                updateRadioButtons(session, "id", choices = NULL,
-                  selected = NULL)
-            }
-        }, ignoreNULL = TRUE, ignoreInit = TRUE, priority = 100)
+            whichMS2 <- vapply(struct$dataset@data@MS2Exp,
+                               function(ms2) {
+                                   return(length(ms2@MS2Data) != 0)
+                               }, logical(1))
+            whichMS2 <- which(whichMS2)
+            
+            output$identTable <- renderUI({
+                tagList(fluidRow(
+                    column(width = 4,
+                           radioButtons(ns("id"), "Select MS2Exp:", choices = whichMS2,
+                                        selected = whichMS2[1], inline = TRUE)),
+                    column(width = 4,
+                           tags$b("Export identifications:"),
+                           div(downloadButton(outputId = ns("savecsv"),
+                                              label = "Export as CSV", style = "margin-top: 10px"))),
+                    column(width = 4, radioButtons(ns("format"),
+                                                   label = "Superspectra export format:",
+                                                   choices = c("msp", "mgf"), selected = "msp"),
+                           shinySaveButton(id = ns("saveselector"),
+                                           label = "Select folder",
+                                           title = "Save superspectra", style = "margin-bottom: 10px"),
+                           verbatimTextOutput(ns("savepath"), placeholder = TRUE),
+                           actionButton(ns("savebutton"), "Save your super spectra",
+                                        icon("save"),
+                                        style = "display: block; margin: 0 auto;")
+                    )),
+                    div(dataTableOutput(ns("ms2table")), style = "margin-top: 30px;")
+                )
+           
+             })
 
+        }, ignoreNULL = TRUE, ignoreInit = TRUE, priority = 10)
+        
         savedf <- reactiveValues(data = NULL)
-
+        
         observeEvent({
             input$id
         }, {
-            ms2 <- struct$dataset@data@MS2Exp[[as.numeric(input$id)]]
-            identdf <- ms2@Ident[[1]][, -c("qMSMS", "patMSMS")]
-            identdf$anot <- vapply(identdf$anot, function(x) {
-                paste(x, collapse = " ")
-            }, character(1))
-            identdf$score <- round(identdf$score, digits = 3)
-            output$ms2table <- renderDataTable(identdf, options = list(scrollX = TRUE))
-            savedf$data <- identdf
-
-        }, ignoreNULL = TRUE, ignoreInit = TRUE, priority = 50)
-
+            if(input$id != "nothing"){
+                ms2 <- struct$dataset@data@MS2Exp[[as.numeric(input$id)]]@Ident[[1]]
+                ms2$hits <- lapply(ms2$results, function(hits){
+                    if(!is.data.frame(hits)){return(hits)}
+                    hits$formula
+                })
+                ms2$bestscore <- lapply(ms2$results, function(hits){
+                    if(!is.data.frame(hits)){return("N/A")}
+                    as.character(round(max(hits$cos), digits = 3))
+                })
+                ms2 <- dplyr::select(ms2, -c("ssdata", "results"))
+                output$ms2table <- renderDataTable(ms2,
+                                                   options = list(scrollX = TRUE))
+                savedf$data <- ms2   
+            }
+        }, ignoreNULL = TRUE, ignoreInit = TRUE)
+        
         output$savecsv <- downloadHandler(filename = "ms2data.csv",
-            content = function(file) {
-                write.csv(savedf$data, file)
-            }, contentType = "text/csv")
-
+                                          content = function(file) {
+                                              write.csv(savedf$data, file)
+                                          }, contentType = "text/csv")
+        
         shinyFileSave(input, "saveselector", roots = getVolumes(),
                       filetypes = c(""))
         savepath <- reactive(as.character(parseSavePath(getVolumes(),
@@ -82,7 +85,7 @@ IdentServer <- function(id, struct) {
         output$savepath <- renderText(savepath())
         observeEvent(input$savebutton, {
             if (length(savepath()) != 0) {
-
+                
                 switch(input$format,
                        msp = {exportMSP(struct$dataset, as.numeric(input$id), savepath())},
                        mgf = {exportMGF(struct$dataset, as.numeric(input$id), savepath())}
@@ -96,7 +99,6 @@ IdentServer <- function(id, struct) {
                                type = "warning")
             }
         }, ignoreNULL = TRUE, ignoreInit = TRUE)
-
-
     })
 }
+
