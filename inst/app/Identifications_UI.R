@@ -28,7 +28,9 @@ IdentServer <- function(id, struct) {
                 tagList(fluidRow(
                     column(width = 4,
                            radioButtons(ns("id"), "Select MS2Exp:", choices = whichMS2,
-                                        selected = whichMS2[1], inline = TRUE)),
+                                        selected = whichMS2[1], inline = TRUE),
+                           switchInput(ns("onlyhits"), label = "Only hits", value = TRUE)
+                    ),
                     column(width = 4,
                            tags$b("Export identifications:"),
                            div(downloadButton(outputId = ns("savecsv"),
@@ -44,6 +46,7 @@ IdentServer <- function(id, struct) {
                                         icon("save"),
                                         style = "display: block; margin: 0 auto;")
                     )),
+
                     div(dataTableOutput(ns("ms2table")), style = "margin-top: 30px;")
                 )
            
@@ -55,9 +58,15 @@ IdentServer <- function(id, struct) {
         
         observeEvent({
             input$id
+            input$onlyhits
         }, {
             if(input$id != "nothing"){
                 ms2 <- struct$dataset@data@MS2Exp[[as.numeric(input$id)]]@Ident[[1]]
+                
+                if(input$onlyhits){
+                    ms2 <- ms2[vapply(ms2$results, is.data.frame, logical(1)), ]
+                }
+                
                 ms2$hits <- lapply(ms2$results, function(hits){
                     if(!is.data.frame(hits)){return(hits)}
                     hits$formula
@@ -69,7 +78,8 @@ IdentServer <- function(id, struct) {
                 ms2 <- dplyr::select(ms2, -c("ssdata", "results"))
                 output$ms2table <- renderDataTable(ms2,
                                                    options = list(scrollX = TRUE))
-                savedf$data <- ms2   
+                ms2 <- sapply(ms2, as.character)
+                savedf$data <- ms2
             }
         }, ignoreNULL = TRUE, ignoreInit = TRUE)
         

@@ -41,11 +41,11 @@ IsoCalc <- function(DB, FWHM, intTHR, kTHR, instr = "Orbitrap",
 
     nsplit <- BiocParallelParam$workers
     suppressWarnings({
-        testres <- bplapply(split(testiso, seq(nsplit)),
+        testres <- bplapply(testiso,
                             RHermes:::isocalc_parallel, kTHR, resol_factor,
                             isotopecode, isOrbi, BPPARAM = BiocParallelParam)
     }) #Suppress warnings to avoid the split() "object not multiple of ..."
-    testres <- unlist(testres, recursive = FALSE)
+    # testres <- unlist(testres, recursive = FALSE)
 
     b <- lapply(testres, function(x) {
         return(any(is.na(x)))
@@ -74,45 +74,41 @@ IsoCalc <- function(DB, FWHM, intTHR, kTHR, instr = "Orbitrap",
     return(list(d4, factordf))
 }
 
-isocalc_parallel <- function(y, kTHR, resol_factor, isotopecode, isOrbi){
-    output <- lapply(y, function(x) {
-        if (isOrbi) {
-            limitfactor <- 2 * kTHR * x[1, 1]^(3/2)/resol_factor
+isocalc_parallel <- function(x, kTHR, resol_factor, isotopecode, isOrbi){
+    if (isOrbi) {
+        limitfactor <- 2 * kTHR * x[1, 1]^(3/2)/resol_factor
+    } else {
+        limitfactor <- 2 * kTHR * x[1, 1]/resol_factor
+    }
+    farenough <- diff(x[, 1]) > limitfactor
+    good <- c()
+    for (i in seq_len(nrow(x))) {
+        if (i == nrow(x)) {
+            good <- c(good, i)
+            next
+        }
+        if (farenough[i]) {
+            good <- c(good, i)
         } else {
-            limitfactor <- 2 * kTHR * x[1, 1]/resol_factor
-        }
-        farenough <- diff(x[, 1]) > limitfactor
-        good <- c()
-        for (i in seq_len(nrow(x))) {
-            if (i == nrow(x)) {
+            if (x[i, 2] > x[i + 1, 2]) {
                 good <- c(good, i)
-                next
-            }
-            if (farenough[i]) {
-                good <- c(good, i)
-            } else {
-                if (x[i, 2] > x[i + 1, 2]) {
-                    good <- c(good, i)
-                }
             }
         }
-        good <- unique(good)
-        x <- x[good, ]
+    }
+    good <- unique(good)
+    x <- x[good, ]
 
-        curiso <- isotopecode[which(isotopecode[, 1] %in% colnames(x)),]
-        x <- as.data.frame(x)
-        x$ID <- ""
-        for (i in seq_len(nrow(curiso))) {
-            col <- which(colnames(x) == curiso[i, 1])[1]
-            num <- x[, col]
-            tomodify <- which(num != 0)
-            x$ID[tomodify] <- paste0(x$ID[tomodify],
-                                     paste0(curiso[i,2], num[tomodify]))
-        }
-        x$deltam <- x[, 1] - as.numeric(unlist(x[1, 1]))
-        x <- x[-1, ]
-        return(x[, c("ID", "deltam")])
-    })
-    names(output) <- names(y)
-    return(output)
+    curiso <- isotopecode[which(isotopecode[, 1] %in% colnames(x)),]
+    x <- as.data.frame(x)
+    x$ID <- ""
+    for (i in seq_len(nrow(curiso))) {
+        col <- which(colnames(x) == curiso[i, 1])[1]
+        num <- x[, col]
+        tomodify <- which(num != 0)
+        x$ID[tomodify] <- paste0(x$ID[tomodify],
+                                 paste0(curiso[i,2], num[tomodify]))
+    }
+    x$deltam <- x[, 1] - as.numeric(unlist(x[1, 1]))
+    x <- x[-1, ]
+    return(x[, c("ID", "deltam")])
 }

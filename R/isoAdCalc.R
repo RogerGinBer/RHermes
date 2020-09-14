@@ -2,7 +2,8 @@ isoCos <- function(soilist, PL, isothr = 0.99, BiocParallelParam) {
     PL <- PL@peaklist
     setkey(PL, formv)
     message("Calculating isotope similarity:")
-    clist <- bplapply(seq_len(nrow(soilist)), parallelIsoCos, soilist, PL,
+    clist <- bplapply(seq_len(nrow(soilist)), parallelIsoCos, soilist, PL, 
+                      isothr,
                       BPPARAM = BiocParallelParam)
     hits <- lapply(clist, function(x) {return(x[[1]])})
     hitdf <- lapply(clist, function(x) {return(x[[2]])})
@@ -24,12 +25,12 @@ adCos <- function(soilist, FATable, adthr = 0.8, BiocParallelParam) {
     })
     setkey(FATable, "f")
     clist <- bplapply(seq_len(nrow(soilist)), parallelAdCos, soilist, FATable,
-                      BPPARAM = BiocParallelParam)
+                      adthr, BPPARAM = BiocParallelParam)
     soilist$adrows <- clist
     return(soilist)
 }
 
-parallelIsoCos <- function(i, soilist, PL){
+parallelIsoCos <- function(i, soilist, PL, isothr){
     SOI <- soilist[i, ]
     rti <- SOI$start[[1]]
     rtend <- SOI$end[[1]]
@@ -50,14 +51,14 @@ parallelIsoCos <- function(i, soilist, PL){
             count <- count + 1
             hitdf <- rbind(hitdf,
                            data.frame(iso = j,
-                                      mass = mean(cur$mz[cur$isov == j, ]),
+                                      mass = mean(cur$mz[cur$isov == j]),
                                       stringsAsFactors = FALSE))
         }
     }
     return(list(count, hitdf))
 }
 
-parallelAdCos <- function(i, soilist, FATable){
+parallelAdCos <- function(i, soilist, FATable, adthr){
     SOI <- soilist[i, ]
     rti <- SOI$start[[1]]
     rtend <- SOI$end[[1]]

@@ -83,7 +83,7 @@ ExtraInfoServer <- function(id, struct){
       }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
       observeEvent({input$SOIfiles},{
-        data <- struct$dataset@data@SOI[[as.numeric(input$SOIfiles)]]@SoiList[,-c("peaks", "MLdata")]
+        data <- struct$dataset@data@SOI[[as.numeric(input$SOIfiles)]]@SoiList[,-c("peaks")]
       data$anot <- paste(data$anot, sep = "@")
       output$SOItable <- DT::renderDataTable(data, options = list(scrollX = TRUE, autoWidth = TRUE))
       }, ignoreInit = TRUE, ignoreNULL = TRUE)

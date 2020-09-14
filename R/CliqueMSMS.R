@@ -22,10 +22,18 @@ CliqueMSMS <- function(MS2Exp, idx, contaminant = 173.5, delta = 0.1,
             }) %>% unlist() %>% unique()
         })
 
-    #Main loop
-    RES <- bplapply(seq_along(idx), generate_ss, BPPARAM = BPPARAM,
-                    MS2list, contaminant, delta, fs, idx, FALSE)
+    #Main function    
+    suppressWarnings(
+        RES <- bplapply(seq_along(idx), generate_ss, BPPARAM = BPPARAM,
+                        MS2list, contaminant, delta, fs, idx, FALSE)
+    )
     RES <- do.call(rbind, RES)
+    
+    RES <- RHermes:::purify_ss(RES, minint = 30000, minpks = 2)
+    
+    RES$start <- as.numeric(RES$start)
+    RES$end <- as.numeric(RES$end)
+    RES$apex <- as.numeric(RES$apex)
     return(RES)
 }
 
@@ -148,11 +156,6 @@ generate_ss <- function(curentry, MS2list, contaminant, delta, fs, idx,
     wc <- igraph::cluster_fast_greedy(net)
     members <- igraph::membership(wc)
 
-    if(to_plot){
-        return(list(net = net, members = members, data = data,
-                    soi = soi, pks = pks))
-    }
-
     n_mem <- length(unique(members))
     ss <- data.frame(start = numeric(n_mem), end = numeric(n_mem),
                      apex = numeric(n_mem), ILentry = numeric(n_mem),
@@ -172,6 +175,12 @@ generate_ss <- function(curentry, MS2list, contaminant, delta, fs, idx,
                           int = pks$maxo[which(members == id)]))
     })
     ss$precmass <- rep(header$precursorMZ[1], nrow(ss))
+    
+    if(to_plot){
+        return(list(net = net, members = members, data = data,
+                    soi = soi, pks = pks, ss = ss))
+    }
+    
     ss$ILentry <- rep(idx[curentry], nrow(ss))
     ss$anot <- rep(fs[curentry], nrow(ss))
 
@@ -305,3 +314,14 @@ centwavePropag <- function(pks, soi){
     })
     return(list(pks, soi))
 }
+
+purify_ss <- function(sslist, minint = 30000, minpks = 2){
+    good_ss <- vapply(sslist$ssdata, function(data){
+        has_int <- any(data$int > minint)
+        has_many_pks <- (nrow(data) > minpks)
+        return(has_int | has_many_pks)
+    }, logical(1))
+    sslist <- sslist[good_ss, ]
+    return(sslist)
+}
+

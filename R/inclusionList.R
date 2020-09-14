@@ -61,7 +61,7 @@ inclusionList <- function(struct, params, id) {
         rare <- which(vapply(GL$ad[low], function(x) {
             !any(unlist(x) %in% c("M+H", "M+NH4", "M+Na", "M+K",
                 "M+CH3OH", "M-H", "M+Cl", "M+Br", "M+H2O-H"))
-        }, logical(length(low))))
+        }, logical(1)))
         if (length(rare) != 0) {
             GL <- GL[-low[rare], ]
         }

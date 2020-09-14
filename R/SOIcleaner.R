@@ -26,9 +26,13 @@ setMethod("SOIcleaner", signature = c("RHermesExp", "numeric",
         # Isotopic pattern similarity
         message("Calculating isotopic fidelity metrics:")
 
-        isodata <- bplapply(good, PlotlyIsoFidelity, struct = struct,
+        # isodata <- bplapply(good, IsoFidelity, struct = struct,
+        #                     soilist = soiid, plot = FALSE,
+        #                     BPPARAM = BiocParallelParam)
+        
+        isodata <- bplapply(good, IsoFidelity, struct = struct,
                             soilist = soiid, plot = FALSE,
-                            BPPARAM = BiocParallelParam)
+                            BPPARAM = SerialParam(progressbar = TRUE))
 
         cos <- vapply(isodata, function(x) {
             x[[3]]
