@@ -531,9 +531,16 @@ setGeneric("RawMS2Plot", function(struct, ms2id, entryid, bymz) {
 })
 setMethod("RawMS2Plot", c("RHermesExp", "ANY", "ANY", "ANY"),
           function(struct, ms2id, entryid, bymz = TRUE) {
-    if (is.na(entryid)) { return(list(ggplotly(ggplot()), NA))}
-
+    if (is.na(entryid)) { 
+      return(list(p_bymz = ggplotly(ggplot()), p_bygroup = ggplotly(ggplot()),
+                  net = NA, pks = data.frame()))
+    }
     ms2data <- struct@data@MS2Exp[[ms2id]]@MS2Data
+    withdata <- which(vapply(ms2data, function(x){length(x) != 0}, logical(1)))
+    if(!entryid %in% withdata){
+      return(list(p_bymz = ggplotly(ggplot()), p_bygroup = ggplotly(ggplot()),
+                  net = NA, pks = data.frame()))
+    }
     ss <- RHermes:::generate_ss(entryid, MS2list = ms2data, contaminant = 173.5,
                       delta = 0.1, fs = chracter(), idx = numeric(),
                       to_plot = TRUE)
@@ -543,16 +550,41 @@ setMethod("RawMS2Plot", c("RHermesExp", "ANY", "ANY", "ANY"),
     data <- ss$data
     pks <- ss$pks
     pks$members <- members
+    ss <- ss$ss
+    mem_to_keep <- vapply(members, function(x){
+      curpks <- pks[pks$members == x, ]
+      is_intense <- any(curpks$maxo > 3e5)
+      has_many_pks <- nrow(curpks) > 2
+      return(is_intense | has_many_pks)
+    }, logical(1))
+    
+    members <- members[mem_to_keep]
+    
+    pks <- pks[pks$members %in% members, ]
+    
+    oldpoints <- soi
+    oldpoints$member <- "Original points"
+    xlim <- c(min(soi$rt)-8, max(soi$rt)+8)
+    
+    res <- reassign_and_check(pks, soi)
+    pks <- res[[1]]
+    soi <- res[[2]]
+    if(nrow(soi) == 0){
+      return(list(p_bymz = ggplotly(ggplot()), p_bygroup = ggplotly(ggplot()),
+                  net = NA, pks = data.frame()))
+    }
+    
+    if(any(!mem_to_keep)) net <- igraph::delete.vertices(net, which(!mem_to_keep))
 
     soi$member <- "Not considered"
     for (i in unique(members)) {
-        soi$member[soi$peak %in% which(members == i)] <- as.character(i)
+        soi$member[soi$peak %in% which(members == i)] <- paste("Superspec.", as.character(i))
     }
 
-    p_bymz <- ggplotly(ggplot(soi) + geom_point(aes(x = rt, y = rtiv,
-                color = as.factor(mz))))
-    p_bygroup <- ggplotly(ggplot(soi) + geom_point(aes(x = rt, y = rtiv,
-                color = as.factor(member))))
+    p_bymz <- ggplotly(ggplot(rbind(soi, oldpoints)) + geom_point(aes(x = rt, y = rtiv,
+                color = as.factor(mz))) + xlim(xlim))
+    p_bygroup <- ggplotly(ggplot(rbind(soi, oldpoints)) + geom_point(aes(x = rt, y = rtiv,
+                color = as.factor(member))) + xlim(xlim))
 
     net <- networkD3::igraph_to_networkD3(net, group = members)
 

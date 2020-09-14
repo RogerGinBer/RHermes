@@ -73,7 +73,7 @@ RHermesIdent <- setClass("RHermesIdent", slots = list(IdentifiedSOI = "data.tabl
     CompoundList = "list", MSMSMatchings = "list", Metadata = "list"))
 
 
-
+#' @import BiocParallel
 setRHermesCluster <- function(){
     if(Sys.info()[1] == "Windows"){
         ram <- system2("wmic", args =  "OS get FreePhysicalMemory /Value",
@@ -82,7 +82,7 @@ setRHermesCluster <- function(){
         ram <- gsub("FreePhysicalMemory=", "", ram, fixed = TRUE)
         ram <- gsub("\r", "", ram, fixed = TRUE)
         ram <- as.integer(ram)
-        nwork <- floor(ram/2e6) #Suppose max 2GB per worker
+        nwork <- min(floor(ram/2e6), BiocParallel::snowWorkers()) #Suppose max 2GB per worker
         if(nwork == 1){
             warning(paste("Maybe you have too little RAM.",
                                "Proceeding with SerialParam()"))

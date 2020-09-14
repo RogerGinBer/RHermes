@@ -38,11 +38,11 @@ require(enviPat)
 library(igraph)
 require(mzR)
 require(magrittr)
-require(doParallel)
 require(CHNOSZ)
 require(ggplot2)
+require(viridis)
 require(tidyverse)
-library(doSNOW)
+library(gtools)
 library(data.table)
 library(keras)
 library(BiocParallel)
@@ -51,12 +51,16 @@ library(BiocParallel)
 ```{r warning=FALSE}
 # setwd("../") #For unknitted use of the chunk
 myHermes <- RHermesExp()
-myHermes <- setExpParam(myHermes, params = ExpParam(ppm = 3.5, res = 120000, instr = "Orbitrap", minmz = 50, maxmz = 1200))
+myHermes <- setExpParam(myHermes,
+                        params = ExpParam(ppm = 3.5, res = 120000,
+                                          instr = "Orbitrap", minmz = 50,
+                                          maxmz = 1200))
 
 negHermes <- RHermesExp()
-negHermes <- setExpParam(negHermes, params = ExpParam(ppm = 3.5, res = 120000,
-                                                      instr = "Orbitrap", minmz = 50,
-                                                      maxmz = 1200, ion = "-"))
+negHermes <- setExpParam(negHermes,
+                         params = ExpParam(ppm = 3.5, res = 120000,
+                                          instr = "Orbitrap", minmz = 50,
+                                          maxmz = 1200, ion = "-"))
 
 ```
 
@@ -82,16 +86,11 @@ charge and multiplicity.
 
 ```{r, message=seq(2,3), warning= FALSE}
 setwd("../") #For unknitted use of the chunk
-myHermes <- setDB(myHermes, "custom", filename = "D:/MS1_2ID/MS1_2ID.csv") #Default HMDB, single charged, monomeric adducts  
-adlist <- adductTables()[[2]]
-# myHermes <- remAd(myHermes, c(adlist[grep(x = adlist, pattern = "Iso")], adlist[grep(x = adlist, pattern = "DMSO")]))
+myHermes <- setDB(myHermes, "custom", filename = "D:/MS1_2ID/MS1_2ID.csv") 
+myHermes <- remAd(myHermes, c("M+IsoProp+H", "M+IsoProp+Na+H", "M+DMSO+H"))
 
-negHermes <- setDB(negHermes, "custom", filename = "D:/MS1_2ID/MS1_2ID.csv") #Default HMDB, single charged, monomeric adducts
-adlist <- adductTables()[[1]]
-# negHermes <- remAd(negHermes, c(adlist[grep(x = adlist, pattern = "Iso")], adlist[grep(x = adlist, pattern = "DMSO")]))
-
-
-
+negHermes <- setDB(negHermes, "custom", filename = "D:/MS1_2ID/MS1_2ID.csv")
+negHermes <- remAd(negHermes, c("M+IsoProp+H", "M+IsoProp+Na+H", "M+DMSO+H"))
 
 readTime(myHermes)
 ```
@@ -107,13 +106,13 @@ mode_, just bear in mind it is significantly slower).
 
 ```{r, message = 1, warning = FALSE}
 dir <- "D:/ABrunner Plasma/"
-fil <- list.files(dir, pattern = ".*pos.*.mzML", full.names = TRUE)[c(1,3,5)]
+fil <- list.files(dir, pattern = ".*pos.*.mzML", full.names = TRUE)[c(3,5)] #Blank and Sample
 myHermes <- FileProc(myHermes, files = fil)
-saveRDS(myHermes, file ="D:/ABrunner Plasma/MS1_custom_pos.rds")
+saveRDS(myHermes, file ="D:/ABrunner Plasma/MS1_pos_PL.rds")
 
-fil <- list.files(dir, pattern = ".*neg.*.mzML", full.names = TRUE)[c(1,3,5)]
+fil <- list.files(dir, pattern = ".*neg.*.mzML", full.names = TRUE)[c(3,5)]
 negHermes <- FileProc(negHermes, files = fil)
-saveRDS(negHermes, file ="D:/ABrunner Plasma/MS1_custom_neg.rds")
+saveRDS(negHermes, file ="D:/ABrunner Plasma/MS1_neg_PL.rds")
 
 
 ```
@@ -164,22 +163,32 @@ injections needed afterwards. It works like this:
 
 
 ```{r , warning=FALSE}
+myHermes <- readRDS("D:/ABrunner Plasma/MS1_pos_PL.rds")
 setwd("../") #For unknitted use of the chunk
 s <- getSOIpar("double")
-myHermes <- SOIfinder(myHermes, params = s, fileID = c(3),
-                      against = c(2))
-saveRDS(myHermes, file = "D:/ABrunner Plasma/MS1_custom_pos.rds")
-myHermes <- SOIcleaner(myHermes, soiid = 1, minint = 10000, TRUE)
+myHermes <- SOIfinder(myHermes, params = s, fileID = c(1,2,2),
+                      against = c(0,0,1))
+saveRDS(myHermes, file = "D:/ABrunner Plasma/MS1_pos_SOI.rds")
 
 
+myHermes <- readRDS("D:/ABrunner Plasma/MS1_pos_SOI.rds")
 
-negHermes <- SOIfinder(negHermes, params = s, fileID = c(3),
-                      against = c(2))
-saveRDS(negHermes, file = "D:/ABrunner Plasma/MS1_custom_neg.rds")
-negHermes <- SOIcleaner(negHermes, soiid = 1, 10000, TRUE)
+myHermes <- SOIcleaner(myHermes, soiid = 3, minint = 10000, FALSE)
+myHermes <- SOIcleaner(myHermes, soiid = 3, minint = 10000, TRUE)
 
-# myHermes <- SOIfinder(myHermes, params = s, fileID = c(1,2,3,3),
-#                       against = c(0,1,1,2))
+saveRDS(myHermes, file = "D:/ABrunner Plasma/MS1_pos_SOI_filter.rds")
+
+
+negHermes <- readRDS("D:/ABrunner Plasma/MS1_neg_PL.rds")
+negHermes <- SOIfinder(negHermes, params = s, fileID = c(1,2,2),
+                      against = c(0,0,1))
+saveRDS(negHermes, file = "D:/ABrunner Plasma/MS1_neg_SOI.rds")
+
+negHermes <- SOIcleaner(negHermes, soiid = 3, minint = 10000, FALSE)
+negHermes <- SOIcleaner(negHermes, soiid = 3, 10000, TRUE)
+saveRDS(negHermes, file = "D:/ABrunner Plasma/MS1_neg_SOI_filter.rds")
+
+
 ```
 
 ## Quality control - Plotting
@@ -209,12 +218,14 @@ object@metadata@ExpParam@adlist to ensure proper spelling.
 
 ```{r}
 
-myHermes <- genIL(myHermes, id = 1, par = ILParam(priorization = "full"))
-myHermes <- genIL(myHermes, id = 1, par = ILParam(priorization = "yes", ad = c("M+H", "M+NH4", "M+CH3OH+H")))
+myHermes <- genIL(myHermes, id = 3, par = ILParam(priorization = "full"))
+myHermes <- genIL(myHermes, id = 3, par = ILParam(priorization = "yes", ad = c("M+H", "M+NH4", "M+CH3OH+H")))
+saveRDS(myHermes, file = "D:/ABrunner Plasma/MS1_pos_SOI_filter.rds")
 
 
-negHermes <- genIL(negHermes, id = 1, par = ILParam(priorization = "full"))
-negHermes <- genIL(negHermes, id = 1, par = ILParam(priorization = "yes", ad = c("M-H")))
+negHermes <- genIL(negHermes, id = 3, par = ILParam(priorization = "full"))
+negHermes <- genIL(negHermes, id = 3, par = ILParam(priorization = "yes", ad = c("M-H")))
+saveRDS(negHermes, file = "D:/ABrunner Plasma/MS1_neg_SOI_filter.rds")
 
 ```
 
@@ -239,15 +250,19 @@ generated data with RHermes and obtain compound identifications.
 ## Using MS2Proc
 
 ```{r}
-myHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_pos_filtered.rds")
+# myHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_pos_filtered.rds")
 ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*pos.*.mzML", full.names = TRUE)
 ms2f <- ms2f[c(seq(5,14), seq(16, 25))]
-myHermes2 <- MS2Proc(myHermes, 2, MS2files = ms2f, referenceDB = "D:/sp_MS2ID_RogerGB.RData")
+myHermes <- MS2Proc(myHermes, 1, MS2files = ms2f, referenceDB = "D:/sp_MS2ID_RogerGB.RData", mincos = 0.8)
+myHermes <- MS2Proc(myHermes, 2, MS2files = ms2f, referenceDB = "D:/sp_MS2ID_RogerGB.RData", mincos = 0.8)
+saveRDS(myHermes, file = "D:/ABrunner Plasma/MS1_pos_ident.rds")
 
-negHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_neg_filtered.rds")
+# negHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_neg_filtered.rds")
 ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*neg.*.mzML", full.names = TRUE)
 ms2f <- ms2f[c(seq(5,14), seq(16, 22))]
-negHermes2 <- MS2Proc(negHermes, 1, MS2files = ms2f, referenceDB = "D:/sp_MS2ID_RogerGB.RData")
+negHermes <- MS2Proc(negHermes, 1, MS2files = ms2f, referenceDB = "D:/sp_MS2ID_RogerGB.RData", mincos = 0.8)
+negHermes <- MS2Proc(negHermes, 2, MS2files = ms2f, referenceDB = "D:/sp_MS2ID_RogerGB.RData", mincos = 0.8)
+saveRDS(negHermes, file = "D:/ABrunner Plasma/MS1_neg_ident.rds")
 
 
 ```
