@@ -80,6 +80,7 @@ IdentServer <- function(id, struct) {
                                                    options = list(scrollX = TRUE))
                 ms2 <- sapply(ms2, as.character)
                 savedf$data <- ms2
+
             }
         }, ignoreNULL = TRUE, ignoreInit = TRUE)
         
