@@ -137,7 +137,7 @@ MS2PlotServer <- function(id, struct) {
         if (!is.na(rawplots[[2]][1])) {
           output$rawss <- renderVisNetwork(rawplots[["net"]])
         } else {
-          output$rawss <- renderVisNetwork({})
+          # output$rawss <- renderVisNetwork({})
         }
       }
     }, ignoreNULL = TRUE, ignoreInit = TRUE, priority = -1)

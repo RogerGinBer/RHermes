@@ -328,7 +328,8 @@ setMethod("MirrorPlot", c("RHermesExp", "numeric", "numeric"),
         query <- entry$ssdata[[1]]
         ref <- struct@data@MS2Exp[[ms2id]]@Ident$MS2_correspondance[[ssnumber]]
         pattern <- struct@data@MS2Exp[[ms2id]]@Ident$DatabaseSpectra[ref]
-        pattern <- unlist(pattern, recursive = FALSE)
+        pattern <- unname(pattern) #Avoid "name.subname" when unlisting
+        pattern <- unlist(pattern, recursive = FALSE, use.names = TRUE)
         maxint <- max(query$int)
         query$int <- query$int/max(query$int) * 100
         bestdf <- query[query$int > 10, ]
@@ -553,7 +554,7 @@ setMethod("RawMS2Plot", c("RHermesExp", "ANY", "ANY", "ANY"),
     ss <- ss$ss
     mem_to_keep <- vapply(members, function(x){
       curpks <- pks[pks$members == x, ]
-      is_intense <- any(curpks$maxo > 3e5)
+      is_intense <- any(curpks$maxo > 3e4)
       has_many_pks <- nrow(curpks) > 2
       return(is_intense | has_many_pks)
     }, logical(1))
