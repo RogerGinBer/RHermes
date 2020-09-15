@@ -1,9 +1,10 @@
 Ident_UI <- function(id) {
     ns <- NS(id)
     tagList(
+
         sidebarPanel(width = "AUTO", h2("Identification Table",
                                         style = "text-align: center;"),
-                     hr(style = "border-top : 1px dashed #C9B29B"), 
+                     hr(style = "border-top : 1px dashed #C9B29B"),
                      uiOutput(ns("identTable"))
         )
     )
@@ -12,7 +13,7 @@ Ident_UI <- function(id) {
 IdentServer <- function(id, struct) {
     moduleServer(id, function(input, output, session) {
         ns <- session$ns
-        
+
         ####Updates to buttons, selections, etc.####
         observeEvent({
             struct$hasMS2
@@ -23,7 +24,7 @@ IdentServer <- function(id, struct) {
                                    return(length(ms2@MS2Data) != 0)
                                }, logical(1))
             whichMS2 <- which(whichMS2)
-            
+
             output$identTable <- renderUI({
                 tagList(fluidRow(
                     column(width = 4,
@@ -49,24 +50,24 @@ IdentServer <- function(id, struct) {
 
                     div(dataTableOutput(ns("ms2table")), style = "margin-top: 30px;")
                 )
-           
+
              })
 
         }, ignoreNULL = TRUE, ignoreInit = TRUE, priority = 10)
-        
+
         savedf <- reactiveValues(data = NULL)
-        
+
         observeEvent({
             input$id
             input$onlyhits
         }, {
             if(input$id != "nothing"){
                 ms2 <- struct$dataset@data@MS2Exp[[as.numeric(input$id)]]@Ident[[1]]
-                
+
                 if(input$onlyhits){
                     ms2 <- ms2[vapply(ms2$results, is.data.frame, logical(1)), ]
                 }
-                
+
                 ms2$hits <- lapply(ms2$results, function(hits){
                     if(!is.data.frame(hits)){return(hits)}
                     hits$formula
@@ -83,12 +84,12 @@ IdentServer <- function(id, struct) {
 
             }
         }, ignoreNULL = TRUE, ignoreInit = TRUE)
-        
+
         output$savecsv <- downloadHandler(filename = "ms2data.csv",
                                           content = function(file) {
                                               write.csv(savedf$data, file)
                                           }, contentType = "text/csv")
-        
+
         shinyFileSave(input, "saveselector", roots = getVolumes(),
                       filetypes = c(""))
         savepath <- reactive(as.character(parseSavePath(getVolumes(),
@@ -96,7 +97,7 @@ IdentServer <- function(id, struct) {
         output$savepath <- renderText(savepath())
         observeEvent(input$savebutton, {
             if (length(savepath()) != 0) {
-                
+
                 switch(input$format,
                        msp = {exportMSP(struct$dataset, as.numeric(input$id), savepath())},
                        mgf = {exportMGF(struct$dataset, as.numeric(input$id), savepath())}

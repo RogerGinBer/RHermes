@@ -2,12 +2,17 @@ MS2PlotUI <- function(id) {
   ns <- NS(id)
   tagList(
     tags$br(),
+
     radioGroupButtons(inputId = ns("selectplot"), label = "Select a graph :",
                       choices = c(`<i class='fa fa-bar-chart'></i> Identifications` = "ident",
-                                  `<i class="fas fa-database"></i> Raw MSMS data` = "raw"),
+                                  `<i class="fas fa-database"></i> Raw MSMS data` = "raw",
+                                  `SuperSpectra Comparisson` = "comp",
+                                  `Full SuperSpectra COmparisson` = "sup"),
                       justified = TRUE),
+    radioButtons(ns("id"), "Select MS2Exp:", choices = "",
+                 selected = "", inline = TRUE),
     br(),
-    
+
     conditionalPanel("input.selectplot == 'ident'", ns = ns,
                      fluidRow(
                        column(6,
@@ -26,10 +31,6 @@ MS2PlotUI <- function(id) {
     ),
     conditionalPanel("input.selectplot == 'raw'", ns = ns,
                      fluidRow(
-                       column(6,
-                              radioButtons(ns("id"), "Select MS2Exp:", choices = "",
-                                           selected = "", inline = TRUE)
-                       ),
                        column(6,
                               checkboxGroupButtons(
                                 inputId = ns("rawset"),
@@ -69,15 +70,30 @@ MS2PlotUI <- function(id) {
                                         column(12, align="center",
                                                tableOutput(ns('rawpks'))))
                      )
+    ),
+    conditionalPanel("input.selectplot == 'comp'", ns = ns,
+                     fluidRow(
+                       column(6,
+                              selectizeInput(ns("selectident2"),
+                                             label = "Select the superspectra entry to check:",
+                                             choices = NULL, selected = NULL)),
+                       column(6,
+                              pickerInput(inputId = ns("otherss"),
+                                          label = "Select which superspectra to compare with:",
+                                          choices = NULL, selected = NULL, multiple = TRUE,
+                                          options = list(`max-options` = 10))
+                       )
+                     ),
+                     plotlyOutput(ns("versusplot"))
     )
   )
-  
+
 }
 
 MS2PlotServer <- function(id, struct) {
   moduleServer(id, function(input, output, session) {
     # observeEvent({},{}, ignoreNULL = TRUE, ignoreInit = TRUE)
-    
+
     ####Updates to buttons, selections, etc.####
     observeEvent({
       struct$hasMS2
@@ -90,21 +106,22 @@ MS2PlotServer <- function(id, struct) {
                              return(length(ms2@MS2Data) != 0)
                            }, logical(1))
         whichMS2 <- which(whichMS2)
-        
+
         #Update accordingly
         updateRadioButtons(session, "id", choices = whichMS2,
                            selected = whichMS2[1])
-        
+
       } else {
         #Hide panels again
         updateRadioButtons(session, "id", choices = NULL,
                            selected = NULL)
       }
     }, ignoreNULL = TRUE, ignoreInit = TRUE, priority = 100)
-    
+
     observeEvent({
       input$id
-    }, {
+    },
+    {
       ms2 <- struct$dataset@data@MS2Exp[[as.numeric(input$id)]]
       sslist <- ms2@Ident[["MS2Features"]]
       with_hits <- which(vapply(sslist$results,
@@ -119,9 +136,25 @@ MS2PlotServer <- function(id, struct) {
                            choices = as.character(original_IL),
                            selected = as.character(original_IL[1]),
                            server = TRUE, options = list(maxOptions = 50000))
+      updateSelectizeInput(session, "selectident2",
+                           choices = as.character(seq_len(nrow((sslist)[1]))), server = TRUE,
+                           selected = as.character(1),
+                           options = list(maxOptions = 50000))
+
     }, ignoreNULL = TRUE, ignoreInit = TRUE, priority = 50)
-    
-    
+
+    observeEvent({input$selectident2},{
+      ms2 <- struct$dataset@data@MS2Exp[[as.numeric(input$id)]]
+      sslist <- ms2@Ident[["MS2Features"]]
+
+      otherss <- seq_len(nrow(sslist))[-as.numeric(input$selectident2)]
+
+      updatePickerInput(session, "otherss",
+                        choices = as.character(otherss),
+                        selected = as.character(otherss[1]))
+      }, ignoreNULL = TRUE, ignoreInit = TRUE
+    )
+
     #### Plots ####
     observeEvent({
       input$selectILentry
@@ -141,7 +174,7 @@ MS2PlotServer <- function(id, struct) {
         }
       }
     }, ignoreNULL = TRUE, ignoreInit = TRUE, priority = -1)
-    
+
     observeEvent({
       input$selectident
       input$id
@@ -158,7 +191,7 @@ MS2PlotServer <- function(id, struct) {
         }
       }
     }, ignoreNULL = TRUE, ignoreInit = TRUE, priority = 50)
-    
+
     observeEvent({
       input$selectident
       input$selecthits
@@ -174,10 +207,28 @@ MS2PlotServer <- function(id, struct) {
         if(as.numeric(input$selectident) %in% with_hits){
           identplots <- MirrorPlot(struct$dataset,
                                    as.numeric(input$id), as.numeric(input$selectident),
-                                   input$selecthits)
+                                   input$selecthits, mode = "hits")
           output$mirrorplot <- renderPlotly(identplots)
         }
       }
+    }, ignoreNULL = TRUE, ignoreInit = TRUE, priority = -2)
+
+    observeEvent({
+      input$selectident2
+      input$otherss
+      input$id
+    }, {
+      if (input$selectident2 != "" & !is.na(input$selectident2) &
+          length(input$otherss) != 0) {
+        ms2 <- struct$dataset@data@MS2Exp[[as.numeric(input$id)]]
+
+        sslist <- ms2@Ident[["MS2Features"]]
+
+          identplots <- MirrorPlot(struct$dataset,
+                                   as.numeric(input$id), as.numeric(input$selectident2),
+                                   as.numeric(input$otherss), mode = "versus")
+          output$versusplot <- renderPlotly(identplots)
+        }
     }, ignoreNULL = TRUE, ignoreInit = TRUE, priority = -2)
   })
 }

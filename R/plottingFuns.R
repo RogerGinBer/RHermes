@@ -318,34 +318,43 @@
 # }
 
 #'@export
-setGeneric("MirrorPlot", function(struct, ms2id, ssnumber, patform) {
+setGeneric("MirrorPlot", function(struct, ms2id, ssnumber, patform, mode = "hits") {
     standardGeneric("MirrorPlot")
 })
 setMethod("MirrorPlot", c("RHermesExp", "numeric", "numeric"),
-    function(struct, ms2id, ssnumber, patform) {
+    function(struct, ms2id, ssnumber, patform, mode = "hits") {
         # function(query, pattern, title = 'Mirror plot', subtitle = '', baseline = 1000, maxint = 0, molecmass = 200){
         entry <- struct@data@MS2Exp[[ms2id]]@Ident$MS2Features[ssnumber,]
         query <- entry$ssdata[[1]]
-        ref <- struct@data@MS2Exp[[ms2id]]@Ident$MS2_correspondance[[ssnumber]]
-        pattern <- struct@data@MS2Exp[[ms2id]]@Ident$DatabaseSpectra[ref]
-        pattern <- unname(pattern) #Avoid "name.subname" when unlisting
-        pattern <- unlist(pattern, recursive = FALSE, use.names = TRUE)
         maxint <- max(query$int)
         query$int <- query$int/max(query$int) * 100
         bestdf <- query[query$int > 10, ]
         bestdf$mz <- round(bestdf$mz, 4)
-
         molecmass <- entry$precmass
         baseline <- 1000
         subtitle <- ""
         title <- ""
         baseline <- baseline/maxint * 100
 
+        if(mode == "hits"){
+          ref <- struct@data@MS2Exp[[ms2id]]@Ident$MS2_correspondance[[ssnumber]]
+          pattern <- struct@data@MS2Exp[[ms2id]]@Ident$DatabaseSpectra[ref]
+          pattern <- unname(pattern) #Avoid "name.subname" when unlisting
+          pattern <- unlist(pattern, recursive = FALSE, use.names = TRUE)
+          }
+
         mirrplot <- lapply(patform, function(x){
+          if(mode == "hits"){
             refspec <- pattern[[x]][[entry$results[[1]]$id[which(entry$results[[1]]$formula == x)]]]
             if(is.null(refspec)){return(ggplotly(ggplot()))}
             refspec <- as.data.frame(t(refspec))
+          }
+          if(mode == "versus"){
+            refspec <- struct@data@MS2Exp[[ms2id]]@Ident$MS2Features$ssdata[[x]]
 
+            if(is.null(refspec)){return(ggplotly(ggplot()))}
+
+          }
             colnames(refspec) <- c("mz", "int")
             refspec$int <- refspec$int/max(refspec$int) * 100
 
@@ -383,6 +392,8 @@ setMethod("MirrorPlot", c("RHermesExp", "numeric", "numeric"),
               ggplotly(pl, height = ifelse(length(patform)<5, 300, 200)*
                            length(patform))
             })
+
+
         return(subplot(mirrplot, nrows = length(mirrplot), shareX = TRUE,
                        which_layout = 1))
     })
@@ -532,7 +543,7 @@ setGeneric("RawMS2Plot", function(struct, ms2id, entryid, bymz) {
 })
 setMethod("RawMS2Plot", c("RHermesExp", "ANY", "ANY", "ANY"),
           function(struct, ms2id, entryid, bymz = TRUE) {
-    if (is.na(entryid)) { 
+    if (is.na(entryid)) {
       return(list(p_bymz = ggplotly(ggplot()), p_bygroup = ggplotly(ggplot()),
                   net = NA, pks = data.frame()))
     }
@@ -558,15 +569,15 @@ setMethod("RawMS2Plot", c("RHermesExp", "ANY", "ANY", "ANY"),
       has_many_pks <- nrow(curpks) > 2
       return(is_intense | has_many_pks)
     }, logical(1))
-    
+
     members <- members[mem_to_keep]
-    
+
     pks <- pks[pks$members %in% members, ]
-    
+
     oldpoints <- soi
     oldpoints$member <- "Original points"
     xlim <- c(min(soi$rt)-8, max(soi$rt)+8)
-    
+
     res <- reassign_and_check(pks, soi)
     pks <- res[[1]]
     soi <- res[[2]]
@@ -574,7 +585,7 @@ setMethod("RawMS2Plot", c("RHermesExp", "ANY", "ANY", "ANY"),
       return(list(p_bymz = ggplotly(ggplot()), p_bygroup = ggplotly(ggplot()),
                   net = NA, pks = data.frame()))
     }
-    
+
     if(any(!mem_to_keep)) net <- igraph::delete.vertices(net, which(!mem_to_keep))
 
     soi$member <- "Not considered"
