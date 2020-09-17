@@ -255,7 +255,7 @@ generated data with RHermes and obtain compound identifications.
 
 ```{r}
 ms2f <- list.files("D:/ABrunner/MSMSdata", pattern = ".*pos.*.mzML", full.names = TRUE)[seq(1,31)]
-myHermes <- MS2Proc(myHermes, 1, MS2files = ms2f)
+myHermes <- MS2Proc(myHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", useDB = TRUE)
 myHermes <- MS2Proc(myHermes, 2, MS2files = ms2f)
 
 

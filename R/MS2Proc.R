@@ -20,15 +20,13 @@
 #'MS2Proc(myHermes, 1, c('C:/myFolder/File1.mzML', 'C:/myFolder/File2.mzML'))
 #'
 #' @export
-setGeneric("MS2Proc", function(struct, id, MS2files,
-    referenceDB = "D:/sp_MassBankEU_20200316_203615.RData",
-    mincos = 0.6) {
+setGeneric("MS2Proc", function(struct, id, MS2files, useDB = FALSE,
+    referenceDB = "D:/sp_MassBankEU_20200316_203615.RData", mincos = 0.8) {
     standardGeneric("MS2Proc")
 })
 setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
-    "ANY", "ANY"), function(struct, id,
-    MS2files, referenceDB = "D:/sp_MassBankEU_20200316_203615.RData",
-    mincos = 0.6) {
+    "ANY", "ANY"), function(struct, id, MS2files, useDB = FALSE,
+    referenceDB = "D:/sp_MassBankEU_20200316_203615.RData", mincos = 0.8) {
     #### MS2 Data Importation and Sorting within IL ####------------------------
     validObject(struct)
     MS2Exp <- struct@data@MS2Exp[[id]]
@@ -56,73 +54,73 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
     message("Starting superspectra generation. This may take a while...")
     purifiedSpectra <- RHermes:::CliqueMSMS(MS2Exp, idx)
 
+    if(!useDB){
+        message("No spectral matching was performed. Done!")
+        purifiedSpectra$results <- rep("No DB matching", 
+                                       times = nrow(purifiedSpectra))
+        MS2Exp@Ident <- list(MS2Features = purifiedSpectra,
+                             DatabaseSpectra = list(),
+                             MS2_correspondance = list())
+        struct@data@MS2Exp[[id]] <- MS2Exp
+        return(struct)
+    }
+    
     #### Database Query ####----------------------------------------------------
-
-    # Catching possible user errors
+    # Catching possible load error
     tryCatch({
-        load(referenceDB)
+        obj <- readRDS(referenceDB)
+        # Data.tables for faster indexing
+        metaesp <- as.data.table(obj$df_spectra)
+        metamet <- as.data.table(obj$df_metabolite)
+        espmet <- as.data.table(obj$df_spectraMetabolite)
+        list_fragments <- obj$list_fragments
+        rm(obj)
     }, error = function(cond) {
         stop("The referenceDB input isn't valid")
     })
 
-    # Data.tables for faster indexing
-    metaesp <- as.data.table(df_metaespectres)
-    espmet <- as.data.table(df_EspectreMetabolit)
-    metamet <- as.data.table(df_metametabolits)
-
     metamet$formula <- unlist(metamet$formula)
 
-    setkeyv(metaesp, c("idespectre"))
-    setkeyv(espmet, c("idmetabolit"))
+    setkeyv(metaesp, c("ID_spectra"))
+    setkeyv(espmet, c("ID_metabolite"))
     setkeyv(metamet, c("formula"))
 
-    metaesp$polaritat <- toupper(metaesp$polaritat)
-    metamet$nommetabolit[is.na(metamet$nommetabolit)] <- metamet$casname[is.na(metamet$nommetabolit)]
-    polarity <- ifelse(struct@metadata@ExpParam@ion == "+", "POSITIVE",
-        "NEGATIVE")
-
-
-    allf <- purifiedSpectra$anot %>% unlist() %>% unique()
+    polarity <- ifelse(struct@metadata@ExpParam@ion == "+", 1, 0)
 
     # Retrieving spectra
     message("Retrieving MS2 spectra from the reference database")
+    allf <- purifiedSpectra$anot %>% unlist() %>% unique()
     retrievedMSMS <- lapply(allf, function(f) {
-            idmet <- metamet[.(f), ]$idmetabolit
-            if (is.na(idmet[1])) {
-                return(list())
+        idmet <- metamet[.(f), ]$ID_metabolite
+        if (is.na(idmet[1])) return(list())
+        RES <- lapply(idmet, function(id) {
+            idesp <- espmet[.(id), ]$ID_spectra
+            idesp <- idesp[metaesp[.(idesp), ]$polarity == polarity]
+            return(list_fragments[["spectra"]][list_fragments[["ID_spectra"]] %in%
+              idesp])
+        })
+        novalidspec <- vapply(RES, function(x) {length(x) != 0}, logical(1))
+        if (!any(novalidspec)) {
+            RES <- RES[-novalidspec]
+            if (length(RES) == 0) {
+              return(list())
             }
-            RES <- lapply(idmet, function(id) {
-                idesp <- espmet[.(id), ]$idespectre
-                idesp <- idesp[metaesp[.(idesp), ]$polaritat == polarity]
-                return(list_fragments[["espectre"]][list_fragments[["idespectre"]] %in%
-                  idesp])
-            })
-            novalidspec <- vapply(RES, function(x) {
-                length(x) != 0
-            }, logical(1))
-            if (!any(novalidspec)) {
-                RES <- RES[-novalidspec]
-                if (length(RES) == 0) {
-                  return(list())
-                }
-                names(RES) <- paste(rep(f, times = nrow(metamet[.(f),
-                  ]) - length(novalidspec)),
-                  metamet[.(f), ]$idmetabolit[-novalidspec],
-                  lapply(metamet[.(f), ]$nommetabolit, function(x) {
-                    x[[1]]
-                  }) %>% unlist()[-novalidspec], metamet[.(f),
-                    ]$smiles[-novalidspec], sep = "#")
-
-            } else {
-                names(RES) <- paste(rep(f, times = nrow(metamet[.(f),])),
-                                    metamet[.(f), ]$idmetabolit,
-                                    lapply(metamet[.(f), ]$nommetabolit,
-                                        function(x) {x[[1]]}
-                                    ) %>% unlist(),
-                                    metamet[.(f), ]$smiles,
-                                    sep = "#")
-            }
-            return(RES)
+            names(RES) <- paste(rep(f, times = nrow(metamet[.(f),]) - 
+                                        length(novalidspec)),
+                                metamet[.(f), ]$ID_metabolite[-novalidspec],
+                                lapply(metamet[.(f), ]$name,
+                                       function(x) {x[[1]]}) %>%
+                                    unlist()[-novalidspec],
+                                metamet[.(f),]$smiles[-novalidspec], sep = "#")
+        } else {
+            names(RES) <- paste(rep(f, times = nrow(metamet[.(f),])),
+                                metamet[.(f), ]$ID_metabolite,
+                                lapply(metamet[.(f), ]$name,
+                                    function(x) {x[[1]]}
+                                ) %>% unlist(),
+                                metamet[.(f), ]$smiles, sep = "#")
+        }
+        return(RES)
     })
     names(retrievedMSMS) <- allf
 
@@ -142,7 +140,6 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
     #### Output formatting ####------------------------------------------------
     purifiedSpectra$results <- lapply(cos_list, function(x) {
         if (length(x) == 0) {return("Missing reference spectra")}
-
         isValidhit <- any(rapply(x, function(cos) {cos > mincos},
                                  "numeric", "unlist"))
         if (!isValidhit) {return("No significant hits")}

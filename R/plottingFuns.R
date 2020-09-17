@@ -344,29 +344,40 @@ setMethod("MirrorPlot", c("RHermesExp", "numeric", "numeric"),
           }
 
         mirrplot <- lapply(patform, function(x){
+          pl <- ggplot()
           if(mode == "hits"){
             refspec <- pattern[[x]][[entry$results[[1]]$id[which(entry$results[[1]]$formula == x)]]]
-            if(is.null(refspec)){return(ggplotly(ggplot()))}
+            if(is.null(refspec)){return(ggplotly(pl))}
             refspec <- as.data.frame(t(refspec))
+            pl <- pl + scale_x_continuous(limits = c(min(c(refspec$mz,
+                                                     query$mz, molecmass)) - 20,
+                                                     max(c(refspec$mz, query$mz,
+                                                           molecmass)) + 20))
+            
           }
           if(mode == "versus"){
+            refmass <- struct@data@MS2Exp[[ms2id]]@Ident$MS2Features$precmass[[x]]
             refspec <- struct@data@MS2Exp[[ms2id]]@Ident$MS2Features$ssdata[[x]]
-
-            if(is.null(refspec)){return(ggplotly(ggplot()))}
-
+            if(is.null(refspec)){return(ggplotly(pl))}
+            refdf <- data.frame(mz = refmass)
+            pl <- pl + geom_point(data = refdf, aes(x = mz, y = 0), shape = 25,
+                                  size = 4, color = "red", fill = "red") +
+              scale_x_continuous(limits = c(min(c(refspec$mz,
+                                                  query$mz, molecmass, refmass)) - 20,
+                                            max(c(refspec$mz, query$mz,
+                                                  molecmass, refmass)) + 20))
           }
             colnames(refspec) <- c("mz", "int")
             refspec$int <- refspec$int/max(refspec$int) * 100
-
-             bldf <- data.frame(xmin = min(c(refspec$mz, query$mz,
-                                molecmass)) - 5, xmax = max(c(refspec$mz,
-                                                              query$mz,
-                                molecmass) + 5), y = baseline)
-
+            
              moldf <- data.frame(mz = molecmass)
+              
+             bldf <- data.frame(xmin = min(c(refspec$mz, query$mz,
+                                             molecmass)) - 5,
+                                xmax = max(c(refspec$mz,query$mz,
+                                             molecmass) + 5), y = baseline)
 
-
-             pl <- ggplot() + geom_segment(data = query, aes(x = mz,
+             pl <- pl + geom_segment(data = query, aes(x = mz,
                 xend = mz, y = 0, yend = int), color = "black") +
                 geom_segment(data = refspec, aes(x = mz, xend = mz,
                              y = 0, yend = -int), color = "red") +
@@ -378,10 +389,6 @@ setMethod("MirrorPlot", c("RHermesExp", "numeric", "numeric"),
                              color = "red", alpha = 0.3) +
                 geom_point(data = moldf, aes(x = mz, y = 0), shape = 17,
                            size = 2) + theme_minimal() + ylab("% Intensity") +
-                scale_x_continuous(limits = c(min(c(refspec$mz,
-                                                    query$mz, molecmass)) - 20,
-                                              max(c(refspec$mz, query$mz,
-                                                    molecmass)) + 20)) +
                 theme(plot.margin = unit(c(1, 0.7, 1, 0.8), "cm"),
                       text = element_text(size = 11, family = "Segoe UI Light"),
                       plot.title = element_text(hjust = 0.5)) +
