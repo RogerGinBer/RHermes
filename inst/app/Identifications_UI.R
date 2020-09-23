@@ -25,35 +25,35 @@ IdentServer <- function(id, struct) {
                                }, logical(1))
             whichMS2 <- which(whichMS2)
 
-            output$identTable <- renderUI({
-                tagList(fluidRow(
-                    column(width = 4,
-                           radioButtons(ns("id"), "Select MS2Exp:", choices = whichMS2,
-                                        selected = whichMS2[1], inline = TRUE),
-                           switchInput(ns("onlyhits"), label = "Only hits", value = TRUE)
-                    ),
-                    column(width = 4,
-                           tags$b("Export identifications:"),
-                           div(downloadButton(outputId = ns("savecsv"),
-                                              label = "Export as CSV", style = "margin-top: 10px"))),
-                    column(width = 4, radioButtons(ns("format"),
-                                                   label = "Superspectra export format:",
-                                                   choices = c("msp", "mgf"), selected = "msp"),
-                           shinySaveButton(id = ns("saveselector"),
-                                           label = "Select folder",
-                                           title = "Save superspectra", style = "margin-bottom: 10px"),
-                           verbatimTextOutput(ns("savepath"), placeholder = TRUE),
-                           actionButton(ns("savebutton"), "Save your super spectra",
-                                        icon("save"),
-                                        style = "display: block; margin: 0 auto;")
-                    )),
+            if(length(whichMS2) != 0){
+                output$identTable <- renderUI({
+                    tagList(fluidRow(
+                        column(width = 4,
+                               radioButtons(ns("id"), "Select MS2Exp:", choices = whichMS2,
+                                            selected = whichMS2[1], inline = TRUE),
+                               switchInput(ns("onlyhits"), label = "Only hits", value = TRUE)
+                        ),
+                        column(width = 4,
+                               tags$b("Export identifications:"),
+                               div(downloadButton(outputId = ns("savecsv"),
+                                                  label = "Export as CSV", style = "margin-top: 10px"))),
+                        column(width = 4, radioButtons(ns("format"),
+                                                       label = "Superspectra export format:",
+                                                       choices = c("msp", "mgf"), selected = "msp"),
+                               shinySaveButton(id = ns("saveselector"),
+                                               label = "Select folder",
+                                               title = "Save superspectra", style = "margin-bottom: 10px"),
+                               verbatimTextOutput(ns("savepath"), placeholder = TRUE),
+                               actionButton(ns("savebutton"), "Save your super spectra",
+                                            icon("save"),
+                                            style = "display: block; margin: 0 auto;")
+                        )),
+                        
+                        div(dataTableOutput(ns("ms2table")), style = "margin-top: 30px;")
+                    )
 
-                    div(dataTableOutput(ns("ms2table")), style = "margin-top: 30px;")
-                )
-
-             })
-
-        }, ignoreNULL = TRUE, ignoreInit = TRUE, priority = 10)
+                })
+        }}, ignoreNULL = TRUE, ignoreInit = TRUE, priority = 10)
 
         savedf <- reactiveValues(data = NULL)
 
@@ -63,7 +63,8 @@ IdentServer <- function(id, struct) {
         }, {
             if(input$id != "nothing"){
                 ms2 <- struct$dataset@data@MS2Exp[[as.numeric(input$id)]]@Ident[[1]]
-
+                ms2 <- cbind(data.frame(ID = seq_len(nrow(ms2))), ms2) 
+                
                 if(input$onlyhits){
                     ms2 <- ms2[vapply(ms2$results, is.data.frame, logical(1)), ]
                 }
@@ -77,8 +78,12 @@ IdentServer <- function(id, struct) {
                     as.character(round(max(hits$cos), digits = 3))
                 })
                 ms2 <- dplyr::select(ms2, -c("ssdata", "results"))
-                output$ms2table <- renderDataTable(ms2,
-                                                   options = list(scrollX = TRUE))
+                ms2$start <- as.numeric(ms2$start)
+                ms2$end <- as.numeric(ms2$end)
+                ms2$apex <- as.numeric(ms2$apex)
+                output$ms2table <- renderDataTable(ms2, plugins = 'natural', server = FALSE,
+                                                   options = list(columnDefs = list(list(type = "natural", targets = "_all")),
+                                                                  scrollX = TRUE))
                 ms2 <- sapply(ms2, as.character)
                 savedf$data <- ms2
 
@@ -87,7 +92,7 @@ IdentServer <- function(id, struct) {
 
         output$savecsv <- downloadHandler(filename = "ms2data.csv",
                                           content = function(file) {
-                                              write.csv(savedf$data, file)
+                                              write.csv2(savedf$data, file)
                                           }, contentType = "text/csv")
 
         shinyFileSave(input, "saveselector", roots = getVolumes(),

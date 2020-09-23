@@ -193,7 +193,7 @@ PLServer <- function(id, struct){
                               choices = paste(names(path), path, sep="-"),
                               selected = paste(names(path), path, sep="-")[1])
           }
-        })
+        }, ignoreInit = TRUE, ignoreNULL = TRUE)
 
         #Output allocation
         toReturn <- reactiveValues(dataset = RHermesExp(), trigger = 0)

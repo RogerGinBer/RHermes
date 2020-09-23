@@ -153,8 +153,18 @@ generate_ss <- function(curentry, MS2list, contaminant, delta, fs, idx,
                                        weighted = TRUE, diag = FALSE)
     net <- igraph::simplify(net, remove.multiple = TRUE,
                             remove.loops = TRUE)
-    wc <- igraph::cluster_fast_greedy(net)
-    members <- igraph::membership(wc)
+    
+    ncomp <- igraph::components(net) %>% igraph::groups() %>% length()
+    dens <- igraph::edge_density(net)
+    if(is.nan(dens)){dens <- 0}
+    
+    if(ncomp == 1 & dens > 0.5){
+        members <- rep(1, V(net) %>% length())
+    } else {
+        wc <- igraph::cluster_fast_greedy(net)
+        members <- igraph::membership(wc)
+    }
+
 
     n_mem <- length(unique(members))
     ss <- data.frame(start = numeric(n_mem), end = numeric(n_mem),
