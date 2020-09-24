@@ -353,7 +353,7 @@ setMethod("MirrorPlot", c("RHermesExp", "numeric", "numeric"),
                                                      query$mz, molecmass)) - 20,
                                                      max(c(refspec$mz, query$mz,
                                                            molecmass)) + 20))
-            
+
           }
           if(mode == "versus"){
             refmass <- struct@data@MS2Exp[[ms2id]]@Ident$MS2Features$precmass[[x]]
@@ -369,9 +369,9 @@ setMethod("MirrorPlot", c("RHermesExp", "numeric", "numeric"),
           }
             colnames(refspec) <- c("mz", "int")
             refspec$int <- refspec$int/max(refspec$int) * 100
-            
+
              moldf <- data.frame(mz = molecmass)
-              
+
              bldf <- data.frame(xmin = min(c(refspec$mz, query$mz,
                                              molecmass)) - 5,
                                 xmax = max(c(refspec$mz,query$mz,
@@ -404,6 +404,45 @@ setMethod("MirrorPlot", c("RHermesExp", "numeric", "numeric"),
         return(subplot(mirrplot, nrows = length(mirrplot), shareX = TRUE,
                        which_layout = 1))
     })
+
+
+#'@export
+setGeneric("SSPlot", function(struct, ms2id, ssnumber) {
+  standardGeneric("SSPlot")
+})
+setMethod("SSPlot", c("RHermesExp", "numeric", "numeric"),
+          function(struct, ms2id, ssnumber) {
+    # function(query, pattern, title = 'Mirror plot', subtitle = '', baseline = 1000, maxint = 0, molecmass = 200){
+    entry <- struct@data@MS2Exp[[ms2id]]@Ident$MS2Features[ssnumber,]
+    if(!is.data.frame(entry)){return(ggplotly(ggplot()))}
+    query <- entry$ssdata[[1]]
+    maxint <- max(query$int)
+    #query$int <- query$int/max(query$int) * 100 #No normalization for this plot
+    bestdf <- query[query$int > 10, ]
+    bestdf$mz <- round(bestdf$mz, 4)
+    molecmass <- entry$precmass
+    moldf <- data.frame(mz = molecmass)
+
+    subtitle <- ""
+    title <- ""
+
+    pl <- ggplot() +
+      geom_segment(data = query, aes(x = mz, xend = mz, y = 0, yend = int),
+                    color = "black") +
+      geom_point(data = moldf, aes(x = mz, y = 0), shape = 17,
+                 size = 2) + theme_minimal() + ylab("Intensity (Counts)") +
+      theme(plot.margin = unit(c(1, 0.7, 1, 0.8), "cm"),
+            text = element_text(size = 11, family = "Segoe UI Light"),
+            plot.title = element_text(hjust = 0.5)) +
+      geom_text(data = bestdf, aes(x = mz, y = int + 5, label = mz),
+                family = "Segoe UI Light", check_overlap = TRUE) +
+      scale_x_continuous(limits = c(min(query$mz, molecmass) - 20,
+                                      max(query$mz, molecmass) + 20))+
+      ggtitle(title, subtitle)
+
+    ggplotly(pl, height = 400)
+})
+
 
 #'@export
 setGeneric("PLPlot", function(struct, id, formula, rtrange,
