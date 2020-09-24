@@ -76,7 +76,7 @@ IsoCalc <- function(DB, FWHM, intTHR, kTHR, instr = "Orbitrap",
 
 isocalc_parallel <- function(x, kTHR, resol_factor, isotopecode, isOrbi){
     if (isOrbi) {
-        limitfactor <- 2 * kTHR * x[1, 1]^(3/2)/resol_factor
+        limitfactor <- 2 * kTHR * x[1, 1]^(1/2)/resol_factor
     } else {
         limitfactor <- 2 * kTHR * x[1, 1]/resol_factor
     }

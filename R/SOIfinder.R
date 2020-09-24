@@ -346,7 +346,6 @@ groupShort <- function(Groups, maxlen, BiocParallelParam){
 
 parallelGroupShort <- function(i, LG, maxlen){
     curGR <- LG[i,]
-
     #Divide long group into equal-sized smaller groups
     times <- seq(from = curGR[1, 1][[1]], to = curGR[1, 2][[1]],
                  length.out = ceiling(curGR[1, 3][[1]] / maxlen) + 1)
@@ -367,9 +366,12 @@ parallelGroupShort <- function(i, LG, maxlen){
 
 blankSubstraction <- function(Groups, blankPL, BiocParallelParam){
     message("Blank substraction:")
-    # model <-
-    # load_model_hdf5(system.file('extdata','KerasModel.h5',
-    # package = 'RHermes')) #CNN
+    setkeyv(blankPL, c("formv", "rt"))
+
+    toKeep <- bplapply(seq_len(nrow(Groups)), firstCleaning, Groups, blankPL,
+                  BPPARAM = BiocParallelParam) %>% unlist()
+    sure <- Groups[which(toKeep), ]
+    if(any(toKeep)){Groups <- Groups[-which(toKeep),]}
     reticulate::py_available(initialize = TRUE)
     if(reticulate::py_module_available("keras") &
        reticulate::py_module_available("tensorflow")){
@@ -378,7 +380,7 @@ blankSubstraction <- function(Groups, blankPL, BiocParallelParam){
         setkeyv(blankPL, "formv")
 
         RES <- bplapply(seq_len(nrow(Groups)), prepareNetInput, Groups, blankPL,
-                 BPPARAM = BiocParallelParam)
+                        BPPARAM = BiocParallelParam)
 
         Groups$MLdata <- RES
         NAgroups <- do.call(rbind, lapply(RES, function(x){is.na(x[1])}))
@@ -392,14 +394,11 @@ blankSubstraction <- function(Groups, blankPL, BiocParallelParam){
                                                    return(c(x[1, ], x[2, ]))
                                                }))
         if(nrow(organizeddata) != 0){
-            # organizeddata <- keras::array_reshape(organizeddata,
-            # c(nrow(organizeddata), 2, 200, 1), order = 'C') #CNN input
             organizeddata <- keras::array_reshape(organizeddata,
                                                   c(nrow(organizeddata), 400),
                                                   order = "C")  #ANN input
             q <- model %>% keras::predict_classes(organizeddata)
 
-            # Groups <- Groups[-which(q==1), ] #CNN output
             Groups <- Groups[-which(q == 0), ]  #ANN output
             Groups <- Groups[, -c("MLdata")]
         }
@@ -407,6 +406,32 @@ blankSubstraction <- function(Groups, blankPL, BiocParallelParam){
         warning(paste0("A Keras installation was not found and blank",
                         "substraction was not performed"))
     }
+    Groups <- rbind(sure, Groups)
+}
+
+firstCleaning <- function(i, Groups, blankPL){
+  cur <- Groups[i, ]
+  st <- cur$start
+  end <- cur$end
+  f <- cur$formula
+  deltat <- 10
+  peaks <- cur$peaks[[1]]
+  blankpks <- blankPL[.(f)] %>% filter(., rt >= st - deltat &
+                                         rt <= end + deltat &
+                                         isov == "M0")
+  blankpks <- distinct(blankpks[, c(1, 2)])
+  if(nrow(blankpks) < 5){return(TRUE)} #No blank signals
+  
+  sampleCV <- sd(peaks$rtiv)/mean(peaks$rtiv)
+  blankCV <- sd(blankpks$rtiv)/mean(blankpks$rtiv)
+  sampleMax <- max(peaks$rtiv)
+  blankMax <- max(blankpks$rtiv)
+  
+  #We have to be a bit stringent with the conditions, otherwise we collect junk
+  if(sampleCV/blankCV > 5){return(TRUE)} 
+  if(sampleMax/blankMax > 3 & sampleMax > 30000){return(TRUE)}
+  
+  return(FALSE) #Can't decide if the SOI is good enough, let the ANN decide
 }
 
 prepareNetInput <- function(i, Groups, blankPL){
@@ -419,12 +444,12 @@ prepareNetInput <- function(i, Groups, blankPL){
     Npoints <- 200
     tryCatch({
         if (nrow(peaks) <= 2 | length(unique(peaks$rt)) <= 2) {
-            return(NA)
+            return(NA) #No signal
         }
         smooth_pks <- data.frame(approx(x = peaks,
                                         xout = seq(from = st, to = end,
                                                    length.out = Npoints),
-                                        rule = 1))
+                                        rule = 1)) #Interpolate to N points
         smooth_pks[is.na(smooth_pks[, "y"]), "y"] <- 0
         blankpks <- blankPL[.(f)] %>% filter(., rt >= st - deltat &
                                                  rt <= end + deltat &

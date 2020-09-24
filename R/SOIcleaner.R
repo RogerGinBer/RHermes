@@ -13,7 +13,8 @@ setMethod("SOIcleaner", signature = c("RHermesExp", "numeric",
     BiocParallelParam <- struct@metadata@cluster
 
     ##Filter by maximum intensity
-    soilist <- soilist[soilist$MaxInt > minint, ]
+    intense_enough <- which(soilist$MaxInt > minint)
+    soilist <- soilist[intense_enough, ]
 
     ##Filter by isotopic fidelity
     if (isofidelity) {
@@ -22,15 +23,16 @@ setMethod("SOIcleaner", signature = c("RHermesExp", "numeric",
         soilist <- isoCos(soilist, PL, isothr = 0.85, BiocParallelParam)
         good <- which(!(soilist$MaxInt > 1e+05 & soilist$isofound == 0))
         soilist <- soilist[good, ]
+        with_isos <- intense_enough[good]
 
         # Isotopic pattern similarity
         message("Calculating isotopic fidelity metrics:")
 
-        # isodata <- bplapply(good, IsoFidelity, struct = struct,
+        # isodata <- bplapply(with_isos, IsoFidelity, struct = struct,
         #                     soilist = soiid, plot = FALSE,
         #                     BPPARAM = BiocParallelParam)
         
-        isodata <- bplapply(good, IsoFidelity, struct = struct,
+        isodata <- bplapply(with_isos, IsoFidelity, struct = struct,
                             soilist = soiid, plot = FALSE,
                             BPPARAM = SerialParam(progressbar = TRUE))
 
@@ -39,7 +41,7 @@ setMethod("SOIcleaner", signature = c("RHermesExp", "numeric",
         }, numeric(1))
         soilist <- soilist[cos > 0.5, ]
 
-        rtmargin <- 10
+        rtmargin <- 20
         # Removing confirmed isotopic signals
         soilist <- soilist[order(-soilist$MaxInt), ]
         message("Removing confirmed isotope entries:")
@@ -48,11 +50,13 @@ setMethod("SOIcleaner", signature = c("RHermesExp", "numeric",
             isomasses <- soilist[i, ]$isodf[[1]][, 2]
             st <- soilist[i, ]$start
             end <- soilist[i, ]$end
-            idx <- which(between(soilist$start, st - rtmargin, st + rtmargin) &
-                        between(soilist$end, end - rtmargin, end + rtmargin))  #Entries in window
+            idx <- which(between(soilist$start, st - rtmargin, end) &
+                        between(soilist$end, st, end + rtmargin))  #Entries in window
             entrymass <- soilist[idx, ]$mass
             overlaps <- lapply(isomasses, function(x) {
-                thr <- c(x - ppm * 1e-06 * x, x + ppm * 1e-06 * x)
+                #Multiply ppm range to cover possible isotope mishaps
+                thr <- c(x - 3 * ppm * 1e-06 * x,
+                         x + 3 * ppm * 1e-06 * x) 
                 if (any(entrymass > thr[1] & entrymass < thr[2])) {
                   return(which(entrymass > thr[1] & entrymass < thr[2]))
                 }
