@@ -473,7 +473,6 @@ setMethod("SOIcos", c("RHermesExp", "numeric"), function(struct,
             }
             # m[i, j] <- cosineSim(SOI$peaks[[i]], SOI$peaks[[j]])
             m[i, j] <- RHermes:::pearsonSim(SOI$peaks[[i]], SOI$peaks[[j]])
-
             m[j, i] <- m[i, j]
         }
     }
@@ -481,6 +480,46 @@ setMethod("SOIcos", c("RHermesExp", "numeric"), function(struct,
 })
 
 
+#'@export
+setGeneric("exportIdent", function(struct, ms2id, file){standardGeneric("exportIdent")})
+setMethod("exportIdent", c("RHermesExp", "numeric", "character"),
+          function(struct, ms2id, file){
+    ms2 <- struct$dataset@data@MS2Exp[[ms2id]]@Ident[[1]]
+    ms2 <- ms2[vapply(ms2$results, is.data.frame, logical(1)), ]
 
+    ms2$hits <- lapply(ms2$results, function(hits){
+        if(!is.data.frame(hits)){return(hits)}
+        hits$formula
+    })
+    ms2$bestscore <- lapply(ms2$results, function(hits){
+        if(!is.data.frame(hits)){return("N/A")}
+        as.character(round(max(hits$cos), digits = 3))
+    })
+    ms2 <- dplyr::select(ms2, -c("ssdata", "results"))
+    ms2$start <- as.numeric(ms2$start)
+    ms2$end <- as.numeric(ms2$end)
+    ms2$apex <- as.numeric(ms2$apex)
+    ms2$precmass <- as.numeric(ms2$precmass)
+    ms2$bestscore <- as.numeric(ms2$bestscore)
+    ms2$start <- format(round(ms2$start,2),nsmall = 2)
+    ms2$end <- format(round(ms2$end,2),nsmall = 2)
+    ms2$apex <- format(round(ms2$apex,2),nsmall = 2)
+    ms2$bestscore <- format(round(ms2$bestscore,4),nsmall = 4)
+    ms2$precmass <- format(round(ms2$precmass,4),nsmall = 4)
+    ms2$anot <- lapply(ms2$anot, function(x){paste(x, collapse = " ")})
+    ms2$hits <- lapply(ms2$hits, function(x){paste(x, collapse = " ")})
+    ms2$hits <- lapply(ms2$hits, function(x){gsub(pattern = "\n",
+                                                  replacement = "", x = x,)})
+    ms2$hits <- lapply(ms2$hits, function(x){gsub(pattern = "\t",
+                                                  replacement = "", x = x,)})
+    write.csv(ms2, file = file)
+})
 
-
+#'@export
+setGeneric("whichIdent", function(struct, ms2id){standardGeneric("whichIdent")})
+setMethod("whichIdent", c("RHermesExp", "numeric"),
+          function(struct, ms2id){
+    identdf <- struct@data@MS2Exp[[ms2id]]@Ident[[1]]
+    which_ID <- which(vapply(identdf$results, is.data.frame, logical(1)))
+    return(which_ID)
+})

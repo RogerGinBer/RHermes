@@ -79,12 +79,13 @@
 #'        exportMSP(myHermes, 1, "output")
 #'    }
 #' @export
-exportMSP <- function(struct, ID, fname) {
+exportMSP <- function(struct, ID, fname, idx = NA) {
     sstable <- struct@data@MS2Exp[[ID]]@Ident[[1]]
     charge <- struct@metadata@ExpParam@ion
 
+    if(is.na(idx)){idx <- seq_len(nrow(sstable))}
     sink(file = paste0(fname, ".msp"))
-    for (i in seq_len(nrow(sstable))) {
+    for (i in idx) {
         curss <- sstable[i,]
         precmz <- curss$precmass
         ssdata <- curss$ssdata[[1]]
@@ -115,11 +116,12 @@ exportMSP <- function(struct, ID, fname) {
 #'        exportMGF(myHermes, 1, "output")
 #'    }
 #' @export
-exportMGF <- function(struct, ID, fname) {
+exportMGF <- function(struct, ID, fname, idx = NA) {
     sstable <- struct@data@MS2Exp[[ID]]@Ident[[1]]
     charge <- struct@metadata@ExpParam@ion
+    if(is.na(idx)){idx <- seq_len(nrow(sstable))}
     sink(file = paste0(fname, ".mgf"))
-    for (i in seq_len(nrow(sstable))) {
+    for (i in idx) {
         curss <- sstable[i,]
         precmz <- curss$precmass
         ssdata <- curss$ssdata[[1]]
