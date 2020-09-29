@@ -484,7 +484,7 @@ setMethod("SOIcos", c("RHermesExp", "numeric"), function(struct,
 setGeneric("exportIdent", function(struct, ms2id, file){standardGeneric("exportIdent")})
 setMethod("exportIdent", c("RHermesExp", "numeric", "character"),
           function(struct, ms2id, file){
-    ms2 <- struct$dataset@data@MS2Exp[[ms2id]]@Ident[[1]]
+    ms2 <- struct@data@MS2Exp[[ms2id]]@Ident[[1]]
     ms2 <- ms2[vapply(ms2$results, is.data.frame, logical(1)), ]
 
     ms2$hits <- lapply(ms2$results, function(hits){
