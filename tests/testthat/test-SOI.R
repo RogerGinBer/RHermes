@@ -48,7 +48,7 @@ test_that("Blank substraction is configured and works",{
     rnorm(100)^2
   myHermes <- SOIfinder(myHermes, getSOIpar(), 1, 2)
 
-  p <- RHermes::PlotlySoiPlot(struct = myHermes, id = 2, formula = "C2H7NO3S",
+  p <- RHermes::SoiPlot(struct = myHermes, id = 2, formula = "C2H7NO3S",
                               blankid = 2, rtrange = c(0,1500),
                               dynamicaxis = TRUE, ads = "M+H")
   expect_true(is(p, "plotly"))
@@ -57,7 +57,7 @@ test_that("Blank substraction is configured and works",{
 test_that("SOI plot works", {
   myHermes <- readRDS(system.file("extdata", "afterSOI.rds" ,
                                   package = "RHermes"))
-  p <- RHermes::PlotlySoiPlot(myHermes, 1, "C6H12O6",
+  p <- RHermes::SoiPlot(myHermes, 1, "C6H12O6",
                               rtrange = c(0,1500), dynamicaxis = TRUE,
                               ads = "M+Na")
   expect_true(is(p, "plotly"))
@@ -69,7 +69,7 @@ test_that("SOI are filtered correctly", {
   myHermes <- readRDS(system.file("extdata", "afterSOI.rds" ,
                                   package = "RHermes"))
   myHermes <- SOIcleaner(myHermes, 1, 50000, TRUE)
-  expect_equal(nrow(myHermes@data@SOI[[1]]@SoiList), 6)
+  expect_equal(nrow(myHermes@data@SOI[[1]]@SoiList), 2)
 })
 
 

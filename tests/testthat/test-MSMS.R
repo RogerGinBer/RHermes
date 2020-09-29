@@ -7,7 +7,7 @@ test_that("cosineSim works", {
 })
 
 test_that("Compounds are identified", {
-    skip_on_bioc() #Depends on local databases and MS2 files, so we skip it
+    skip_on_bioc() #Depends on copyrighted databases and local MS2 files, so we skip it
     skip_if(length(list.files("D:/ABrunner Plasma/MS2data",
                             pattern = ".*pos.*.mzML", full.names = TRUE)) == 0)
     myHermes <- readRDS(system.file("extdata", "testIL.rds",
@@ -16,9 +16,9 @@ test_that("Compounds are identified", {
     MS2files <- list.files("D:/ABrunner Plasma/MS2data",
                            pattern = ".*pos.*.mzML", full.names = TRUE)
     myHermes <- MS2Proc(myHermes, 1, MS2files,
-                        referenceDB = "D:/sp_MassBankEU_20200316_203615.RData")
+                        referenceDB = "D:/MS2ID_20200824_202808.rds")
 
-    expect_equal(nrow(myHermes@data@MS2Exp[[1]]@Ident[[1]]),  16)
+    expect_equal(nrow(myHermes@data@MS2Exp[[1]]@Ident[[1]]),  15)
 })
 
 test_that("Superspectra can be exported", {
@@ -33,7 +33,7 @@ test_that("Superspectra can be exported", {
 test_that("Mirror plot works", {
     myHermes <- readRDS(system.file("extdata", "withIdent.rds",
                                     package = "RHermes"))
-    p <- RHermes::PlotlyMirrorPlot(myHermes, 1, 1)
+    p <- RHermes::MirrorPlot(myHermes, 1, 1)
     expect_true(is(p, "plotly"))
 })
 
@@ -41,9 +41,9 @@ test_that("Raw MS2 plot works", {
     myHermes <- readRDS(system.file("extdata", "withIdent.rds",
                                     package = "RHermes"))
 
-    p <- RHermes::PlotlyRawMS2Plot(myHermes, ms2id = 1, entryid = 22,
+    p <- RHermes::RawMS2Plot(myHermes, ms2id = 1, entryid = 22,
                                    bymz = TRUE)
-    p2 <- RHermes::PlotlyRawMS2Plot(myHermes, 1, 4, bymz = FALSE)
+    p2 <- RHermes::RawMS2Plot(myHermes, 1, 4, bymz = FALSE)
     expect_true(is(p[[1]], "plotly") & is(p[[2]], "visNetwork"))
     expect_true(is(p2[[1]], "plotly") & is(p2[[2]], "visNetwork"))
 })

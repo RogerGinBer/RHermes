@@ -24,23 +24,24 @@ database_importer <- function(template = "hmdb", filename = "./app/www/norman.xl
                                seq_len(ceiling(length(keggpath)/10)))
         )
         comp <- lapply(splitpath, function(x){
-                                 pathdata <- keggGet(keggpath[x])
-                                 lapply(pathdata, function(y){
-                                     names(y$COMPOUND)
-                                 })
-                             })
+             pathdata <- keggGet(keggpath[x])
+             lapply(pathdata, function(y){names(y$COMPOUND)})
+        })
         comp <- unique(unlist(comp))
-        db <- lapply(split(seq_along(comp),
-                            seq_len(ceiling(length(comp)/10))), function(x){
-                                data <- keggGet(comp[x])
-                                data <- lapply(data, function(y){
-                                    c(y[1],
-                                      gsub(y[2][[1]][[1]], pattern = ";",
-                                           replacement = ""),
-                                      y[3])
-                                })
-                                as.data.frame(do.call(rbind,data))
-                            })
+        suppressWarnings(
+            splitcomp <- split(seq_along(comp),
+                               seq_len(ceiling(length(comp)/10)))
+        )
+        db <- lapply(splitcomp, function(x){
+            data <- keggGet(comp[x])
+            data <- lapply(data, function(y){
+                c(y[1],
+                  gsub(y[2][[1]][[1]], pattern = ";",
+                       replacement = ""),
+                  y[3])
+            })
+            as.data.frame(do.call(rbind,data))
+        })
         db <- as.data.frame(do.call(rbind, db))
         names(db)[c(2,3)] <- c("Name", "MolecularFormula")
     } else {

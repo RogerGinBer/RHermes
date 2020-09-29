@@ -22,7 +22,7 @@ test_that("ScanSearch works",{
                                              "MS1TestData.mzML",
                                              package = "RHermes"))
   expect_equal(length(myHermes@data@PL), 1)
-  expect_equal(nrow(myHermes@data@PL[[1]]@peaklist), 8108)
+  expect_equal(nrow(myHermes@data@PL[[1]]@peaklist), 13536)
 })
 
 test_that("Labelled proc works",{
@@ -37,7 +37,7 @@ test_that("Labelled proc works",{
                                              package = "RHermes"),
                        labelled = TRUE)
   expect_equal(length(myHermes@data@PL), 1)
-  expect_equal(nrow(myHermes@data@PL[[1]]@peaklist), 14571)
+  expect_equal(nrow(myHermes@data@PL[[1]]@peaklist), 33462)
 })
 
 test_that("PL plot works", {
@@ -53,7 +53,7 @@ test_that("PL plot works", {
   myHermes <- FileProc(myHermes, system.file("extdata",
                                              "MS1TestData.mzML",
                                              package = "RHermes"))
-  p <- RHermes:::PlotlyPLPlot(myHermes, 1, "C6H12O6", rtrange = c(0,1500),
+  p <- RHermes::PLPlot(myHermes, 1, "C6H12O6", rtrange = c(0,1500),
                               dynamicaxis = TRUE, ads = c("M+Na"))
   expect_true(is(p, "plotly"))
 })

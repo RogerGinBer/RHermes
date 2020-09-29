@@ -724,7 +724,7 @@ setMethod("IsoFidelity", c("RHermesExp", "numeric", "numeric",
         "[66Zn]", "[67Zn]", "[68Zn]", "[70Zn]", "[76Se]", "[77Se]",
         "[78Se]", "[82Se]", "[84Sr]", "[86Sr]", "[87Sr]", "[91Zr]",
         "[92Zr]", "[94Zr]", "[96Zr]"), stringsAsFactors = FALSE)
-    data("isotopes")
+    data("isotopes", package = "enviPat")
     # pat <- enviPat::isopattern(isotopes = isotopes, chemforms = f, threshold = 10000/PL$rtiv[PL$isov == 'M0'][maxpoint])[[1]]
 
     pat <- enviPat::isopattern(isotopes = isotopes, chemforms = f,

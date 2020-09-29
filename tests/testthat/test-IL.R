@@ -27,7 +27,7 @@ test_that("Prioritized IL generation works",{
   myHermes <- SOIcleaner(myHermes, 1, 50000, TRUE)
   myHermes <- genIL(myHermes, 1, ILParam(filtermz = 0.1,
                                          priorization = "yes", ad = "M+H"))
-  expect_equal(nrow(myHermes@data@MS2Exp[[1]]@IL@IL), 6)
+  expect_equal(nrow(myHermes@data@MS2Exp[[1]]@IL@IL), 2)
 
 })
 
