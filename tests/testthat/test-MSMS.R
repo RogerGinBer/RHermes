@@ -16,7 +16,7 @@ test_that("Compounds are identified", {
     MS2files <- list.files("D:/ABrunner Plasma/MS2data",
                            pattern = ".*pos.*.mzML", full.names = TRUE)
     myHermes <- MS2Proc(myHermes, 1, MS2files,
-                        referenceDB = "D:/MS2ID_20200824_202808.rds")
+                        referenceDB = "D:/MS2ID_20200824_202808.rds", useDB = TRUE)
 
     expect_equal(nrow(myHermes@data@MS2Exp[[1]]@Ident[[1]]),  15)
 })
@@ -33,7 +33,7 @@ test_that("Superspectra can be exported", {
 test_that("Mirror plot works", {
     myHermes <- readRDS(system.file("extdata", "withIdent.rds",
                                     package = "RHermes"))
-    p <- RHermes::MirrorPlot(myHermes, 1, 1)
+    p <- RHermes::MirrorPlot(myHermes, 1, 2, patform = 1, mode = "versus")
     expect_true(is(p, "plotly"))
 })
 

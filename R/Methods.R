@@ -20,13 +20,63 @@ setMethod("show", "ExpParam", function(object){
 })
 
 #'@export
-setMethod("show", "RHermesPL", function(object){
+setMethod("show", "SOIParam", function(object){
+    message("SOI parameters info:")
+    message("\tBins used:")
+    print(object@specs)
+    message(paste("\tMax SOI length: ", object@maxlen))
+    message(paste("\tMin data point intensity: ", object@minint))
+    message(paste("\tBlank substraction performed: ", object@blanksub))
+    message(paste("\tBlank filename: ", object@blankname))
+})
 
+#'@export
+setMethod("show", "RHermesPL", function(object){
+    message("Info about this PeakList:")
+    message(paste("\tOriginal filename:", object@filename))
+    message(paste("\tNumber of raw data points:", nrow(object@raw)))
+    message(paste("\tNumber of PL points: ", nrow(object@peaklist)))
+    message(paste("\tRedundance coefficient: ",
+                   round(nrow(object@peaklist)/nrow(object@raw), digits = 3)))
+    message(paste("\tNumber of scans", nrow(object@header)))
+    rtrange <- range(object@header$retentionTime)
+    message(paste0("\tAverage scan time: ",
+                   format((rtrange[2]-rtrange[1])/nrow(object@header),
+                          digits = 3), "s"))
+    message(paste("\tLabelled processing:", object@labelled, "\n"))
 })
 
 #'@export
 setMethod("show", "RHermesSOI", function(object){
+    message("Info about this SOI list:")
+    message(paste("\tOriginal file name:", object@filename))
+    message(paste("\tNumber of SOIs:", nrow(object@SoiList)))
+    show(object@SoiParam)
+})
 
+#'@export
+setMethod("show", "RHermesIL", function(object){
+    message("Info about the IL:")
+    message(paste("\tIL entries:", nrow(object@IL)))
+    message(paste("\tSOI index:", object@SOInum))
+})
+
+#'@export
+setMethod("show", "RHermesMS2Exp", function(object){
+    message("Info about this MS2Exp object:")
+    show(object@IL)
+    hasMS2 <- length(object@Ident) != 0
+    if(hasMS2){
+        num_entries <- length(unique(object@Ident[["MS2Features"]]$ILentry))
+        num_sup <- nrow(object@Ident[["MS2Features"]])
+        num_ident <- length(which(vapply(object@Ident[["MS2Features"]]$results,
+                            is.data.frame, logical(1))))
+        message(paste0("Number of covered entries: ", num_entries ))
+        message(paste0("Number of superspectra: ", num_sup ))
+        message(paste0("Identified superspectra: ", num_ident ))
+    } else {
+        message("No identification was performed")
+    }
 })
 
 #'@export
@@ -36,17 +86,22 @@ setMethod("show", "RHermesExp", function(object) {
     if(nfiles != 0){
         message(paste0("Number of processed MS1 files: ", nfiles ))
         lapply(object@metadata@filenames, function(x){message(paste0("\t", x))})
+        show(object@data@PL)
         nsoi <- length(object@data@SOI)
         if(nsoi != 0){
-            lapply(object@data@SOI, show)
-
+            show(object@data@SOI)
+            nMS2 <- length(object@data@MS2Exp)
+            if(nMS2 != 0){
+                show(object@data@MS2Exp)
+            }
         } else {
             message("No SOI lists generated yet.")
         }
     } else {
         message("No files processed yet.")
     }
-
+    message("Processing Timestamps ---------------------------------------")
+    readTime(object)
 })
 
 
