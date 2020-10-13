@@ -80,23 +80,26 @@ isocalc_parallel <- function(x, kTHR, resol_factor, isotopecode, isOrbi){
     } else {
         limitfactor <- 2 * kTHR * x[1, 1]/resol_factor
     }
-    farenough <- diff(x[, 1]) > limitfactor
-    good <- c()
-    for (i in seq_len(nrow(x))) {
-        if (i == nrow(x)) {
-            good <- c(good, i)
-            next
+    breaks <- which(diff(x[,1]) > 5*median(diff(x[,1]))) #Find iso clusters
+    breaks <- data.frame(st = c(1, breaks + 1), end = c(breaks, nrow(x)))
+    clust <- lapply(seq_len(nrow(breaks)), function(i){
+        x[seq(breaks$st[i], breaks$end[i]), , drop = FALSE]
+    })
+
+    #Split the cluster into subclusters and take the most intense peaks
+    x <- do.call(rbind, lapply(clust, function(x){
+        farenough <- diff(x[, 1]) > limitfactor
+        if(!any(farenough)){
+            return(x[which.max(x[,2]), ]) #No subclusters
         }
-        if (farenough[i]) {
-            good <- c(good, i)
-        } else {
-            if (x[i, 2] > x[i + 1, 2]) {
-                good <- c(good, i)
-            }
-        }
-    }
-    good <- unique(good)
-    x <- x[good, ]
+        farenough <- data.frame(st = c(1, which(farenough) + 1),
+                                end = c(which(farenough), nrow(x)))
+        clust <- lapply(seq_len(nrow(farenough)), function(i){
+            cur <- x[seq(farenough$st[i], farenough$end[i]), , drop = FALSE]
+            return(cur[which.max(cur[,2]), ])
+        })
+        do.call(rbind, clust)
+    }))
 
     curiso <- isotopecode[which(isotopecode[, 1] %in% colnames(x)),]
     x <- as.data.frame(x)

@@ -39,33 +39,46 @@ pearsonSim <- function(pattern, query, nscans = 5) {
 }
 
 #' @export
-MSMScosineSim <- function(pattern, query, minhits = 1, mode = "full") {
-    if (nrow(pattern) == 0 | nrow(query) == 0) {
-        stop("Invalid pattern or query")
-    }
-    if (ncol(query) == 1) {query <- t(query)}
-    patint <- c()
-    qint <- c()
-    allmz <- unique(pattern$mz)
-    pattern$int <- sqrt(pattern$int)
-    query[, 2] <- sqrt(query[, 2])
-    for (i in seq_along(allmz)) {
-        m <- allmz[i]
-        dist <- abs(query[, 1] - m)
-        if (dist[which.min(dist)] < 0.001) {
-            patint <- c(patint, pattern[i, 2])
-            qint <- c(qint, query[which.min(dist), 2])
+MSMScosineSim <-
+    function (pattern, query, minhits = 0, mzdiff = 0.05, minint = 0.1,
+              do.sqrt=F) {
+        if (nrow(pattern) == 0 | nrow(query) == 0) {
+            stop("Invalid pattern or query")
         }
-    }
-    if (length(patint) < minhits | length(qint) < minhits) {return(0)}
-    if (mode == "full") {
-        denom <- sqrt(sum(pattern$int^2)) * sqrt(sum(query[, 2]^2))
-    } else {
-        denom <- sqrt(sum(patint^2)) * sqrt(sum(qint^2))
-    }
-    return(sum(patint * qint)/denom)
-}
+        if (is.null(dim(query))) {
+            query <- matrix(query, ncol = 2, byrow = TRUE)
+        }
+        query <- query[query[, 2] > minint, , drop = FALSE]
+        patint <- c()
+        qint <- c()
+        allmz <- unique(pattern$mz)
+        allmz <- sort(c(pattern$mz,query[, 1]))
+        if(do.sqrt){
+            pattern$int <- sqrt(pattern$int)
+            query[, 2] <- sqrt(query[, 2])
+        }
+        toignore <- c()
+        for (i in seq_along(allmz)) {
+            if(!i%in%toignore){
+                m <- allmz[i]
+                dist1 <- abs(query[, 1] - m)
+                dist2 <- abs(pattern[, 1] - m)
+                if( any(dist1 < mzdiff) | any(dist2 < mzdiff)   ){
+                    seqmz <- which(abs(allmz-m)<mzdiff)
+                    patint <- c(patint , sum(pattern[which(dist2 < mzdiff), 2]))
+                    qint <- c(qint, sum(query[which(dist1 < mzdiff) , 2]))
+                    toignore <- c(toignore,seqmz)
+                }
+            }
+        }
 
+        if (length(patint) < minhits | length(qint) < minhits) {
+            return(0)
+        }
+        denom <- sqrt(sum(patint^2)) * sqrt(sum(qint^2))
+        cos <- sum(patint * qint)/denom
+        return(cos)
+    }
 
 
 

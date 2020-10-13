@@ -56,7 +56,7 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
 
     if(!useDB){
         message("No spectral matching was performed. Done!")
-        purifiedSpectra$results <- rep("No DB matching", 
+        purifiedSpectra$results <- rep("No DB matching",
                                        times = nrow(purifiedSpectra))
         MS2Exp@Ident <- list(MS2Features = purifiedSpectra,
                              DatabaseSpectra = list(),
@@ -64,7 +64,7 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
         struct@data@MS2Exp[[id]] <- MS2Exp
         return(struct)
     }
-    
+
     #### Database Query ####----------------------------------------------------
     # Catching possible load error
     tryCatch({
@@ -99,19 +99,18 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
             return(list_fragments[["spectra"]][list_fragments[["ID_spectra"]] %in%
               idesp])
         })
-        novalidspec <- vapply(RES, function(x) {length(x) != 0}, logical(1))
-        if (!any(novalidspec)) {
-            RES <- RES[-novalidspec]
+        novalidspec <- vapply(RES, function(x) {length(x) == 0}, logical(1))
+        if (any(novalidspec)) {
+            RES <- RES[!novalidspec]
             if (length(RES) == 0) {
               return(list())
             }
-            names(RES) <- paste(rep(f, times = nrow(metamet[.(f),]) - 
+            names(RES) <- paste(rep(f, times = nrow(metamet[.(f),]) -
                                         length(novalidspec)),
-                                metamet[.(f), ]$ID_metabolite[-novalidspec],
-                                lapply(metamet[.(f), ]$name,
-                                       function(x) {x[[1]]}) %>%
-                                    unlist()[-novalidspec],
-                                metamet[.(f),]$smiles[-novalidspec], sep = "#")
+                                metamet[.(f), ]$ID_metabolite[!novalidspec],
+                                unlist(lapply(metamet[.(f), ]$name,
+                                       function(x) {x[[1]]}))[!novalidspec],
+                                metamet[.(f),]$smiles[!novalidspec], sep = "#")
         } else {
             names(RES) <- paste(rep(f, times = nrow(metamet[.(f),])),
                                 metamet[.(f), ]$ID_metabolite,
@@ -129,15 +128,15 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
     corresponding <- lapply(purifiedSpectra$anot, function(x){
         which(allf %in% x)
     })
-    cos_list <- mapply(function(entry, reference) {
+    cos_list <- pbmapply(function(entry, reference) {
         curspec <- retrievedMSMS[reference]
+        curspec <- unlist(curspec, recursive = FALSE)
         cos <- rapply(curspec, function(compound) {
-            MSMScosineSim(entry, t(compound), minhits = 1, mode = "full")
+            MSMScosineSim(entry, t(compound), minhits = 1)
         }, classes = "matrix", how = "replace")
         cos[which(lapply(cos, length) != 0)]
     }, purifiedSpectra$ssdata, corresponding)
 
-    #### Output formatting ####------------------------------------------------
     purifiedSpectra$results <- lapply(cos_list, function(x) {
         if (length(x) == 0) {return("Missing reference spectra")}
         isValidhit <- any(rapply(x, function(cos) {cos > mincos},
@@ -156,22 +155,17 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
 
         RES <- lapply(goodf, function(f) {
             #Detect which spectra have a hit for that formula
-            goodf <- which(vapply(x[[f]], function(coslist) {
-                any(vapply(coslist, function(cos) {
-                  cos > mincos
-                }, logical(1)))
-            }, logical(1)))
-            fnames <- names(x[[f]][goodf])
-            resdf <- data.frame(formula = fnames, cos = numeric(length(fnames)),
-                id = numeric(length(fnames)),
+            fnames <- names(x[f])
+            resdf <- data.frame(formula = fnames, cos = numeric(1),
+                id = numeric(1),
                 stringsAsFactors = FALSE)
-            for (i in seq_along(goodf)) {
-                coslist <- x[[f]][[goodf[i]]]
-                resdf$id[i] <- which.max(vapply(coslist, function(cos) {
-                    cos[1]
-                }, numeric(1)))
-                resdf$cos[i] <- coslist[[resdf$id[i]]]
-            }
+
+            coslist <- x[[f]]
+            resdf$id <- which.max(vapply(coslist, function(cos) {
+                cos[1]
+            }, numeric(1)))
+            resdf$cos <- coslist[[resdf$id]]
+
             return(resdf)
         }) %>% do.call(rbind, .)
         return(RES)
@@ -229,3 +223,4 @@ MSMSimporter <- function(IL, filelist) {
     })
     return(RES)
 }
+

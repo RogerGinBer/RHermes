@@ -474,7 +474,7 @@ setMethod("PLPlot", c("RHermesExp", "numeric", "character",
 
     datafile$ad <- ""
     for (f in unique(datafile$formv)) {
-        ad <- fs$an[fs$ion == f]
+        ad <- as.character(fs$an[fs$ion == f])
         datafile$ad[datafile$formv == f] <- ad
     }
     datafile <- filter(datafile, ad %in% ads)
@@ -482,7 +482,7 @@ setMethod("PLPlot", c("RHermesExp", "numeric", "character",
 
     return(ggplotly(ggplot() + geom_point(data = datafile, mapping = aes(x = rt,
         y = rtiv, color = isov), size = 0.5, alpha = 0.6) + facet_grid(rows = vars(ad)) +
-        theme_minimal() + ggtitle(formula) + scale_color_brewer(palette = "Dark2"),
+        theme_minimal() + ggtitle(formula),
         dynamicTicks = dynamicaxis))
 
 })
@@ -538,13 +538,13 @@ setMethod("SoiPlot", c("RHermesExp", "numeric", "character",
 
     datafile$ad <- ""
     for (f in unique(datafile$formv)) {
-        ad <- fs$an[fs$ion == f]
+        ad <- as.character(fs$an[fs$ion == f])
         datafile$ad[datafile$formv == f] <- ad
     }
 
     soiinfo$ad <- ""
     for (f in unique(soiinfo$formv)) {
-        ad <- fs$an[fs$ion == f]
+        ad <- as.character(fs$an[fs$ion == f])
         soiinfo$ad[soiinfo$formv == f] <- ad
     }
 
@@ -680,7 +680,6 @@ setMethod("IsoFidelity", c("RHermesExp", "numeric", "numeric",
         p <- ggplotly(ggplot(PL) +
                         geom_point(aes(x = rt, y = rtiv, color = isov)) +
                         theme_minimal() +
-                        scale_color_brewer(palette = "Set2") +
                         xlab("RT(s)"))
     }
 
@@ -774,7 +773,7 @@ setMethod("IsoFidelity", c("RHermesExp", "numeric", "numeric",
 
     if (plot) {
         p2 <- ggplotly(ggplot(df) + geom_col(aes(x = code, y = abundance,
-            fill = class), position = "dodge") + scale_fill_brewer(palette = "Set2") +
+            fill = class), position = "dodge") +
             ylab("Expected intensities") + theme_minimal() +
             theme(axis.text.x = element_text(angle = 90), plot.margin = unit(c(1,
                 1, 1, 1), "cm")))

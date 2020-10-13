@@ -143,7 +143,7 @@ subform <- function(f1, f2) {
 }
 
 multform <- function(f, k) {
-    f <- CHNOSZ:::count.elements(f1)
+    f <- CHNOSZ:::count.elements(f)
     n <- names(f)
     f <- f * k
     paste0(mapply(function(x, y) {
