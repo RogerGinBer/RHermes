@@ -128,7 +128,7 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
     corresponding <- lapply(purifiedSpectra$anot, function(x){
         which(allf %in% x)
     })
-    cos_list <- pbmapply(function(entry, reference) {
+    cos_list <- mapply(function(entry, reference) {
         curspec <- retrievedMSMS[reference]
         curspec <- unlist(curspec, recursive = FALSE)
         cos <- rapply(curspec, function(compound) {
