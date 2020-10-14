@@ -36,9 +36,10 @@ calculate_ionic_forms <- function(i, F_DB, Ad_DB){
         vapply(function(x) {x[[1]]}, FUN.VALUE = character(1))
 
     db <- data.table(f = j,
-                     m = round((F_DB$m[i] * as.numeric(Ad_DB[good,3])/
-                                    abs(as.numeric(Ad_DB[good, 2])))
-                               + as.numeric(Ad_DB[good,4]), digits = 5),
+                     m = round(((F_DB$m[i] * as.numeric(Ad_DB[good,3])) +
+                                    as.numeric(Ad_DB[good,4]))/
+                                    abs(as.numeric(Ad_DB[good, 2]))
+                               , digits = 5),
                      ch = as.numeric(Ad_DB[good, 2]),
                      envi = envi)
     con <- data.table(f = rep(f, length(j)), ion = j, an = Ad_DB[good, 1])
