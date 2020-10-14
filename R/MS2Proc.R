@@ -106,7 +106,7 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
               return(list())
             }
             names(RES) <- paste(rep(f, times = nrow(metamet[.(f),]) -
-                                        length(novalidspec)),
+                                        length(which(novalidspec))),
                                 metamet[.(f), ]$ID_metabolite[!novalidspec],
                                 unlist(lapply(metamet[.(f), ]$name,
                                        function(x) {x[[1]]}))[!novalidspec],
@@ -130,7 +130,9 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
     })
     cos_list <- mapply(function(entry, reference) {
         curspec <- retrievedMSMS[reference]
-        curspec <- unlist(curspec, recursive = FALSE)
+        n <- unlist(lapply(curspec, names))
+        curspec <- unlist(curspec, recursive = FALSE, use.names = FALSE)
+        names(curspec) <- n
         cos <- rapply(curspec, function(compound) {
             MSMScosineSim(entry, t(compound), minhits = 1)
         }, classes = "matrix", how = "replace")
