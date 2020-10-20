@@ -108,15 +108,18 @@ setRHermesCluster <- function(){
 #'@slot cluster Selected automatically based on your operating system and your number of cores.
 #' Can be set to any valid BiocParallelParam.
 RHermesMeta <- setClass("RHermesMeta",
-                        slots = list(ExpParam = "ExpParam",
-                                     filenames = "character",
-                                     timestamps = "character",
-                                     cluster = "BiocParallelParam"),
-                        prototype = list(ExpParam = ExpParam(),
-                                         filenames = character(0),
-                                         timestamps = character(0),
-                                         cluster = RHermes:::setRHermesCluster()
-                                         ))
+    slots = list(ExpParam = "ExpParam",
+                 filenames = "character",
+                 timestamps = "character",
+                 cluster = "BiocParallelParam"),
+    prototype = list(ExpParam = ExpParam(),
+                     filenames = character(0),
+                     timestamps = c(paste("System info:",
+                                          paste(Sys.info(), collapse = "/")),
+                                    paste("RHermes version:",
+                                          packageVersion("RHermes"))),
+                     cluster = RHermes:::setRHermesCluster()
+                     ))
 
 #'The experimental data storage class. Holds all information of the peaklists, SOI lists
 #'inclusion lists, identifications and compound quantifications (still in development).
