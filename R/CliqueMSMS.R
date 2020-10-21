@@ -84,10 +84,22 @@ generate_ss <- function(curentry, MS2list, contaminant, delta, fs, idx,
     good <- vapply(soi, function(x) {nrow(x) > pmin}, logical(1))
     soi <- soi[good]
     avgmz <- avgmz[good]
-    if (length(soi) == 0) return()
-    # if (length(soi) == 1) {
-    #     return(list(data.frame(mz = avgmz[[1]], int = max(soi[[1]]$rtiv))))
-    # }
+    
+    #Trying to salvage a spectra from suboptimal data
+    if (length(soi) == 0){
+        if(any(data$rtiv) > 30000){
+            return(failsafe_ss(data, header, idx[curentry], fs[curentry]))
+        } else {return()}
+    } else if (length(soi) < 3) {
+        #In case we have a few traces but we're missing the most intense signal
+        #registered in the data
+        if(max(vapply(soi, function(x){max(x$rtiv)},
+                   FUN.VALUE = numeric(1))) < max(data$rtiv)){
+            return(failsafe_ss(data, header, idx[curentry], fs[curentry]))
+        }
+    }
+ 
+
     ##Tidying the regions
     for (i in seq_along(avgmz)) {
         soi[[i]]$mz <- round(avgmz[i], 3)
@@ -334,4 +346,22 @@ purify_ss <- function(sslist, minint = 30000, minpks = 2){
     sslist <- sslist[good_ss, ]
     return(sslist)
 }
+
+failsafe_ss <- function(data, header, idx, fs){
+    maxt <- data$rt[which.max(data$rtiv)]
+    ss <- data.frame(start = numeric(1), end = numeric(1),
+                     apex = numeric(1), ILentry = numeric(1),
+                     precmass = numeric(1))
+    ss$start <- min(data$rt)
+    ss$end <- max(data$rt)
+    data <- data[data$rt == maxt, c("mz", "rtiv")]
+    data <- data[data$rtiv > 0.05*max(data$rtiv),]
+    ss$ssdata <- list(data.frame(mz=data$mz, int = data$rtiv))
+    ss$apex <- maxt
+    ss$precmass <- header$precursorMZ[1]
+    ss$ILentry <- idx
+    ss$anot <- fs
+    return(ss)
+}
+
 

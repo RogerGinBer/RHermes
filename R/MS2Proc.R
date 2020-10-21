@@ -62,6 +62,9 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
                              DatabaseSpectra = list(),
                              MS2_correspondance = list())
         struct@data@MS2Exp[[id]] <- MS2Exp
+        struct <- setTime(struct, paste("Processed MS2Exp object", id,
+                                "and generated superspectra but didn't perform",
+                                "matching"))
         return(struct)
     }
 
@@ -177,6 +180,9 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
                         MS2_correspondance = corresponding)
     message("Done!")
     struct@data@MS2Exp[[id]] <- MS2Exp
+    struct <- setTime(struct, paste("Processed MS2Exp object", id,
+                                ", generated superspectra and matched against",
+                                "database", referenceDB))
     return(struct)
 })
 
