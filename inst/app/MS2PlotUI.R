@@ -2,7 +2,7 @@ MS2PlotUI <- function(id) {
   ns <- NS(id)
   tagList(
     tags$br(),
-
+    
     radioGroupButtons(inputId = ns("selectclass"), label = "Select a graph :",
                       choices = c(`<i class='fa fa-bar-chart'></i> Identifications` = "ident",
                                   `<i class="fas fa-database"></i> Raw MSMS data` = "raw"),
@@ -10,7 +10,7 @@ MS2PlotUI <- function(id) {
     radioGroupButtons(ns("id"), "Select MS2Exp:", choices = "",
                       selected = ""),
     br(),
-
+    
     conditionalPanel("input.selectclass == 'ident'", ns = ns,
                      radioGroupButtons(ns("selectplot"),
                                        choices = c(`Superspectra Plot` = "sup",
@@ -38,7 +38,7 @@ MS2PlotUI <- function(id) {
                                       ),
                                       plotlyOutput(ns("mirrorplot"))
                      ),
-
+                     
                      conditionalPanel("input.selectplot == 'comp'", ns = ns,
                                       fluidRow(
                                         column(6,
@@ -97,15 +97,15 @@ MS2PlotUI <- function(id) {
                                                tableOutput(ns('rawpks'))))
                      )
     ),
-
+    
   )
-
+  
 }
 
 MS2PlotServer <- function(id, struct) {
   moduleServer(id, function(input, output, session) {
     # observeEvent({},{}, ignoreNULL = TRUE, ignoreInit = TRUE)
-
+    
     ####Updates to buttons, selections, etc.####
     observeEvent({
       struct$hasMS2
@@ -118,18 +118,18 @@ MS2PlotServer <- function(id, struct) {
                              return(length(ms2@MS2Data) != 0)
                            }, logical(1))
         whichMS2 <- which(whichMS2)
-
+        
         #Update accordingly
         updateRadioGroupButtons(session, "id", choices = whichMS2,
                                 selected = whichMS2[1])
-
+        
       } else {
         #Hide panels again
         updateRadioGroupButtons(session, "id", choices = NULL,
                                 selected = NULL)
       }
     }, ignoreNULL = TRUE, ignoreInit = TRUE, priority = 100)
-
+    
     observeEvent({
       input$id
     },
@@ -156,41 +156,42 @@ MS2PlotServer <- function(id, struct) {
                            choices = as.character(seq_len(nrow((sslist)[1]))), server = TRUE,
                            selected = as.character(1),
                            options = list(maxOptions = 50000))
-
+      
     }, ignoreNULL = TRUE, ignoreInit = TRUE, priority = 50)
-
+    
     observeEvent({input$selectident2},{
       ms2 <- struct$dataset@data@MS2Exp[[as.numeric(input$id)]]
       sslist <- ms2@Ident[["MS2Features"]]
-
+      
       otherss <- seq_len(nrow(sslist))[-as.numeric(input$selectident2)]
-
+      
       updatePickerInput(session, "otherss",
                         choices = as.character(otherss),
                         selected = as.character(otherss[1]))
     }, ignoreNULL = TRUE, ignoreInit = TRUE
     )
-
+    
     #### Plots ####
     observeEvent({
       input$selectILentry
       input$id
     }, {
       if (input$selectILentry != "" & !is.na(input$selectILentry)) {
-        rawplots <- RawMS2Plot(struct$dataset,
-                               as.numeric(input$id), as.numeric(input$selectILentry),
-                               bymz = input$bymz)
-        output$rawMSMS_bymz <- renderPlotly(rawplots[["p_bymz"]])
-        output$rawMSMS_bygroup <- renderPlotly(rawplots[["p_bygroup"]])
-        output$rawpks <- renderTable(rawplots[["pks"]])
-        if (!is.na(rawplots[[2]][1])) {
-          output$rawss <- renderVisNetwork(rawplots[["net"]])
-        } else {
-          # output$rawss <- renderVisNetwork({})
-        }
+        tryCatch({        
+          rawplots <- RawMS2Plot(struct$dataset,
+                                 as.numeric(input$id), as.numeric(input$selectILentry),
+                                 bymz = input$bymz)
+          output$rawMSMS_bymz <- renderPlotly(rawplots[["p_bymz"]])
+          output$rawMSMS_bygroup <- renderPlotly(rawplots[["p_bygroup"]])
+          output$rawpks <- renderTable(rawplots[["pks"]])
+          if (is(rawplots[["net"]], "visNetwork")) {
+            output$rawss <- renderVisNetwork(rawplots[["net"]])
+          }
+        }, error = function(e){message("Raw MS2 plot failed")})
+        
       }
     }, ignoreNULL = TRUE, ignoreInit = TRUE, priority = -1)
-
+    
     observeEvent({
       input$selectident
       input$id
@@ -207,7 +208,7 @@ MS2PlotServer <- function(id, struct) {
         }
       }
     }, ignoreNULL = TRUE, ignoreInit = TRUE, priority = 50)
-
+    
     observeEvent({
       input$selectident
       input$selecthits
@@ -228,7 +229,7 @@ MS2PlotServer <- function(id, struct) {
         }
       }
     }, ignoreNULL = TRUE, ignoreInit = TRUE, priority = -2)
-
+    
     observeEvent({
       input$selectident2
       input$otherss
@@ -236,17 +237,17 @@ MS2PlotServer <- function(id, struct) {
     }, {
       if (input$selectident2 != "" & !is.na(input$selectident2) &
           length(input$otherss) != 0) {
-        ms2 <- struct$dataset@data@MS2Exp[[as.numeric(input$id)]]
-
-        sslist <- ms2@Ident[["MS2Features"]]
-
-        identplots <- MirrorPlot(struct$dataset,
-                                 as.numeric(input$id), as.numeric(input$selectident2),
-                                 as.numeric(input$otherss), mode = "versus")
-        output$versusplot <- renderPlotly(identplots)
+        tryCatch({        
+          ms2 <- struct$dataset@data@MS2Exp[[as.numeric(input$id)]]
+          sslist <- ms2@Ident[["MS2Features"]]
+          identplots <- MirrorPlot(struct$dataset,
+                                   as.numeric(input$id), as.numeric(input$selectident2),
+                                   as.numeric(input$otherss), mode = "versus")
+          output$versusplot <- renderPlotly(identplots)
+        }, error = function(e){message("Mirrorplot failed")})
       }
     }, ignoreNULL = TRUE, ignoreInit = TRUE, priority = -2)
-
+    
     observeEvent({
       input$selectss
       input$id
@@ -259,5 +260,3 @@ MS2PlotServer <- function(id, struct) {
     }, ignoreNULL = TRUE, ignoreInit = TRUE, priority = -2)
   })
 }
-
-

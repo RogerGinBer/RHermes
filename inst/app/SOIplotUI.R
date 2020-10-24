@@ -193,20 +193,23 @@ SOIPlotServer <- function(id, struct){
     observeEvent({input$choicesfidelity},{
       if(!is.null(input$choicesfidelity) & input$choicesfidelity != ""){
         selected <- strsplit(input$choicesfidelity, " ")[[1]][[1]] %>% as.numeric(.)
-        isoresults <- IsoFidelity(struct$dataset, as.numeric(input$soifiles), selected)
-        output$fplot <- renderPlotly(isoresults[[1]])
+        tryCatch({
+          isoresults <- IsoFidelity(struct$dataset, as.numeric(input$soifiles), selected)
+          output$fplot <- renderPlotly(isoresults[[1]])
+          
+          heteroatoms <- isoresults[[5]]
+          heteroatoms <- heteroatoms[!is.null(heteroatoms)]
+          if(length(heteroatoms) != 0){
+            het_text <- paste0(names(heteroatoms), heteroatoms, collapse = "\n")
+          } else {
+            het_text <- ""
+          }
+          output$valoration <- renderText(paste0("Calculated number of carbon atoms: ", isoresults[[2]], "\n",
+                                                 "Veredict: ", isoresults[[3]], "\n",
+                                                 "Isotopic cosine score: ", isoresults[[4]], "\n",
+                                                 het_text))
+        }, error = function(e){message(e)})
 
-        heteroatoms <- isoresults[[5]]
-        heteroatoms <- heteroatoms[!is.null(heteroatoms)]
-        if(length(heteroatoms) != 0){
-          het_text <- paste0(names(heteroatoms), heteroatoms, collapse = "\n")
-        } else {
-          het_text <- ""
-        }
-        output$valoration <- renderText(paste0("Calculated number of carbon atoms: ", isoresults[[2]], "\n",
-                                              "Veredict: ", isoresults[[3]], "\n",
-                                            "Isotopic cosine score: ", isoresults[[4]], "\n",
-                                            het_text))
       }
     })
 

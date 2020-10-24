@@ -600,7 +600,7 @@ setMethod("RawMS2Plot", c("RHermesExp", "ANY", "ANY", "ANY"),
                   net = NA, pks = data.frame()))
     }
     ss <- RHermes:::generate_ss(entryid, MS2list = ms2data, contaminant = 173.5,
-                      delta = 0.1, fs = chracter(), idx = numeric(),
+                      delta = 0.1, fs = character(), idx = numeric(),
                       to_plot = TRUE)
     soi <- ss$soi
     members <- ss$members

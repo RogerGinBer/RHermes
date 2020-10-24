@@ -187,11 +187,13 @@ PLServer <- function(id, struct){
         observeEvent(input$sel_organism, {
           genome <- strsplit(x = input$sel_organism, split = "-")[[1]]
           if(length(genome) != 0){
-            # message(paste("Searching in KEGG for:", genome[3]))
+            tryCatch({
             path <- KEGGREST::keggList("pathway", genome[2])
             updatePickerInput(session, "sel_pathway",
                               choices = paste(names(path), path, sep="-"),
                               selected = paste(names(path), path, sep="-")[1])
+            }, error = function(e){message("No internet connection, cannot query KEGG")})
+
           }
         }, ignoreInit = TRUE, ignoreNULL = TRUE)
 

@@ -1,6 +1,6 @@
 Package: RHermes
 Title: Bringing Light to Metabolomics MS Data
-Version: 0.99.9002
+Version: 0.99.9003
 Authors@R: person("Roger", "Gine", email = "alrgibe9@gmail.com", role = c("aut", "cre"))
 Description: RHermes is a untargeted metabolomics package to identify compounds
   from biological and environmental samples exploring the whole space of formulas
@@ -31,6 +31,7 @@ Imports:
 	parallel,
 	CHNOSZ,
 	shiny (>= 1.5.0),
+	shinyFiles,
 	shinyWidgets,
 	shinydashboard,
 	networkD3,

@@ -74,8 +74,8 @@ IdentServer <- function(id, struct) {
                     hits$formula
                 })
                 ms2$bestscore <- lapply(ms2$results, function(hits){
-                    if(!is.data.frame(hits)){return("N/A")}
-                    as.character(round(max(hits$cos), digits = 3))
+                    if(!is.data.frame(hits)){return(NA)}
+                    round(max(hits$cos), digits = 3)
                 })
                 ms2 <- dplyr::select(ms2, -c("ssdata", "results"))
                 ms2$start <- as.numeric(ms2$start)
