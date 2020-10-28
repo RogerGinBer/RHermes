@@ -127,9 +127,10 @@ exportMGF <- function(struct, ID, fname, idx = NA) {
         ssdata <- curss$ssdata[[1]]
         #Write into the .ms file
         cat("BEGIN IONS\n")
-        cat("PEPMASS =", precmz, "\n")
-        cat("CHARGE = ","1", charge, "\n", sep = "")
-        cat("TITLE = Entry ", i, " Apex at ", curss$apex[[1]]," seconds. ",
+        cat("PEPMASS=", precmz, "\n", sep = "")
+        cat("CHARGE=","1", charge, "\n", sep = "")
+        cat("RTINSECONDS=",curss$apex[[1]], "\n", sep = "")
+        cat("TITLE=Entry ", i, " Apex at ", curss$apex[[1]]," seconds. ",
             "Range: ", curss$start[[1]], "-", curss$end[[1]], "\n",
             sep = "")
         for (j in seq_len(nrow(ssdata))) {

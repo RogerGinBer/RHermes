@@ -38,7 +38,7 @@ ExtraInfo_UI <- function(id){
                )
       ))
   )
-  
+
 }
 
 ExtraInfoServer <- function(id, struct){
@@ -57,7 +57,7 @@ ExtraInfoServer <- function(id, struct){
         }
       },ignoreInit = FALSE, ignoreNULL = TRUE
       )
-      
+
       observeEvent({
         struct$hasPL
         struct$dataset@data@PL
@@ -72,15 +72,15 @@ ExtraInfoServer <- function(id, struct){
           updateRadioButtons(session, "PLfiles", choices = peakLists, selected = peakLists[1])
         }
       }, ignoreNULL = TRUE, ignoreInit = TRUE)
-      
+
       observeEvent({input$PLfiles},{
         covPlots <- RHermes:::coveragePlot(struct$dataset,
                                            entry = as.numeric(input$PLfiles))
         output$coveragePlot1 <- renderPlotly(covPlots[[1]])
         output$coveragePlot2 <- renderPlotly(covPlots[[2]])
-        
+
       }, ignoreNULL = TRUE, ignoreInit = TRUE)
-      
+
       observeEvent({
         struct$hasSOI
         struct$dataset@data@SOI
@@ -95,14 +95,14 @@ ExtraInfoServer <- function(id, struct){
           updateRadioButtons(session, "SOIfiles", choices = soiLists, selected = soiLists[1])
         }
       }, ignoreNULL = TRUE, ignoreInit = TRUE)
-      
+
       observeEvent({input$SOIfiles},{
         data <- struct$dataset@data@SOI[[as.numeric(input$SOIfiles)]]@SoiList[,-c("peaks")]
         data$anot <- paste(data$anot, sep = "@")
         output$SOItable <- DT::renderDataTable(data, options = list(scrollX = TRUE, autoWidth = TRUE))
       }, ignoreInit = TRUE, ignoreNULL = TRUE)
-      
-      
+
+
       observeEvent({
         struct$hasIL
         struct$dataset@data@MS2Exp
@@ -116,8 +116,8 @@ ExtraInfoServer <- function(id, struct){
         data <- struct$dataset@data@MS2Exp[[as.numeric(input$ILfiles)]]@IL@IL
         output$ILtable <- DT::renderDataTable(data, options = list(scrollX = TRUE, autoWidth = TRUE))
       }, ignoreInit = TRUE, ignoreNULL = TRUE)
-      
-      
+
+
       observeEvent({
         struct$hasMS2
         struct$dataset@data@MS2Exp
@@ -127,7 +127,7 @@ ExtraInfoServer <- function(id, struct){
           updateRadioButtons(session, "MS2files", choices = numMS2, selected = numMS2[1])
         }
       })
-      
+
       observeEvent({
         input$MS2files
       },{
@@ -136,7 +136,7 @@ ExtraInfoServer <- function(id, struct){
           updateSelectInput(session, "MS2ILentry", choices = numMS2entry, selected = numMS2entry[1])
         }
       })
-      
+
       observeEvent({
         input$MS2files
         input$MS2ILentry
@@ -144,12 +144,15 @@ ExtraInfoServer <- function(id, struct){
         data <- struct$dataset@data@MS2Exp[[as.numeric(input$MS2files)]]@MS2Data[[as.numeric(input$MS2ILentry)]]
         if(length(data) != 0){
           output$MS2header <- renderDataTable(data[[1]], options = list(scrollX = TRUE, autoWidth = TRUE))
-          output$MS2raw <- renderPlotly(ggplotly(ggplot(data[[2]]) + 
+          output$MS2raw <- renderPlotly(ggplotly(ggplot(data[[2]]) +
                                                    geom_point(aes(x=rt, y=mz, color = int, shape = as.factor(ID)))))
+        } else {
+          output$MS2header <- renderDataTable(data.frame())
+          output$MS2raw <- renderPlotly(ggplotly(ggplot()))
         }
       }, ignoreInit = TRUE, ignoreNULL = TRUE)
-      
+
     }
-    
+
   )
 }
