@@ -1,11 +1,11 @@
 #'@import data.table
-parallelFilter <- function(j, ScanResults, bins){
+parallelFilter <- function(j, ScanResults, bins, timebin){
     lapply(j, function(i) {
         data <- as.vector(ScanResults[.(i), rt])
         mint <- min(data)
         maxt <- max(data)
         res <- rep(0, length(bins))
-        goodbins <- bins[bins > mint & bins < maxt]
+        goodbins <- bins[between(bins, mint-timebin, maxt+timebin)]
         if (length(goodbins) == 0) {
             return(res)
         }
@@ -42,7 +42,7 @@ densityFilter <- function(ScanResults, h, timebin, iso = "M0", tshift = 0,
 
     idx <- split(unique(ScanResults$formv), seq_len(nwork) * 5)
     setkeyv(ScanResults, c("formv", "rt"))
-    RES <- bplapply(idx, parallelFilter, ScanResults, bins,
+    RES <- bplapply(idx, parallelFilter, ScanResults, bins, timebin,
              BPPARAM = BiocParallelParam)
 
     RES <- unlist(RES, recursive = FALSE)

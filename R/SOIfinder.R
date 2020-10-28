@@ -137,7 +137,6 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename,
     message("Now Grouping:")
     Groups <- GR[[1]]
     setkeyv(Groups, c("formula", "start", "end"))
-
     if (length(GR) > 1) {
         for (i in 2:length(GR)) {
             Groups <- RHermes:::groupGrouper(GR, i, Groups, BiocParallelParam)
@@ -228,13 +227,14 @@ densityProc <- function(x, DataPL, h, BiocParallelParam){
     cutoff <- BinRes[[1]] * scanspercent
     #Correcting CUT < 1 cases to avoid errors (eg. if it was 0, any time region
     #would be included)
-    cutoff[cutoff < 1] <- median(cutoff[cutoff > 1])
+    cutoff[cutoff < 1] <- median(c(cutoff[cutoff > 1], 1)) #Added a 1 for robustness
     message("Running Density Interpreter")
     nwork <- BiocParallelParam$workers
+    if(!is.numeric(nwork)) nwork <- 1
+
     uf <- unique(DataPL$formv)
     suppressWarnings({uf <- split(uf, seq_len(nwork))})
     id <- cumsum(vapply(c(0, uf), length, numeric(1))) - 1
-
     RES <- bplapply(seq_along(uf), RHermes:::parallelInterpreter, uf, cutoff,
                     BinRes, id, BPPARAM = BiocParallelParam)
     RES <- do.call(rbind, RES)
