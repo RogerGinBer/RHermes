@@ -786,7 +786,7 @@ setMethod("IsoFidelity", c("RHermesExp", "numeric", "numeric",
     #Calculate isotopic cosine score -We drop M0 to avoid bias-
     tint <- pat$abundance[-1]
     eint <- exp_int$abundance[-1]
-    tooWeak <- which(tint < 3000)
+    tooWeak <- which(tint < 20000)
     if (length(tooWeak) != 0) {
         tint <- tint[-tooWeak]
         eint <- eint[-tooWeak]

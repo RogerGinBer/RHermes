@@ -1,0 +1,80 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r "setup", include=FALSE}
+knitr::opts_knit$set(root.dir = "../")  # with something else than `getwd()`
+library(RHermes)
+require(enviPat)
+library(igraph)
+require(mzR)
+require(magrittr)
+require(CHNOSZ)
+require(ggplot2)
+require(viridis)
+require(tidyverse)
+library(gtools)
+library(data.table)
+library(keras)
+library(BiocParallel)
+```
+
+```{r warning=FALSE}
+# setwd("../") #For unknitted use of the chunk
+myHermes <- RHermesExp()
+myHermes <- setExpParam(myHermes,
+                        params = ExpParam(ppm = 3.5, res = 120000,
+                                          instr = "Orbitrap", minmz = 50,
+                                          maxmz = 1200))
+
+negHermes <- RHermesExp()
+negHermes <- setExpParam(negHermes,
+                         params = ExpParam(ppm = 3.5, res = 120000,
+                                          instr = "Orbitrap", minmz = 50,
+                                          maxmz = 1200, ion = "-"))
+
+```
+
+
+```{r}
+myHermes <- setDB(myHermes, "custom", filename = "D:/merge_KEGG_ECMDB.csv") 
+myHermes <- remAd(myHermes, c("M+IsoProp+H", "M+IsoProp+Na+H", "M+DMSO+H"))
+
+negHermes <- setDB(negHermes, "custom", filename = "D:/merge_KEGG_ECMDB.csv")
+negHermes <- remAd(negHermes, c("M+IsoProp+H", "M+IsoProp+Na+H", "M+DMSO+H"))
+
+```
+
+
+
+```{r, message = 1, warning = FALSE}
+dir <- "D:/Ecoli_GaryMichi/20201109_MSH_ID-X_pHILIC_E-coli_MS1_Yanes-Lab/MS1_positive/"
+fil <- list.files(dir, pattern = ".*pos.*.mzML", full.names = TRUE)[c(6,9)] #Blank and Sample
+myHermes <- FileProc(myHermes, files = fil)
+saveRDS(myHermes, file ="D:/Ecoli_GaryMichi/MS1_pos_PL.rds")
+
+
+dir <- "D:/Ecoli_GaryMichi/20201109_MSH_ID-X_pHILIC_E-coli_MS1_Yanes-Lab/MS1_negative/"
+fil <- list.files(dir, pattern = ".*neg.*.mzML", full.names = TRUE)[c(6,9)]
+negHermes <- FileProc(negHermes, files = fil)
+saveRDS(negHermes, file ="D:/Ecoli_GaryMichi/MS1_neg_PL.rds")
+
+```
+
+```{r}
+s <- getSOIpar("double")
+myHermes <- SOIfinder(myHermes, params = s, fileID = c(1,2,2,2),
+                      against = c(0,0,1,1))
+myHermes <- SOIcleaner(myHermes, soiid = 4, minint = 10000, TRUE)
+saveRDS(myHermes, file = "D:/Ecoli_GaryMichi/MS1_pos_SOI_filter.rds")
+
+
+negHermes <- SOIfinder(negHermes, params = s, fileID = c(1,2,2,2),
+                      against = c(0,0,1,1))
+negHermes <- SOIcleaner(negHermes, soiid = 4, 10000, TRUE)
+saveRDS(negHermes, file = "D:/Ecoli_GaryMichi/MS1_neg_SOI_filter.rds")
+
+```
+
+

@@ -429,7 +429,7 @@ firstCleaning <- function(i, Groups, blankPL){
   
   #We have to be a bit stringent with the conditions, otherwise we collect junk
   if(sampleCV/blankCV > 5){return(TRUE)} 
-  if(sampleMax/blankMax > 3 & sampleMax > 30000){return(TRUE)}
+  if(sampleMax/blankMax > 3 & sampleMax > 15000){return(TRUE)}
   
   return(FALSE) #Can't decide if the SOI is good enough, let the ANN decide
 }
