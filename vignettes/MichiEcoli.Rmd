@@ -24,13 +24,13 @@ library(BiocParallel)
 # setwd("../") #For unknitted use of the chunk
 myHermes <- RHermesExp()
 myHermes <- setExpParam(myHermes,
-                        params = ExpParam(ppm = 3.5, res = 120000,
+                        params = ExpParam(ppm = 3, res = 120000,
                                           instr = "Orbitrap", minmz = 50,
                                           maxmz = 1200))
 
 negHermes <- RHermesExp()
 negHermes <- setExpParam(negHermes,
-                         params = ExpParam(ppm = 3.5, res = 120000,
+                         params = ExpParam(ppm = 3, res = 120000,
                                           instr = "Orbitrap", minmz = 50,
                                           maxmz = 1200, ion = "-"))
 
@@ -62,19 +62,109 @@ saveRDS(negHermes, file ="D:/Ecoli_GaryMichi/MS1_neg_PL.rds")
 
 ```
 
-```{r}
+```{r, message = FALSE, warning=FALSE}
 s <- getSOIpar("double")
-myHermes <- SOIfinder(myHermes, params = s, fileID = c(1,2,2,2),
-                      against = c(0,0,1,1))
-myHermes <- SOIcleaner(myHermes, soiid = 4, minint = 10000, TRUE)
+myHermes <- SOIfinder(myHermes, params = s, fileID = c(1,2,2,2,2),
+                      against = c(0,0,1,1,1))
+myHermes <- SOIcleaner(myHermes, soiid = 4, minint = 10000, FALSE)
+myHermes <- SOIcleaner(myHermes, soiid = 5, minint = 10000, TRUE)
 saveRDS(myHermes, file = "D:/Ecoli_GaryMichi/MS1_pos_SOI_filter.rds")
 
 
-negHermes <- SOIfinder(negHermes, params = s, fileID = c(1,2,2,2),
-                      against = c(0,0,1,1))
-negHermes <- SOIcleaner(negHermes, soiid = 4, 10000, TRUE)
+negHermes <- SOIfinder(negHermes, params = s, fileID = c(1,2,2,2,2),
+                      against = c(0,0,1,1,1))
+negHermes <- SOIcleaner(negHermes, soiid = 4, 10000, FALSE)
+negHermes <- SOIcleaner(negHermes, soiid = 5, 10000, TRUE)
 saveRDS(negHermes, file = "D:/Ecoli_GaryMichi/MS1_neg_SOI_filter.rds")
 
 ```
 
 
+```{r}
+myHermes <- genIL(myHermes, id = 4, par = ILParam(priorization = "yes", ad = c("M+H", "M+NH4", "M+CH3OH+H")))
+# exportIL(myHermes, 1, maxOver = 15, sepFiles = TRUE)
+
+negHermes <- genIL(negHermes, id = 4, par = ILParam(priorization = "yes", ad = c("M-H")))
+# exportIL(negHermes, 1, maxOver = 15, sepFiles = TRUE)
+
+```
+
+```{r}
+ms2f <- list.files("D:/Ecoli_GaryMichi/tMS2_positive/", pattern = ".*pos.*.mzML", full.names = TRUE)
+myHermes <- MS2Proc(myHermes, 1, MS2files = ms2f, useDB = TRUE, referenceDB = "D:/MS2ID_20200824_202808.rds")
+
+
+ms2f <- list.files("D:/Ecoli_GaryMichi/tMS2_negative/", pattern = ".*neg.*.mzML", full.names = TRUE)
+negHermes <- MS2Proc(negHermes, 1, MS2files = ms2f, useDB = TRUE, referenceDB = "D:/MS2ID_20200824_202808.rds")
+```
+
+
+
+```{r}
+refined_entries <- c(1378, 1679, 2006, 2044, 2068, 2040, 428, 965, 1301, 1266, 446, 1021, 879, 1469, 1556, 1655, 487,551, 1629, 501, 582, 1908, 1456, 1309, 730, 1760, 1832, 1599, 1645, 1540, 1792, 227, 487, 551, 1371, 1540, 1608, 1141, 1348, 469, 564, 2046, 1375, 1491, 1435, 1953, 1268, 2087, 1339, 1929, 210, 2109)
+
+any(duplicated(refined_entries))
+
+curatedIL <- IL@IL[unique(refined_entries), ]
+
+lowintIL <- curatedIL[curatedIL$MaxInt < 100000,]
+
+```
+
+
+
+## 3 m/z range analysis
+```{r warning=FALSE}
+# setwd("../") #For unknitted use of the chunk
+myHermes <- RHermesExp()
+myHermes <- setExpParam(myHermes,
+                        params = ExpParam(ppm = 3, res = 120000,
+                                          instr = "Orbitrap", minmz = 50,
+                                          maxmz = 1200))
+
+negHermes <- RHermesExp()
+negHermes <- setExpParam(negHermes,
+                         params = ExpParam(ppm = 3, res = 120000,
+                                          instr = "Orbitrap", minmz = 50,
+                                          maxmz = 1200, ion = "-"))
+
+```
+
+
+```{r}
+myHermes <- setDB(myHermes, "custom", filename = "D:/merge_KEGG_ECMDB.csv") 
+myHermes <- remAd(myHermes, c("M+IsoProp+H", "M+IsoProp+Na+H", "M+DMSO+H"))
+
+negHermes <- setDB(negHermes, "custom", filename = "D:/merge_KEGG_ECMDB.csv")
+negHermes <- remAd(negHermes, c("M+IsoProp+H", "M+IsoProp+Na+H", "M+DMSO+H"))
+
+```
+
+
+
+```{r, message = 1, warning = FALSE}
+dir <- "D:/Ecoli_GaryMichi/20201109_MSH_ID-X_pHILIC_E-coli_MS1_Yanes-Lab/MS1_positive/"
+fil <- list.files(dir, pattern = ".*pos.*.mzML", full.names = TRUE)[5:10] 
+myHermes <- FileProc(myHermes, files = fil)
+saveRDS(myHermes, file ="D:/Ecoli_GaryMichi/Ranges_MS1_pos_PL.rds")
+
+
+dir <- "D:/Ecoli_GaryMichi/20201109_MSH_ID-X_pHILIC_E-coli_MS1_Yanes-Lab/MS1_negative/"
+fil <- list.files(dir, pattern = ".*neg.*.mzML", full.names = TRUE)[5:10]
+negHermes <- FileProc(negHermes, files = fil)
+saveRDS(negHermes, file ="D:/Ecoli_GaryMichi/Ranges_MS1_neg_PL.rds")
+
+```
+
+```{r, message = FALSE, warning=FALSE}
+s <- getSOIpar("double")
+myHermes <- SOIfinder(myHermes, params = s, fileID = c(1,2,3,4,5,6,3,5,5),
+                      against = c(0,0,0,0,0,0,5,3,6))
+saveRDS(myHermes, file = "D:/Ecoli_GaryMichi/Ranges_MS1_pos_SOI_filter.rds")
+
+
+negHermes <- SOIfinder(negHermes, params = s, fileID = c(1,2,3,4,5,6,3,5,5),
+                      against = c(0,0,0,0,0,0,5,3,6))
+saveRDS(negHermes, file = "D:/Ecoli_GaryMichi/Ranges_MS1_neg_SOI_filter.rds")
+
+```

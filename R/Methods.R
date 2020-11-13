@@ -481,7 +481,9 @@ setMethod("exportIL", c("RHermesExp", "numeric", "ANY", "ANY",
                 "m/z")  #Setting column style for Thermo Xcalibur import
             p[, 1] <- p[, 1]/60
             p[, 2] <- p[, 2]/60
-            write.csv(p, file = paste0(folder, "/Injection_", x, ".csv"))
+            p <- cbind(data.frame(Compound = 1:nrow(p)), p) #Added as result of Michi's comment
+            write.csv(p, file = paste0(folder, "/Injection_", x, ".csv"),
+                      row.names = FALSE)
         }
     } else {
         plandf <- do.call(rbind, lapply(seq_along(plan), function(x) {

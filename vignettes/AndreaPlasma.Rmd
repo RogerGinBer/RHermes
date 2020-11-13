@@ -173,7 +173,7 @@ saveRDS(myHermes, file = "D:/ABrunner Plasma/MS1_pos_SOI.rds")
 
 myHermes <- readRDS("D:/ABrunner Plasma/MS1_pos_SOI.rds")
 
-myHermes <- SOIcleaner(myHermes, soiid = 3, minint = 10000, FALSE)
+# myHermes <- SOIcleaner(myHermes, soiid = 3, minint = 10000, FALSE)
 myHermes <- SOIcleaner(myHermes, soiid = 3, minint = 10000, TRUE)
 
 saveRDS(myHermes, file = "D:/ABrunner Plasma/MS1_pos_SOI_filter.rds")
@@ -184,7 +184,7 @@ negHermes <- SOIfinder(negHermes, params = s, fileID = c(1,2,2),
                       against = c(0,0,1))
 saveRDS(negHermes, file = "D:/ABrunner Plasma/MS1_neg_SOI.rds")
 
-negHermes <- SOIcleaner(negHermes, soiid = 3, minint = 10000, FALSE)
+# negHermes <- SOIcleaner(negHermes, soiid = 3, minint = 10000, FALSE)
 negHermes <- SOIcleaner(negHermes, soiid = 3, 10000, TRUE)
 saveRDS(negHermes, file = "D:/ABrunner Plasma/MS1_neg_SOI_filter.rds")
 
@@ -253,16 +253,153 @@ generated data with RHermes and obtain compound identifications.
 # myHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_pos_filtered.rds")
 ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*pos.*.mzML", full.names = TRUE)
 ms2f <- ms2f[c(seq(5,14), seq(16, 25))]
-myHermes <- MS2Proc(myHermes, 1, MS2files = ms2f, referenceDB = "D:/sp_MS2ID_RogerGB.RData", mincos = 0.8)
-myHermes <- MS2Proc(myHermes, 2, MS2files = ms2f, referenceDB = "D:/sp_MS2ID_RogerGB.RData", mincos = 0.8)
-saveRDS(myHermes, file = "D:/ABrunner Plasma/MS1_pos_ident.rds")
+myHermes <- MS2Proc(myHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE)
+myHermes <- MS2Proc(myHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE)
+saveRDS(myHermes, file = "D:/ABrunner Plasma/MS1_pos_ident_plasma.rds")
 
 # negHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_neg_filtered.rds")
 ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*neg.*.mzML", full.names = TRUE)
 ms2f <- ms2f[c(seq(5,14), seq(16, 22))]
-negHermes <- MS2Proc(negHermes, 1, MS2files = ms2f, referenceDB = "D:/sp_MS2ID_RogerGB.RData", mincos = 0.8)
-negHermes <- MS2Proc(negHermes, 2, MS2files = ms2f, referenceDB = "D:/sp_MS2ID_RogerGB.RData", mincos = 0.8)
-saveRDS(negHermes, file = "D:/ABrunner Plasma/MS1_neg_ident.rds")
+negHermes <- MS2Proc(negHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE)
+negHermes <- MS2Proc(negHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE)
+saveRDS(negHermes, file = "D:/ABrunner Plasma/MS1_neg_ident_plasma.rds")
 
 
 ```
+
+## 35, 70, 100, 200 ms Injection time analysis
+
+```{r}
+#35ms
+# myHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_pos_filtered.rds")
+ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*pos.*.mzML", full.names = TRUE)
+ms2f <- ms2f[27]
+myHermes <- MS2Proc(myHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE)
+myHermes <- MS2Proc(myHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE)
+saveRDS(myHermes, file = "D:/ABrunner Plasma/MS1_pos_ident_plasma_35ms.rds")
+
+# negHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_neg_filtered.rds")
+ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*neg.*.mzML", full.names = TRUE)
+ms2f <- ms2f[24]
+negHermes <- MS2Proc(negHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE)
+negHermes <- MS2Proc(negHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE)
+saveRDS(negHermes, file = "D:/ABrunner Plasma/MS1_neg_ident_plasma_35ms.rds")
+
+#50ms
+# myHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_pos_filtered.rds")
+ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*pos.*.mzML", full.names = TRUE)
+ms2f <- ms2f[5]
+myHermes <- MS2Proc(myHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE)
+myHermes <- MS2Proc(myHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE)
+saveRDS(myHermes, file = "D:/ABrunner Plasma/MS1_pos_ident_plasma_50ms.rds")
+
+# negHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_neg_filtered.rds")
+ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*neg.*.mzML", full.names = TRUE)
+ms2f <- ms2f[5]
+negHermes <- MS2Proc(negHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE)
+negHermes <- MS2Proc(negHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE)
+saveRDS(negHermes, file = "D:/ABrunner Plasma/MS1_neg_ident_plasma_50ms.rds")
+
+#70ms
+# myHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_pos_filtered.rds")
+ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*pos.*.mzML", full.names = TRUE)
+ms2f <- ms2f[28]
+myHermes <- MS2Proc(myHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE)
+myHermes <- MS2Proc(myHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE)
+saveRDS(myHermes, file = "D:/ABrunner Plasma/MS1_pos_ident_plasma_70ms.rds")
+
+# negHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_neg_filtered.rds")
+ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*neg.*.mzML", full.names = TRUE)
+ms2f <- ms2f[25]
+negHermes <- MS2Proc(negHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE)
+negHermes <- MS2Proc(negHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE)
+saveRDS(negHermes, file = "D:/ABrunner Plasma/MS1_neg_ident_plasma_70ms.rds")
+
+
+
+#100ms
+# myHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_pos_filtered.rds")
+ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*pos.*.mzML", full.names = TRUE)
+ms2f <- ms2f[29]
+myHermes <- MS2Proc(myHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE)
+myHermes <- MS2Proc(myHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE)
+saveRDS(myHermes, file = "D:/ABrunner Plasma/MS1_pos_ident_plasma_100ms.rds")
+
+# negHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_neg_filtered.rds")
+ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*neg.*.mzML", full.names = TRUE)
+ms2f <- ms2f[26]
+negHermes <- MS2Proc(negHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE)
+negHermes <- MS2Proc(negHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE)
+saveRDS(negHermes, file = "D:/ABrunner Plasma/MS1_neg_ident_plasma_100ms.rds")
+
+
+
+#200ms
+# myHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_pos_filtered.rds")
+ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*pos.*.mzML", full.names = TRUE)
+ms2f <- ms2f[30]
+myHermes <- MS2Proc(myHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE)
+myHermes <- MS2Proc(myHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE)
+saveRDS(myHermes, file = "D:/ABrunner Plasma/MS1_pos_ident_plasma_200ms.rds")
+
+# negHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_neg_filtered.rds")
+ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*neg.*.mzML", full.names = TRUE)
+ms2f <- ms2f[27]
+negHermes <- MS2Proc(negHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE)
+negHermes <- MS2Proc(negHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE)
+saveRDS(negHermes, file = "D:/ABrunner Plasma/MS1_neg_ident_plasma_200ms.rds")
+```
+
+
+
+
+```{r}
+names <- list.files("D:/ABrunner Plasma", pattern = ".*pos.*ms.*rds", full.names = TRUE)[c(3,4,5,1,2)]
+full <- lapply(names, function(x){
+  myH <- readRDS(x)
+  return(myH@data@MS2Exp[[1]])
+})
+
+costhr <- 0.8
+cosines <- lapply(full, function(x){
+  res <- x@Ident$MS2Features$results
+  res <- res[sapply(res, is.data.frame)]
+  length(which(sapply(res, function(x){any(x$cos > costhr)})))
+})
+cdf <- data.frame(IT = c(35,50,70,100,200), cos = unlist(cosines))
+ggplot(cdf, aes(x=IT, y = cos, width =5)) + geom_col()
+
+e <- c(30,50,70,100,200)
+ms2int <- lapply(full, function(x){
+  ms1i <- x@IL@IL$MaxInt
+  ms2d <- lapply(x@MS2Data, function(y){
+    if(length(y) != 0){
+      max(y[[1]]$totIonCurrent)
+    } else {
+      0
+    }})
+  ms2d
+})
+res <- mapply(int = ms2int, function(int, id){data.frame(int = unlist(int), id = rep(id, length(int)))}, id =e, SIMPLIFY = F)
+res <- do.call(rbind, res)
+ggplot(res, aes(x=int, y=factor(id))) + geom_violin() + scale_x_log10()
+
+comp <- as.data.frame(do.call(cbind, ms2int))
+comp <- as.data.frame(apply(comp, 2, as.numeric))
+
+hist(comp$V5/comp$V1, breaks = 50)
+
+
+
+costhr <- 0.8
+max_cosines <- lapply(full, function(x){
+  res <- x@Ident$MS2Features$results
+  res <- res[sapply(res, is.data.frame)]
+  sapply(res, function(x){max(x$cos)})
+})
+cdf <- data.frame(IT = c(rep(35,length(max_cosines[[1]])),
+                             rep(200,length(max_cosines[[5]]))),
+                             cos = c(max_cosines[[1]], max_cosines[[5]]))
+ggplot(cdf, aes(x=cos, y = as.factor(IT))) + geom_violin()
+```
+

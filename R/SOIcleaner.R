@@ -21,7 +21,7 @@ setMethod("SOIcleaner", signature = c("RHermesExp", "numeric",
         # Isotopic elution similarity
         message("Computing isotopic elution similarity:")
         soilist <- isoCos(soilist, PL, isothr = 0.85, BiocParallelParam)
-        good <- which(!(soilist$MaxInt > 1e+05 & soilist$isofound == 0))
+        good <- which(!(soilist$MaxInt > 1e+06 & soilist$isofound == 0))
         soilist <- soilist[good, ]
         with_isos <- intense_enough[good]
 

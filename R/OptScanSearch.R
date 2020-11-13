@@ -74,7 +74,7 @@ regularProc <- function(curDB, mass, formula, pmz, curiso, ppm, IsoList, minhit,
         scanid$formv <- formula
         scanid$isov <- "M0"
 
-        isom <- mass + (isodf$deltam/ch[[1]])
+        isom <- mass + (isodf$deltam/abs(ch[[1]]))
         # isom <- isom[!is.na(isom)]
 
         isoss <- lapply(isom, function(m) {
@@ -129,7 +129,7 @@ labelledProc <- function(curDB, mass, formula, pmz, curiso, ppm,
         scanid$isov <- "M0"
     }
 
-    isom <- mass + (isodf$deltam/ch[[1]])
+    isom <- mass + (isodf$deltam/abs(ch[[1]]))
     isoss <- lapply(isom, function(m) {
         if (m < pmz[1, 1] | m > pmz[nrow(pmz), 1]) {
             return()
