@@ -7,6 +7,11 @@ ExtraInfo_UI <- function(id){
                  verbatimTextOutput(ns("histext"), placeholder = TRUE), width = 13
                )
       ),
+      tabPanel("Compound database",
+               sidebarPanel(
+                   DT::dataTableOutput(ns("compound_df")), width = 13
+               )
+      ),
       tabPanel("Peak List",
                sidebarPanel(
                  div(radioButtons(inputId = ns("PLfiles"), label = "Select PL:",
@@ -57,6 +62,15 @@ ExtraInfoServer <- function(id, struct){
         }
       },ignoreInit = FALSE, ignoreNULL = TRUE
       )
+
+      observeEvent({struct$dataset@metadata@ExpParam@DB},{
+        if(is.data.frame(struct$dataset@metadata@ExpParam@DB)){
+            output$compound_df <- DT::renderDataTable(struct$dataset@metadata@ExpParam@DB,
+                                                      options = list(scrollX = TRUE,
+                                                      autoWidth = TRUE))
+        }
+      })
+
 
       observeEvent({
         struct$hasPL
