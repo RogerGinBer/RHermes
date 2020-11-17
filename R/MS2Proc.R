@@ -219,6 +219,7 @@ MSMSimporter <- function(IL, filelist) {
             s <- cbind(s, rep(as.numeric(subh[x, "retentionTime"]),
                 times = nrow(s)), rep(as.numeric(subh[x, "runnum"]),
                 times = nrow(s)))
+            s[,2] <- s[,2] * subh[x, "injectionTime"] / 50 #IT scaling, 50ms as reference
             return(s)
         }))
         subpks <- as.data.frame(subpks)
