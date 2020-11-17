@@ -1,7 +1,7 @@
 Ident_UI <- function(id) {
     ns <- NS(id)
     tagList(
-        
+
         sidebarPanel(width = "AUTO", h2("Identification Table",
                                         style = "text-align: center;"),
                      hr(style = "border-top : 1px dashed #C9B29B"),
@@ -13,7 +13,7 @@ Ident_UI <- function(id) {
 IdentServer <- function(id, struct) {
     moduleServer(id, function(input, output, session) {
         ns <- session$ns
-        
+
         ####Updates to buttons, selections, etc.####
         observeEvent({
             struct$hasMS2
@@ -24,7 +24,7 @@ IdentServer <- function(id, struct) {
                                    return(length(ms2@MS2Data) != 0)
                                }, logical(1))
             whichMS2 <- which(whichMS2)
-            
+
             if(length(whichMS2) != 0){
                 output$identTable <- renderUI({
                     tagList(fluidRow(
@@ -48,27 +48,44 @@ IdentServer <- function(id, struct) {
                                             icon("save"),
                                             style = "display: block; margin: 0 auto;")
                         )),
-                        
-                        div(dataTableOutput(ns("ms2table")), style = "margin-top: 30px;")
+
+                        dropdownButton(
+                            tags$h3("Hits summary"),
+                            selectInput(inputId = ns('hitentry'),
+                                        label = 'Select hit entry',
+                                        choices = "", selectize = TRUE),
+
+                            div(dataTableOutput(ns("hitstable")), style = "margin-top: 30px;"),
+
+                            circle = TRUE, status = "info",
+                            icon = icon("gear"), width = "auto",
+
+                            tooltip = tooltipOptions(title = "Check all hits for a given entry")
+                        ),
+
+                        div(dataTableOutput(ns("ms2table")), style = "margin-top: 30px;"),
                     )
-                    
+
                 })
             }}, ignoreNULL = TRUE, ignoreInit = TRUE, priority = 10)
-        
+
         savedf <- reactiveValues(data = NULL)
-        
+
         observeEvent({
             input$id
             input$onlyhits
         }, {
             if(input$id != "nothing"){
                 ms2 <- struct$dataset@data@MS2Exp[[as.numeric(input$id)]]@Ident[[1]]
-                ms2 <- cbind(data.frame(ID = seq_len(nrow(ms2))), ms2) 
-                
+                ms2 <- cbind(data.frame(ID = seq_len(nrow(ms2))), ms2)
+
+                updateSelectInput(session = session, inputId = "hitentry",
+                                  choices = which(vapply(ms2$results, is.data.frame, logical(1))))
+
                 if(input$onlyhits){
                     ms2 <- ms2[vapply(ms2$results, is.data.frame, logical(1)), ]
                 }
-                
+
                 ms2$hits <- lapply(ms2$results, function(hits){
                     if(!is.data.frame(hits)){return(hits)}
                     hits$formula
@@ -77,13 +94,17 @@ IdentServer <- function(id, struct) {
                     if(!is.data.frame(hits)){return(NA)}
                     round(max(hits$cos), digits = 3)
                 })
+                ms2$bestcomp <- lapply(ms2$results, function(hits){
+                    if(!is.data.frame(hits)){return(NA)}
+                    hits$formula[which.max(hits$cos)]
+                })
                 ms2 <- dplyr::select(ms2, -c("ssdata", "results"))
                 ms2$start <- as.numeric(ms2$start)
                 ms2$end <- as.numeric(ms2$end)
                 ms2$apex <- as.numeric(ms2$apex)
                 ms2$precmass <- as.numeric(ms2$precmass)
                 ms2$bestscore <- as.numeric(ms2$bestscore)
-                
+
                 output$ms2table <- renderDataTable(ms2, plugins = 'natural', server = FALSE,
                                                    options = list(columnDefs = list(list(type = "natural", targets = "_all")),
                                                                   scrollX = TRUE))
@@ -93,18 +114,34 @@ IdentServer <- function(id, struct) {
                 ms2$bestscore <- format(round(ms2$bestscore,4),nsmall = 4)
                 ms2$precmass <- format(round(ms2$precmass,4),nsmall = 4)
                 ms2$anot <- lapply(ms2$anot, function(x){paste(x, collapse = " ")})
-                ms2$hits <- lapply(ms2$hits, function(x){paste(x, collapse = " ")})
+                ms2$hits <- lapply(ms2$hits, function(x){
+                    paste(unique(lapply(x, function(y){
+                        paste(strsplit(y, "#")[[1]][c(1,3)],
+                              collapse = "#")})),
+                    collapse = " ")})
                 ms2$hits <- lapply(ms2$hits, function(x){gsub(pattern = "\n", replacement = "", x = x,)})
-                ms2$hits <- lapply(ms2$hits, function(x){gsub(pattern = "\t", replacement = "", x = x,)})                
+                ms2$hits <- lapply(ms2$hits, function(x){gsub(pattern = "\t", replacement = "", x = x,)})
                 savedf$data <- ms2
+
+
             }
         }, ignoreNULL = TRUE, ignoreInit = TRUE)
-        
+
+        observeEvent({input$hitentry},{
+            tryCatch({
+                ms2 <- struct$dataset@data@MS2Exp[[as.numeric(input$id)]]@Ident[[1]]
+                df <- ms2$results[[as.numeric(input$hitentry)]]
+                output$hitstable <- renderDataTable(datatable(df, rownames = FALSE))
+            }, error = function(e){message("Error rendering selected hits table")})
+        })
+
+
+
         output$savecsv <- downloadHandler(filename = "ms2data.csv",
                                           content = function(file) {
                                               data.table::fwrite(savedf$data, file)
                                           }, contentType = "text/csv")
-        
+
         shinyFileSave(input, "saveselector", roots = getVolumes(),
                       filetypes = c(""))
         savepath <- reactive(as.character(parseSavePath(getVolumes(),
@@ -112,7 +149,7 @@ IdentServer <- function(id, struct) {
         output$savepath <- renderText(savepath())
         observeEvent(input$savebutton, {
             if (length(savepath()) != 0) {
-                
+
                 switch(input$format,
                        msp = {exportMSP(struct$dataset, as.numeric(input$id), savepath())},
                        mgf = {exportMGF(struct$dataset, as.numeric(input$id), savepath())}
