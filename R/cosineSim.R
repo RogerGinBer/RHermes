@@ -40,7 +40,7 @@ pearsonSim <- function(pattern, query, nscans = 5) {
 
 #' @export
 MSMScosineSim <-
-    function (pattern, query, minhits = 0, mzdiff = 0.05, minint = 0.1,
+    function (pattern, query, minhits = 0, mzdiff = 0.02, minint = 0.1,
               do.sqrt=F) {
         if (nrow(pattern) == 0 | nrow(query) == 0) {
             stop("Invalid pattern or query")
