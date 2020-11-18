@@ -39,6 +39,7 @@ ExtraInfo_UI <- function(id){
                      style = "margin-left: 5%; margin-top: 3%"), width = "AUTO"),
                sidebarPanel(
                  plotlyOutput(ns("MS2raw")),
+                 plotlyOutput(ns("MS2selectedscan")),
                  dataTableOutput(ns("MS2header")), width = "AUTO"
                )
       ))
@@ -163,6 +164,21 @@ ExtraInfoServer <- function(id, struct){
         } else {
           output$MS2header <- renderDataTable(data.frame())
           output$MS2raw <- renderPlotly(ggplotly(ggplot()))
+        }
+      }, ignoreInit = TRUE, ignoreNULL = TRUE)
+      
+      observeEvent({input$MS2header_rows_selected},{
+        s <- input$MS2header_rows_selected
+        data <- struct$dataset@data@MS2Exp[[as.numeric(input$MS2files)]]@MS2Data[[as.numeric(input$MS2ILentry)]]
+        if(length(data) & length(s)){
+          rts <- unlist(data[[1]][s, "retentionTime"])
+          data[[2]] <- data[[2]][data[[2]]$rt %in% rts, ]
+          output$MS2selectedscan <- renderPlotly(ggplotly(ggplot(data[[2]]) +
+                                                   geom_segment(aes(x=mz, xend = mz, y=0, yend = int)) + 
+                                                   facet_grid(rt ~ .) +
+                                                   theme_minimal()))
+        } else {
+          output$MS2selectedscan <- renderPlotly(ggplotly(ggplot()))
         }
       }, ignoreInit = TRUE, ignoreNULL = TRUE)
 
