@@ -87,7 +87,7 @@ generate_ss <- function(curentry, MS2list, contaminant, delta, fs, idx,
     
     #Trying to salvage a spectra from suboptimal data
     if (length(soi) == 0){
-        if(any(data$rtiv) > 30000){
+        if(any(data$rtiv > 30000)){
             return(failsafe_ss(data, header, idx[curentry], fs[curentry]))
         } else {return()}
     } else if (length(soi) < 3) {
@@ -169,8 +169,8 @@ generate_ss <- function(curentry, MS2list, contaminant, delta, fs, idx,
     ncomp <- igraph::components(net) %>% igraph::groups() %>% length()
     dens <- igraph::edge_density(net)
     if(is.nan(dens)){dens <- 0}
-    
-    if(ncomp == 1 & dens > 0.5){
+    if(ncomp == 1 & dens > 0.4 &
+       modularity(net, igraph::membership(igraph::cluster_fast_greedy(net))) < 0.3){
         members <- rep(1, V(net) %>% length())
     } else {
         wc <- igraph::cluster_fast_greedy(net)
