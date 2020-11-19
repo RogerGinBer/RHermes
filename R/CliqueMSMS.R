@@ -166,17 +166,22 @@ generate_ss <- function(curentry, MS2list, contaminant, delta, fs, idx,
     net <- igraph::simplify(net, remove.multiple = TRUE,
                             remove.loops = TRUE)
     
-    ncomp <- igraph::components(net) %>% igraph::groups() %>% length()
-    dens <- igraph::edge_density(net)
-    if(is.nan(dens)){dens <- 0}
-    if(ncomp == 1 & dens > 0.4 &
-       modularity(net, igraph::membership(igraph::cluster_fast_greedy(net))) < 0.3){
-        members <- rep(1, V(net) %>% length())
-    } else {
-        wc <- igraph::cluster_fast_greedy(net)
-        members <- igraph::membership(wc)
+    
+    ##Network partitioning
+    comp <- components(net)
+    members <- comp$membership
+    for(i in unique(comp$membership)){
+      vertices <- which(comp$membership == i)
+      if(length(vertices) == 1){next}
+      current_net <- induced_subgraph(net, vertices)
+      partitioning <- cluster_fast_greedy(net)
+      dens <- edge_density(current_net)
+      mod <- modularity(net, membership(partitioning))
+      if(is.nan(dens)){dens <- 0}
+      if(dens < 0.5 & mod > 0.3){
+        members[vertices] <- (1e3*i + membership(partitioning)) #1e3 as arbitrary number to avoid membership collisions
+      }
     }
-
 
     n_mem <- length(unique(members))
     ss <- data.frame(start = numeric(n_mem), end = numeric(n_mem),
