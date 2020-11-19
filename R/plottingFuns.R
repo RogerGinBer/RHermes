@@ -396,7 +396,7 @@ setMethod("MirrorPlot", c("RHermesExp", "numeric", "numeric"),
                           family = "Segoe UI Light", check_overlap = TRUE) +
                 ggtitle(title, subtitle)
 
-              ggplotly(pl, height = ifelse(length(patform)<5, 300, 200)*
+              ggplotly(pl, height = ifelse(length(patform)<5, 850/length(patform), 200)*
                            length(patform))
             })
 
