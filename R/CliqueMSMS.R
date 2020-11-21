@@ -174,9 +174,9 @@ generate_ss <- function(curentry, MS2list, contaminant, delta, fs, idx,
       vertices <- which(comp$membership == i)
       if(length(vertices) == 1){next}
       current_net <- induced_subgraph(net, vertices)
-      partitioning <- cluster_fast_greedy(net)
+      partitioning <- cluster_fast_greedy(current_net)
       dens <- edge_density(current_net)
-      mod <- modularity(net, membership(partitioning))
+      mod <- modularity(current_net, membership(partitioning))
       if(is.nan(dens)){dens <- 0}
       if(dens < 0.5 & mod > 0.3){
         members[vertices] <- (1e3*i + membership(partitioning)) #1e3 as arbitrary number to avoid membership collisions
