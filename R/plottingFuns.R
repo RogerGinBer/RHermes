@@ -346,7 +346,13 @@ setMethod("MirrorPlot", c("RHermesExp", "numeric", "numeric"),
         mirrplot <- lapply(patform, function(x){
           pl <- ggplot()
           if(mode == "hits"){
-            refspec <- pattern[[x]][[entry$results[[1]]$id[which(entry$results[[1]]$formula == x)]]]
+
+            index <- entry$results[[1]]$id[which(entry$results[[1]]$formula == x)]
+            if(length(index) == 0){
+              refspec <- NULL
+            } else {
+              refspec <- pattern[[x]][[index]]
+            }
             if(is.null(refspec)){return(ggplotly(pl))}
             refspec <- as.data.frame(t(refspec))
             pl <- pl + scale_x_continuous(limits = c(min(c(refspec$mz,
@@ -396,7 +402,7 @@ setMethod("MirrorPlot", c("RHermesExp", "numeric", "numeric"),
                           family = "Segoe UI Light", check_overlap = TRUE) +
                 ggtitle(title, subtitle)
 
-              ggplotly(pl, height = ifelse(length(patform)<5, 300, 200)*
+              ggplotly(pl, height = ifelse(length(patform)<5, 850/length(patform), 200)*
                            length(patform))
             })
 

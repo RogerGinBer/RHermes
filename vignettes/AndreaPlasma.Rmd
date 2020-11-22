@@ -374,7 +374,7 @@ ms2int <- lapply(full, function(x){
   ms1i <- x@IL@IL$MaxInt
   ms2d <- lapply(x@MS2Data, function(y){
     if(length(y) != 0){
-      max(y[[1]]$totIonCurrent)
+      sum(y[[2]][,2])
     } else {
       0
     }})
