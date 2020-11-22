@@ -6,7 +6,8 @@ SOIPlotUI <- function(id){
       inputId = ns("selectplot"),
       label = "Select a graph :",
       choices = c(`<i class="fas fa-mountain"></i> SOI plots` = "soiplot",
-                  `<i class='fa fa-bar-chart'></i> Isotopic fidelity` = "fidelityplot"),
+                  `<i class='fa fa-bar-chart'></i> Isotopic fidelity` = "fidelityplot",
+                  `<i class='fa fa-project-diagram'></i> Inter-SOI cosine similarity` = "cossim"),
       justified = TRUE
     ),
     conditionalPanel("input.selectplot == 'soiplot'", ns = ns,
@@ -62,7 +63,13 @@ SOIPlotUI <- function(id){
                                     label = "Select SOI to check", width = "600px"),
                      verbatimTextOutput(ns("valoration")),
                      plotlyOutput(ns("fplot"), height = "600px")
-                     )
+                     ),
+    conditionalPanel("input.selectplot == 'cossim'", ns = ns,
+                     selectizeInput(ns("choicescos"), choices = NULL, selected = NULL,
+                                    label = "Select SOI to check", width = "600px"),
+                     actionButton(ns("start_cos_calculation"), label = "Calculate cosines"),
+                     dataTableOutput(ns("cos_table"), height = "600px")
+    )
   )
 }
 SOIPlotServer <- function(id, struct){
@@ -183,6 +190,8 @@ SOIPlotServer <- function(id, struct){
         )
         rows <- paste(ids, fa_names, rep(" Intensity:", length(ids)),round(SOIlist$MaxInt[ids]))
         updateSelectizeInput(session, "choicesfidelity", choices = rows)
+        updateSelectizeInput(session, "choicescos", choices = rows)
+
 
 
       }
@@ -196,7 +205,7 @@ SOIPlotServer <- function(id, struct){
         tryCatch({
           isoresults <- IsoFidelity(struct$dataset, as.numeric(input$soifiles), selected)
           output$fplot <- renderPlotly(isoresults[[1]])
-          
+
           heteroatoms <- isoresults[[5]]
           heteroatoms <- heteroatoms[!is.null(heteroatoms)]
           if(length(heteroatoms) != 0){
@@ -211,7 +220,27 @@ SOIPlotServer <- function(id, struct){
         }, error = function(e){message(e)})
 
       }
-    })
+    }, ignoreNULL = TRUE, ignoreInit = TRUE)
+
+
+    observeEvent({input$start_cos_calculation},{
+        if(!is.null(input$choicescos) & input$choicescos != ""){
+            selected <- strsplit(input$choicescos, " ")[[1]][[1]] %>% as.numeric(.)
+            tryCatch({
+                sois <- struct$dataset@data@SOI[[as.numeric(input$soifiles)]]@SoiList
+                cos <- sapply(sois$peaks, function(x){cosineSim(sois$peaks[[selected]],
+                                                                query = x, nscans = 5)})
+                m <- sois$mass[[selected]]
+                sois$deltam <- sois$mass - m
+                sois$cos <- cos
+                output$cos_table <- renderDataTable(sois[order(cos, decreasing = T), -c("length","width","peaks")],
+                                                    options = list(scrollX = TRUE, autoWidth = TRUE))
+
+            }, error = function(e){message(e)})
+
+        }
+    }, ignoreNULL = TRUE, ignoreInit = TRUE)
+
 
     return()
   }

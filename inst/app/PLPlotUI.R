@@ -2,52 +2,79 @@ PLPlotUI <- function(id){
   ns <- NS(id)
   tagList(
     tags$br(),
-    dropdown(circle = FALSE, status = "info",
-             label = HTML('<span style = "margin-left:10px; margin-right:10px">Settings</span>'),
-                   tooltip = tooltipOptions(title = "Plotting settings"),
-                   icon = icon("align-justify"),
-                   sidebarPanel(fluidRow(
-      column(3, offset = 0,
-             radioButtons(ns("PLplotmode"), label = "Select mode:",
-                          c("By compound name", "By formula"), selected = "By compound name"),
-             conditionalPanel("input.PLcompselect != 'No file detected'", ns = ns,
-                              radioButtons(ns("PLfiles"), "Select which PL to use: ", choices = "", 1, inline = TRUE))
-      ),
-      column(9, offset = 0,
-             fluidRow(
-               column(8,
-                      conditionalPanel(condition = "input.PLplotmode == 'By compound name'", ns = ns,
-                                       selectizeInput(inputId = ns("PLcompselect"), label ="Select compound",
-                                                      choices = "No file detected", selected = NULL, multiple = FALSE),
-                      ),
-                      conditionalPanel(condition = "input.PLplotmode == 'By formula'", ns = ns,
-                                       selectizeInput(inputId = ns("PLformselect"), label = "Select formula",
-                                                      choices = "No file detected", selected = NULL, multiple = FALSE),
-                      )),
+    radioGroupButtons(inputId = ns("selectclass"), label = "Select a graph :",
+                      choices = c(`<i class='fa fa-bar-chart'></i> Compounds` = "comp",
+                                  `<i class="fas fa-database"></i> Raw MS1 data` = "raw"),
+                      justified = TRUE),
+    conditionalPanel("input.selectclass == 'comp'", ns = ns,
+          dropdown(circle = FALSE, status = "info",
+                 label = HTML('<span style = "margin-left:10px; margin-right:10px">Settings</span>'),
+                       tooltip = tooltipOptions(title = "Plotting settings"),
+                       icon = icon("align-justify"),
+                       sidebarPanel(fluidRow(
+          column(3, offset = 0,
+                 radioButtons(ns("PLplotmode"), label = "Select mode:",
+                              c("By compound name", "By formula"), selected = "By compound name"),
+                 conditionalPanel("input.PLcompselect != 'No file detected'", ns = ns,
+                                  radioButtons(ns("PLfiles"), "Select which PL to use: ", choices = "", 1, inline = TRUE))
+          ),
+          column(9, offset = 0,
+                 fluidRow(
+                   column(8,
+                          conditionalPanel(condition = "input.PLplotmode == 'By compound name'", ns = ns,
+                                           selectizeInput(inputId = ns("PLcompselect"), label ="Select compound",
+                                                          choices = "No file detected", selected = NULL, multiple = FALSE),
+                          ),
+                          conditionalPanel(condition = "input.PLplotmode == 'By formula'", ns = ns,
+                                           selectizeInput(inputId = ns("PLformselect"), label = "Select formula",
+                                                          choices = "No file detected", selected = NULL, multiple = FALSE),
+                          )),
 
-               column(3, offset = 1, tags$b("Dynamic axis"), switchInput(
-                 inputId = ns("dynamicaxis"),
-                 onStatus = "success",
-                 offStatus = "danger",
-                 value = TRUE, size = "small"
-               ))
-             ),
-             conditionalPanel("input.PLcompselect != 'No file detected'", ns = ns,
-                              sliderInput(ns("RTinterval"), label = "Select an RT interval:",
-                                          min = 0, max = 1800, value = c(0,1800)),
-                              pickerInput(
-                                inputId = ns("ads"),
-                                label = "Select adducts to plot",
-                                choices = NULL,
-                                options = list(
-                                  `actions-box` = TRUE),
-                                multiple = TRUE
-                              ),
-                              verbatimTextOutput(outputId = ns("othercomp")),
-                              tags$head(tags$style("#PLPlotUI-othercomp{overflow-y:scroll; max-height: 250px; background: ghostwhite;}")))
-      )
-    ),width = 12), width = "100%"),
-    plotlyOutput(outputId = ns("PLPlot"), height = "800px")
+                   column(3, offset = 1, tags$b("Dynamic axis"), switchInput(
+                     inputId = ns("dynamicaxis"),
+                     onStatus = "success",
+                     offStatus = "danger",
+                     value = TRUE, size = "small"
+                   ))
+                 ),
+                 conditionalPanel("input.PLcompselect != 'No file detected'", ns = ns,
+                                  sliderInput(ns("RTinterval"), label = "Select an RT interval:",
+                                              min = 0, max = 1800, value = c(0,1800)),
+                                  pickerInput(
+                                    inputId = ns("ads"),
+                                    label = "Select adducts to plot",
+                                    choices = NULL,
+                                    options = list(
+                                      `actions-box` = TRUE),
+                                    multiple = TRUE
+                                  ),
+                                  verbatimTextOutput(outputId = ns("othercomp")),
+                                  tags$head(tags$style("#PLPlotUI-othercomp{overflow-y:scroll; max-height: 250px; background: ghostwhite;}")))
+          )
+        ),width = 12), width = "100%"),
+        plotlyOutput(outputId = ns("PLPlot"), height = "800px")
+    ),
+    conditionalPanel("input.selectclass == 'raw'", ns = ns,
+        dropdown(circle = FALSE, status = "info",
+            label = HTML('<span style = "margin-left:10px; margin-right:10px">Settings</span>'),
+            tooltip = tooltipOptions(title = "Plotting settings"),
+            icon = icon("align-justify"),
+            sidebarPanel(fluidRow(
+                column(4, offset = 0,
+                        radioButtons(ns("PLfiles_raw"), "Select which PL to use: ", choices = "", 1, inline = TRUE)
+                  ),
+                column(8,
+                    numericInput(ns("targetmz"), "Target mz:", value = 200, min = 0, max = 5000),
+                    numericInput(ns("mztol"), "mz tolerance", value = 0.5, min = 0, max = 5000, step = 0.001),
+                    sliderInput(ns("RTinterval"), label = "Select an RT interval:",
+                                min = 0, max = 1800, value = c(0,1800)),
+                    column(6, actionButton(ns("addConfig"), "Add mz")),
+                    column(6, actionButton(ns("remConfig"), "Remove mz"))
+                )
+            ), width = 12),
+            width = "100%"),
+        plotlyOutput(outputId = ns("RawMS1Plot"), height = "800px")
+    )
   )
 }
 PLPlotServer <- function(id, struct){
@@ -74,6 +101,7 @@ PLPlotServer <- function(id, struct){
                                selected = struct$dataset@metadata@ExpParam@DB$MolecularFormula[1],
                                server = TRUE)
           updateRadioButtons(session, "PLfiles", choices = peakLists)
+          updateRadioButtons(session, "PLfiles_raw", choices = peakLists)
           updateSliderInput(session, "RTinterval", max = ceiling(max(struct$dataset@data@PL[[1]]@raw$rt)),
                             value = c(0, ceiling(max(struct$dataset@data@PL[[1]]@raw$rt))))
           updatePickerInput(session, "ads", choices = struct$dataset@metadata@ExpParam@adlist$adduct,
@@ -111,6 +139,29 @@ PLPlotServer <- function(id, struct){
                                                                 ads = as.character(input$ads)
                                                               ))
         }
+
+
+      }, ignoreNULL = TRUE, ignoreInit = TRUE)
+
+
+      observeEvent({
+          input$PLfiles
+          input$RTinterval
+          input$targetmz
+          input$mztol
+          input$PLfiles_raw
+      },{
+          if(struct$hasPL){
+              d <- struct$dataset@data@PL[[as.numeric(input$PLfiles)]]@raw
+              target <- as.numeric(input$targetmz)
+              tol <- as.numeric(input$mztol)
+              d <- filter(d, between(mz, target - tol, target + tol) &
+                              between(rt, as.numeric(input$RTinterval[[1]]),
+                                      as.numeric(input$RTinterval[[2]])))
+
+              output$RawMS1Plot <- renderPlotly(ggplotly(ggplot(d) + geom_point(aes(x=rt, y=mz, color = rtiv))))
+
+          }
 
 
       }, ignoreNULL = TRUE, ignoreInit = TRUE)
