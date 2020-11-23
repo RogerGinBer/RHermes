@@ -86,7 +86,7 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
 
     setkeyv(metaesp, c("ID_spectra"))
     setkeyv(espmet, c("ID_metabolite"))
-    setkeyv(metamet, c("formula"))
+    setkeyv(metamet, c("REFformula"))
 
     polarity <- ifelse(struct@metadata@ExpParam@ion == "+", 1, 0)
 
@@ -98,9 +98,15 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
         if (is.na(idmet[1])) return(list())
         RES <- lapply(idmet, function(id) {
             idesp <- espmet[.(id), ]$ID_spectra
-            idesp <- idesp[metaesp[.(idesp), ]$polarity == polarity]
-            return(list_fragments[["spectra"]][list_fragments[["ID_spectra"]] %in%
-              idesp])
+            metadata <- metaesp[.(idesp), ]
+            which_polarity <- metadata$REFpolarity == polarity
+            spec <- list_fragments[["spectra"]][list_fragments[["ID_spectra"]] %in%
+                                                    idesp[which_polarity]]
+            if(length(spec)==0){return(spec)}
+            energies <- apply(metadata[which_polarity, c("REFCE", "REFnature")], 1,
+                              function(x){paste(x, collapse = "_")})
+            names(spec) <- energies
+            return(spec)
         })
         novalidspec <- vapply(RES, function(x) {length(x) == 0}, logical(1))
         if (any(novalidspec)) {
@@ -111,9 +117,9 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
             names(RES) <- paste(rep(f, times = nrow(metamet[.(f),]) -
                                         length(which(novalidspec))),
                                 metamet[.(f), ]$ID_metabolite[!novalidspec],
-                                unlist(lapply(metamet[.(f), ]$name,
+                                unlist(lapply(metamet[.(f), ]$REFname,
                                        function(x) {x[[1]]}))[!novalidspec],
-                                metamet[.(f),]$smiles[!novalidspec], sep = "#")
+                                metamet[.(f),]$REFsmiles[!novalidspec], sep = "#")
         } else {
             names(RES) <- paste(rep(f, times = nrow(metamet[.(f),])),
                                 metamet[.(f), ]$ID_metabolite,
