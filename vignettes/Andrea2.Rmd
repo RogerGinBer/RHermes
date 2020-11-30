@@ -259,19 +259,19 @@ generated data with RHermes and obtain compound identifications.
 
 ```{r}
 ms2f <- list.files("D:/ABrunner/MSMSdata", pattern = ".*pos.*.mzML", full.names = TRUE)[seq(1,31)]
-myHermes <- MS2Proc(myHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", useDB = TRUE, mincos = 0.5)
-myHermes <- MS2Proc(myHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", useDB = TRUE, mincos = 0.5)
+myHermes <- MS2Proc(myHermes, 1, MS2files = ms2f, sstype = "regular", referenceDB = "D:/MS2ID_B2R_20201113_083214.rds", useDB = TRUE, mincos = 0.5)
+myHermes <- MS2Proc(myHermes, 2, MS2files = ms2f,sstype = "regular",  referenceDB = "D:/MS2ID_B2R_20201113_083214.rds", useDB = TRUE, mincos = 0.5)
 
 
 ms2f <- list.files("D:/ABrunner/MSMSdata", pattern = ".*pos.*.mzML", full.names = TRUE)[seq(33,45)]
-myHermes <- MS2Proc(myHermes, 3, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", useDB = TRUE, mincos = 0.5)
-myHermes <- MS2Proc(myHermes, 4, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", useDB = TRUE, mincos = 0.5)
+myHermes <- MS2Proc(myHermes, 3, MS2files = ms2f,sstype = "regular",  referenceDB = "D:/MS2ID_B2R_20201113_083214.rds", useDB = TRUE, mincos = 0.5)
+myHermes <- MS2Proc(myHermes, 4, MS2files = ms2f,sstype = "regular",  referenceDB = "D:/MS2ID_B2R_20201113_083214.rds", useDB = TRUE, mincos = 0.5)
 
 ms2f <- list.files("D:/ABrunner/MSMSdata", pattern = ".*pos.*.mzML", full.names = TRUE)[c(1:31, seq(33,45))]
-myHermes <- MS2Proc(myHermes, 5, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", useDB = TRUE, mincos = 0.5)
-myHermes <- MS2Proc(myHermes, 6, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", useDB = TRUE, mincos = 0.5)
+myHermes <- MS2Proc(myHermes, 5, MS2files = ms2f,sstype = "regular",  referenceDB = "D:/MS2ID_B2R_20201113_083214.rds", useDB = TRUE, mincos = 0.5)
+myHermes <- MS2Proc(myHermes, 6, MS2files = ms2f,sstype = "regular",  referenceDB = "D:/MS2ID_B2R_20201113_083214.rds", useDB = TRUE, mincos = 0.5)
 
-saveRDS(myHermes, file = "D:/ABrunner/MS1_pos_Ident_Water2.rds")
+saveRDS(myHermes, file = "D:/ABrunner/MS1_pos_Ident_Water.rds")
 
 ```
 
@@ -279,13 +279,13 @@ saveRDS(myHermes, file = "D:/ABrunner/MS1_pos_Ident_Water2.rds")
 
 ```{r}
 ms2f <- list.files("D:/ABrunner/MSMSdata", pattern = ".*neg.*.mzML", full.names = TRUE)[seq(3,33)]
-negHermes <- MS2Proc(negHermes, 1, MS2files = ms2f)
-negHermes <- MS2Proc(negHermes, 2, MS2files = ms2f)
+negHermes <- MS2Proc(negHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_B2R_20201113_083214.rds", useDB = TRUE, mincos = 0.5)
+negHermes <- MS2Proc(negHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_B2R_20201113_083214.rds", useDB = TRUE, mincos = 0.5)
 
 
 ms2f <- list.files("D:/ABrunner/MSMSdata", pattern = ".*neg.*.mzML", full.names = TRUE)[seq(35,45)]
-negHermes <- MS2Proc(negHermes, 3, MS2files = ms2f)
-negHermes <- MS2Proc(negHermes, 4, MS2files = ms2f)
+negHermes <- MS2Proc(negHermes, 3, MS2files = ms2f, referenceDB = "D:/MS2ID_B2R_20201113_083214.rds", useDB = TRUE, mincos = 0.5)
+negHermes <- MS2Proc(negHermes, 4, MS2files = ms2f, referenceDB = "D:/MS2ID_B2R_20201113_083214.rds", useDB = TRUE, mincos = 0.5)
 saveRDS(negHermes, file = "D:/ABrunner/MS1_neg_Ident_Water.rds")
 
 ```

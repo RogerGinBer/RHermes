@@ -9,7 +9,9 @@ OptScanSearch <- function(DB, raw, mzList, ppm, IsoList, labelled = FALSE,
 
     if(labelled){
         DB$numC <- as.numeric(lapply(DB$envi, function(x){
-            CHNOSZ::count.elements(x)[["C"]]
+            elements <- CHNOSZ::count.elements(x)
+            if("C" %in% names(elements)){return(elements[["C"]])}
+            else{return(0)}
         }))
     }
 
@@ -17,7 +19,6 @@ OptScanSearch <- function(DB, raw, mzList, ppm, IsoList, labelled = FALSE,
     #Splitting the formulas into a list (with l = number of workers) to reduce
     #time loss associated with variable loading (in SOCK only)
     flist <- split(DB, f = seq_len(ncores))
-
     PLresults <- bplapply(seq_along(flist), PLparallelfun, flist, raw, IsoList,
                           labelled, ppm, minhit, BPPARAM = BiocParallelParam)
     PLresults <- do.call(rbind, PLresults)
@@ -113,17 +114,20 @@ labelledProc <- function(curDB, mass, formula, pmz, curiso, ppm,
     } else {
         ss <- RHermes:::binarySearch(pmz, mass, ppm)
     }
-
+    if(length(ss) == 0){return()}
+    
     ##Note that we don't need any M0 hit to find the other signals
     isofactors <- curiso[[i]]
     isodf <- IsoList[[2]][isofactors, ]
-    isodf <- rbind(isodf, data.frame(ID = paste0("M", seq_len(numC)),
-                                     deltam = 1.003355*seq_len(numC)))
-    isodf <- dplyr::distinct(isodf)
+    if(numC != 0){
+      isodf <- rbind(isodf, data.frame(ID = paste0("M", seq_len(numC)),
+                                       deltam = 1.003355*seq_len(numC)))
+      isodf <- dplyr::distinct(isodf)
+    }
     ch <- curDB[i, 3]  #Charge to normalize isotope deltam's
 
 
-    scanid <- raw[ss[[1]]]
+    scanid <- raw[ss, ]
     if(nrow(scanid) != 0){
         scanid$formv <- formula
         scanid$isov <- "M0"

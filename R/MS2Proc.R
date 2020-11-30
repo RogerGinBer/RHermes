@@ -20,12 +20,12 @@
 #'MS2Proc(myHermes, 1, c('C:/myFolder/File1.mzML', 'C:/myFolder/File2.mzML'))
 #'
 #' @export
-setGeneric("MS2Proc", function(struct, id, MS2files, useDB = FALSE,
+setGeneric("MS2Proc", function(struct, id, MS2files, sstype = "regular", useDB = FALSE,
     referenceDB = "D:/sp_MassBankEU_20200316_203615.RData", mincos = 0.8) {
     standardGeneric("MS2Proc")
 })
-setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
-    "ANY", "ANY"), function(struct, id, MS2files, useDB = FALSE,
+setMethod("MS2Proc", c("RHermesExp", "numeric", "character", "character",
+    "ANY", "ANY"), function(struct, id, MS2files, sstype = "regular", useDB = FALSE,
     referenceDB = "D:/sp_MassBankEU_20200316_203615.RData", mincos = 0.8) {
     #### MS2 Data Importation and Sorting within IL ####------------------------
     validObject(struct)
@@ -52,7 +52,7 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
 
     #### Superspectra Generation ####-------------------------------------------
     message("Starting superspectra generation. This may take a while...")
-    purifiedSpectra <- RHermes:::CliqueMSMS(MS2Exp, idx)
+    purifiedSpectra <- RHermes:::CliqueMSMS(MS2Exp, idx, sstype = sstype)
 
     if(!useDB){
         message("No spectral matching was performed. Done!")
@@ -82,7 +82,7 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
         stop("The referenceDB input isn't valid")
     })
 
-    metamet$formula <- unlist(metamet$formula)
+    metamet$REFformula <- unlist(metamet$REFformula)
 
     setkeyv(metaesp, c("ID_spectra"))
     setkeyv(espmet, c("ID_metabolite"))
@@ -123,10 +123,10 @@ setMethod("MS2Proc", c("RHermesExp", "numeric", "character",
         } else {
             names(RES) <- paste(rep(f, times = nrow(metamet[.(f),])),
                                 metamet[.(f), ]$ID_metabolite,
-                                lapply(metamet[.(f), ]$name,
+                                lapply(metamet[.(f), ]$REFname,
                                     function(x) {x[[1]]}
                                 ) %>% unlist(),
-                                metamet[.(f), ]$smiles, sep = "#")
+                                metamet[.(f), ]$REFsmiles, sep = "#")
         }
         return(RES)
     })
@@ -207,6 +207,8 @@ MSMSimporter <- function(IL, filelist) {
 
     heads <- do.call(rbind, filesdata[seq(1, length(filesdata),
         2)])
+    heads$totIonCurrent <- heads$totIonCurrent*heads$injectionTime/50
+    
     peaks <- unlist(filesdata[seq(2, length(filesdata), 2)],
         recursive = FALSE)
     ##Organize MSMS data into the different IL entries

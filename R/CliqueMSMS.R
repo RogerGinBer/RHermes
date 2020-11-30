@@ -10,7 +10,7 @@
 #' one for each superspectra).
 #' @import ggplot2
 CliqueMSMS <- function(MS2Exp, idx, contaminant = 173.5, delta = 0.1,
-                       BPPARAM = BiocParallel::SerialParam()) {
+                       BPPARAM = BiocParallel::SerialParam(), sstype = "regular") {
     IL <- MS2Exp@IL
     MS2list <- MS2Exp@MS2Data[idx]
     ## Parsing formulas from annotation for every IL entry
@@ -23,13 +23,18 @@ CliqueMSMS <- function(MS2Exp, idx, contaminant = 173.5, delta = 0.1,
         })
 
     #Main function    
-    suppressWarnings(
+    if(sstype == "regular"){
+      suppressWarnings(
         RES <- bplapply(seq_along(idx), generate_ss, BPPARAM = BPPARAM,
                         MS2list, contaminant, delta, fs, idx, FALSE)
-    )
-    RES <- do.call(rbind, RES)
-    
-    RES <- RHermes:::purify_ss(RES, minint = 30000, minpks = 2)
+      )
+      RES <- do.call(rbind, RES)
+      RES <- RHermes:::purify_ss(RES, minint = 30000, minpks = 2)
+    } else {
+      RES <-  lapply(seq_along(idx), wrapper_failsafe_ss, idx = idx,
+                       MS2list = MS2list, fs = fs)
+      RES <- do.call(rbind, RES)
+    }
     
     RES$start <- as.numeric(RES$start)
     RES$end <- as.numeric(RES$end)
@@ -352,6 +357,18 @@ purify_ss <- function(sslist, minint = 30000, minpks = 2){
     return(sslist)
 }
 
+wrapper_failsafe_ss <- function(curentry, idx, MS2list, fs){
+  header <- MS2list[[curentry]][[1]]
+  data <- MS2list[[curentry]][[2]]
+  names(data)[2] <- "rtiv"
+  
+  #Select by TIC
+  besttic_rt <- header$retentionTime[which.max(header$totIonCurrent)]
+  data <- data[data$rt == besttic_rt, ]
+  header <- header[which.max(header$totIonCurrent), ]
+  return(failsafe_ss(data, header, idx[curentry], fs[curentry]))
+}
+
 failsafe_ss <- function(data, header, idx, fs){
     maxt <- data$rt[which.max(data$rtiv)]
     ss <- data.frame(start = numeric(1), end = numeric(1),
@@ -360,7 +377,7 @@ failsafe_ss <- function(data, header, idx, fs){
     ss$start <- min(data$rt)
     ss$end <- max(data$rt)
     data <- data[data$rt == maxt, c("mz", "rtiv")]
-    data <- data[data$rtiv > 0.05*max(data$rtiv),]
+    data <- data[data$rtiv > 0.005*max(data$rtiv),]
     ss$ssdata <- list(data.frame(mz=data$mz, int = data$rtiv))
     ss$apex <- maxt
     ss$precmass <- header$precursorMZ[1]

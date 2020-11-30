@@ -18,6 +18,7 @@ library(gtools)
 library(data.table)
 library(keras)
 library(BiocParallel)
+library(plotly)
 ```
 
 ```{r warning=FALSE}
@@ -177,12 +178,12 @@ saveRDS(negHermes, file = "D:/Ecoli_GaryMichi/Ranges_MS1_neg_SOI_filter.rds")
 
 
 myHermes <- MS2Proc(myHermes, 1, MS2files = "D:/Ecoli_GaryMichi/Curated_lowint/Curated_lowint/UNL_Ecoli_low-int_pos.mzML",
-                    useDB = T, mincos = 0.1, referenceDB = "D:/MS2ID_20200824_202808.rds")
+                    useDB = T, mincos = 0.1, referenceDB = "D:/MS2ID_B2R_20201113_083214.rds", sstype = "1scan")
 
 myHermes@data@MS2Exp[[2]] <- myHermes@data@MS2Exp[[1]] 
 myHermes <- MS2Proc(myHermes, 2, MS2files = "D:/Ecoli_GaryMichi/Curated_lowint/Curated_lowint/UNL_Ecoli_low-int_HCD50_pos.mzML",
-                    useDB = T, mincos = 0.1, referenceDB = "D:/MS2ID_20200824_202808.rds")
-saveRDS(myHermes, "D:/Ecoli_GaryMichi/lowint_corrected.rds")
+                    useDB = T, mincos = 0.1, referenceDB = "D:/MS2ID_B2R_20201113_083214.rds")
+saveRDS(myHermes, "D:/Ecoli_GaryMichi/lowint_corrected_newMS2.rds")
 
 
 IL@IL <- lowintIL
@@ -200,6 +201,300 @@ IL@IL <- lowintIL
 # 
 # spec <- RHermes:::CliqueMSMS(MS2Exp, which(withdata))
 
+
+```
+
+## Labelled samples study
+
+```{r}
+myHermes <- RHermesExp()
+myHermes <- setExpParam(myHermes,
+                        params = ExpParam(ppm = 3, res = 120000,
+                                          instr = "Orbitrap", minmz = 50,
+                                          maxmz = 1200))
+
+negHermes <- RHermesExp()
+negHermes <- setExpParam(negHermes,
+                         params = ExpParam(ppm = 3, res = 120000,
+                                          instr = "Orbitrap", minmz = 50,
+                                          maxmz = 1200, ion = "-"))
+
+```
+
+
+```{r}
+myHermes <- setDB(myHermes, "custom", filename = "D:/merge_KEGG_ECMDB.csv") 
+myHermes <- remAd(myHermes, c("M+IsoProp+H", "M+IsoProp+Na+H", "M+DMSO+H"))
+
+negHermes <- setDB(negHermes, "custom", filename = "D:/merge_KEGG_ECMDB.csv")
+negHermes <- remAd(negHermes, c("M+IsoProp+H", "M+IsoProp+Na+H", "M+DMSO+H"))
+
+```
+
+
+```{r, message = 1, warning = FALSE}
+dir <- "D:/Ecoli_GaryMichi/20201109_MSH_ID-X_pHILIC_E-coli_MS1_Yanes-Lab/MS1_positive/"
+fil <- list.files(dir, pattern = ".*pos.*.mzML", full.names = TRUE)[c(6,3)] #Blank and Sample
+myHermes <- FileProc(myHermes, files = fil, labelled = TRUE)
+saveRDS(myHermes, file ="D:/Ecoli_GaryMichi/13C_MS1_pos_PL.rds")
+
+
+dir <- "D:/Ecoli_GaryMichi/20201109_MSH_ID-X_pHILIC_E-coli_MS1_Yanes-Lab/MS1_negative/"
+fil <- list.files(dir, pattern = ".*neg.*.mzML", full.names = TRUE)[c(6,3)]
+negHermes <- FileProc(negHermes, files = fil, labelled = TRUE)
+saveRDS(negHermes, file ="D:/Ecoli_GaryMichi/13C_MS1_neg_PL.rds")
+
+```
+
+```{r, message = FALSE, warning=FALSE}
+unlabPos <- readRDS("D:/Ecoli_GaryMichi/MS1_pos_results.rds")
+myHermes@data@SOI <- c(unlabPos@data@SOI[[2]], unlabPos@data@SOI[[4]], unlabPos@data@SOI[[5]])
+myHermes@data@SOI[[1]]@filename <- myHermes@metadata@filenames[2]
+myHermes@data@SOI[[2]]@filename <- myHermes@metadata@filenames[2]
+myHermes@data@SOI[[3]]@filename <- myHermes@metadata@filenames[2]
+saveRDS(myHermes, file ="D:/Ecoli_GaryMichi/13C_MS1_pos_SOI.rds")
+
+
+unlabNeg <- readRDS("D:/Ecoli_GaryMichi/MS1_neg_results.rds")
+
+```
+
+
+```{r}
+myHermes <- readRDS("D:/Ecoli_GaryMichi/13C_MS1_pos_SOI.rds")
+
+enrichment <- function(struct, soilist, entry, plot = TRUE) {
+    #Extract SOI and PL information from the selected SOI list
+    SOI <- struct@data@SOI[[soilist]]
+    fname <- SOI@filename
+    correspondingPL <- which(struct@metadata@filenames == fname)
+    PL <- struct@data@PL[[correspondingPL]]@peaklist
+
+    #Filter the PL to the selected SOI region
+    curSOI <- SOI@SoiList[entry, ]
+    PL <- filter(PL, formv == curSOI$formula)
+    PL <- filter(PL, data.table::between(rt, curSOI$start, curSOI$end))
+    
+    exp_int <- do.call(rbind, lapply(unique(PL$isov), function(iso){
+      curPL <- PL[PL$isov == iso, ]
+      return(curPL[which.max(curPL$rtiv), ])
+    }))
+    exp_int <- exp_int[,c("rtiv", "isov")]
+    if(is.null(exp_int)){return(c(0,0))}
+    colnames(exp_int) <- c("abundance", "code")
+    exp_int$class <- "Experimental"
+
+    if (plot) {
+        p <- ggplotly(ggplot(PL) +
+                        geom_point(aes(x = rt, y = rtiv, color = isov)) +
+                        theme_minimal() +
+                        xlab("RT(s)"))
+    }
+
+   
+    f <- gsub(x = curSOI$formula, pattern = "[", replacement = "",
+        fixed = TRUE) %>% gsub(x = ., pattern = "]", replacement = "",
+        fixed = TRUE)
+
+
+    #Generate the isopattern plots
+    isotopecode <- data.frame(name = c("13C", "17O", "18O", "2H",
+        "15N", "33S", "34S", "36S", "37Cl", "81Br", "41K", "6Li",
+        "10B", "21Ne", "22Ne", "25Mg", "26Mg", "29Si", "30Si",
+        "42Ca", "43Ca", "44Ca", "48Ca", "46Ti", "47Ti", "49Ti",
+        "50Ti", "50Cr", "53Cr", "54Cr", "54Fe", "57Fe", "58Fe",
+        "60Ni", "61Ni", "62Ni", "64Ni", "65Cu", "66Zn", "67Zn",
+        "68Zn", "70Zn", "76Se", "77Se", "78Se", "82Se", "84Sr",
+        "86Sr", "87Sr", "91Zr", "92Zr", "94Zr", "96Zr"), code = c("M",
+        "[17O]", "[18O]", "D", "[15N]", "[33S]", "[34S]", "[36S]",
+        "[37Cl]", "[81Br]", "[41K]", "[6Li]", "[10B]", "[21Ne]",
+        "[22Ne]", "[25Mg]", "[26Mg]", "[29Si]", "[30Si]", "[42Ca]",
+        "[43Ca]", "[44Ca]", "[48Ca]", "[46Ti]", "[47Ti]", "[49Ti]",
+        "[50Ti]", "[50Cr]", "[53Cr]", "[54Cr]", "[54Fe]", "[57Fe]",
+        "[58Fe]", "[60Ni]", "[61Ni]", "[62Ni]", "[64Ni]", "[65Cu]",
+        "[66Zn]", "[67Zn]", "[68Zn]", "[70Zn]", "[76Se]", "[77Se]",
+        "[78Se]", "[82Se]", "[84Sr]", "[86Sr]", "[87Sr]", "[91Zr]",
+        "[92Zr]", "[94Zr]", "[96Zr]"), stringsAsFactors = FALSE)
+    data("isotopes", package = "enviPat")
+    # pat <- enviPat::isopattern(isotopes = isotopes, chemforms = f, threshold = 10000/PL$rtiv[PL$isov == 'M0'][maxpoint])[[1]]
+
+    pat <- enviPat::isopattern(isotopes = isotopes[c(1,10,11,12,14,17,21,29,30,35,41,44,98),], chemforms = f,
+                    threshold = 0, verbose = F)[[1]]
+
+    pat <- rbind(t(apply(pat, 1, function(x) {
+        x[3:length(x)] <- x[3:length(x)] - pat[1, 3:ncol(pat)]
+        x
+    })))
+    pat[pat < 0] <- 0
+    cols <- which(colnames(pat) %in% isotopecode$name)
+    #Sort the cols in the order the iso appear on the list
+    idx <- vapply(cols, function(x) {
+        which(colnames(pat)[x] == isotopecode$name)[1]
+    }, numeric(1))
+    cols <- cols[order(idx)]
+
+    pat <- as.data.frame(pat)
+    pat$code <- ""
+    for (i in cols) {
+        different <- which(pat[, i] != 0)
+        pat$code[different] <- paste0(pat$code[different], rep(isotopecode$code[colnames(pat)[i] ==
+            isotopecode$name], length(different)), pat[different,
+            i])
+    }
+    pat$code[1] <- "M0"
+    pat$abundance <- pat$abundance * curSOI$MaxInt/100
+    pat$class <- "Theoretical"
+    pat$code <- factor(pat$code, levels = unique(pat$code[order(-pat$abundance)]))  #Sort by abundance
+    pat <- pat[pat$code %in% exp_int$code, ]
+    
+
+    df <- rbind(pat[, c("abundance", "code", "class")], exp_int)
+
+    if (plot) {
+        p2 <- ggplotly(ggplot(df) + geom_col(aes(x = code, y = abundance,
+            fill = class), position = "dodge") +
+            ylab("Expected intensities") + theme_minimal() +
+            theme(axis.text.x = element_text(angle = 90), plot.margin = unit(c(1,
+                1, 1, 1), "cm")))
+
+        # p2 <- p2 %>% style(p2, showlegend = FALSE, traces = 1:nrow(pat))
+        # p3 <- subplot(p, p2, nrows = 2, which_layout = 2) %>%
+        #     layout(title = curSOI$formula)
+        return(p2)
+    } else {
+      if(nrow(pat) != 0){
+        enrich <- max(unlist(sapply(unique(df$code), function(iso){
+        unlab <- df[df$code == iso & df$class == "Theoretical", "abundance"]
+        lab <- df[df$code == iso & df$class == "Experimental", "abundance"]
+        return(lab/unlab)})))
+      } else {
+        enrich <- 0
+      }
+      
+      FC <- sum(sapply(unique(df$code), function(iso){
+        i <- strsplit(as.character(gsub(x=iso, pattern = "\\[.*", replacement = "")), "[A-Z]")[[1]][2] %>% as.numeric()
+        if(is.na(i)){return(0)}
+        lab <- df[df$code == iso & df$class == "Experimental", "abundance"]
+        return(i*lab)
+      })) / (as.numeric(makeup(f)[["C"]]) * sum(df$abundance[df$class == "Experimental"]))
+      return(c(enrich, FC))
+    }
+
+}
+
+C13_enrich_before_sub <- lapply(1:nrow(myHermes@data@SOI[[1]]@SoiList), function(i){
+  if(i%%100 == 0){message(i)}
+  tryCatch(enrichment(myHermes, 1, i, F), error = function(cond){return(c(0,0))})
+})
+C13_enrich_before_sub <- do.call(rbind, C13_enrich_before_sub)
+
+
+C13_enrich_after_sub <- lapply(1:nrow(myHermes@data@SOI[[2]]@SoiList), function(i){
+  if(i%%100 == 0){message(i)}
+  tryCatch(enrichment(myHermes, 2, i, F), error = function(cond){return(c(0,0))})
+})
+C13_enrich_after_sub <- do.call(rbind, C13_enrich_after_sub)
+
+C13_enrich_after_refine <- lapply(1:nrow(myHermes@data@SOI[[3]]@SoiList), function(i){
+  if(i%%100 == 0){message(i)}
+  tryCatch(enrichment(myHermes, 2, i, F), error = function(cond){return(c(0,0))})
+})
+C13_enrich_after_refine <- do.call(rbind, C13_enrich_after_refine)
+
+
+EC_dist <- sapply(seq(0,0.9,0.1), function(x){between(C13_enrich_before_sub[,2], x, x+0.1) %>% which() %>% length()})
+labels <- sapply(seq(0,0.9,0.1), function(x){paste(x, x+0.1, sep = "-")})
+EC_df <- data.frame(EC = EC_dist, labels = labels)
+fig <- plot_ly(EC_df, labels = ~labels, values = ~EC, type = 'pie')
+fig <- fig %>% layout(title = 'EC',
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+fig
+
+EC_dist <- sapply(seq(0,0.9,0.1), function(x){between(C13_enrich_after_sub[,2], x, x+0.1) %>% which() %>% length()})
+labels <- sapply(seq(0,0.9,0.1), function(x){paste(x, x+0.1, sep = "-")})
+EC_df2 <- data.frame(EC = EC_dist, labels = labels)
+fig2 <- plot_ly(EC_df2, labels = ~labels, values = ~EC, type = 'pie')
+fig2 <- fig2 %>% layout(title = 'EC',
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+fig2
+
+EC_dist <- sapply(seq(0,0.9,0.1), function(x){between(C13_enrich_after_refine[,2], x, x+0.1) %>% which() %>% length()})
+labels <- sapply(seq(0,0.9,0.1), function(x){paste(x, x+0.1, sep = "-")})
+EC_df3 <- data.frame(EC = EC_dist, labels = labels)
+fig3 <- plot_ly(EC_df3, labels = ~labels, values = ~EC, type = 'pie')
+fig3 <- fig3 %>% layout(title = 'EC',
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+fig3
+
+
+
+mergefig <- plot_ly() %>% add_pie(data = EC_df, labels = ~labels, values = ~EC, textinfo='label+percent',
+                         name = "Before BSub", domain = list(x = c(0,0.4), y= c(0,1)))
+mergefig <- mergefig %>% add_pie(data = EC_df2, labels = ~labels, values = ~EC,textinfo='label+percent',
+                       name = "After Bsub", domain = list(x = c(0.5,0.9), y= c(0,1)))
+mergefig <- mergefig %>% layout(title = "Enrichment comparison", showlegend = T,
+                      xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+                      yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+mergefig
+
+plot(C13_enrich_after_sub[,2], log10(myHermes@data@SOI[[2]]@SoiList$MaxInt))
+plot(C13_enrich_after_sub[,2], (myHermes@data@SOI[[2]]@SoiList$mass))
+plot((myHermes@data@SOI[[2]]@SoiList$start), C13_enrich_after_sub[,2])
+
+which(between(C13_enrich_after_sub[,2], 0.05,0.15) &
+        between(myHermes@data@SOI[[2]]@SoiList$mass, 650, 850))
+
+plot(log10(C13_enrich_before_sub[,1]), C13_enrich_before_sub[,2])
+plot(log10(C13_enrich_after_sub[,1]), C13_enrich_after_sub[,2])
+
+```
+
+## Enrichment and SOI similarity
+```{r}
+sois <- myHermes@data@SOI[[3]]@SoiList
+cos <- lapply(seq_along(sois$peaks), function(x){
+        if(x%%100 == 0) message(x)  
+        x_peak <- sois$peaks[[x]]
+          sapply(seq_along(sois$peaks), function(y){
+            if (x>y){
+              y_peak <- sois$peaks[[y]]
+              cosineSim(y_peak, query = x_peak, nscans = 15)}
+            else{0}
+          })
+      })
+ 
+filteredcos <- matrix(ifelse(unlist(cos) > 0.99,1,0), ncol = length(cos), byrow = T)
+
+nodes <- data.frame(name = seq_len(nrow(filteredcos)))
+links <- do.call(rbind, lapply(seq_len(nrow(filteredcos)), function(x){
+  l <- which(as.logical(filteredcos[x,]))  
+  return(data.frame(from = rep(x, length(l)), to = l))
+}))
+links <- rbind(links, 
+  do.call(rbind, lapply(seq_len(nrow(filteredcos)), function(x){
+    cons <- row.names(unlabPos@data@SOI[[5]]@SoiList)[unlist(sois$adrows[[x]])]
+    if(is.null(cons)){return(data.frame(from = character(), to = character()))}
+    return(data.frame(from = rep(x, length(cons)), to = cons))
+})))
+
+links$label <- apply(links, 1, function(x){
+  round(sois$mass[x[1]] -  sois$mass[x[2]], digits = 6)
+})
+links$arrows <- "to"
+
+nodes$label <- paste("SOI", nodes$name)
+nodes$id <- nodes$name
+
+col <- colorRampPalette(c("blue", "red"))
+nodes$color <- col(nrow(C13_enrich_after_refine))[order(C13_enrich_after_refine[,2])]
+
+visNetwork(nodes, links) %>%  visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE) %>%
+  visEdges(smooth = FALSE) %>% visPhysics(solver = "forceAtlas2Based",
+    forceAtlas2Based = list(gravitationalConstant = -100),
+    stabilization = FALSE)
 
 ```
 

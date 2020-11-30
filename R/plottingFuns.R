@@ -335,7 +335,13 @@ setMethod("MirrorPlot", c("RHermesExp", "numeric", "numeric"),
         subtitle <- ""
         title <- ""
         baseline <- baseline/maxint * 100
-
+        
+        f <- list(
+          family = "Open Sans",
+          size = 16,
+          color = "black")
+        
+        
         if(mode == "hits"){
           ref <- struct@data@MS2Exp[[ms2id]]@Ident$MS2_correspondance[[ssnumber]]
           pattern <- struct@data@MS2Exp[[ms2id]]@Ident$DatabaseSpectra[ref]
@@ -352,6 +358,20 @@ setMethod("MirrorPlot", c("RHermesExp", "numeric", "numeric"),
               refspec <- NULL
             } else {
               refspec <- pattern[[x]][[index]]
+              spec_energy <- names(pattern[[x]])[index]
+              a <- list(
+                text = paste(strsplit(patform, split = "#")[[which(patform == x)]][[3]],
+                             spec_energy),
+                font = f,
+                xref = "paper",
+                yref = "paper",
+                yanchor = "bottom",
+                xanchor = "center",
+                align = "center",
+                x = 0.5,
+                y = 1,
+                showarrow = FALSE
+              )
             }
             if(is.null(refspec)){return(ggplotly(pl))}
             refspec <- as.data.frame(t(refspec))
@@ -359,12 +379,25 @@ setMethod("MirrorPlot", c("RHermesExp", "numeric", "numeric"),
                                                      query$mz, molecmass)) - 20,
                                                      max(c(refspec$mz, query$mz,
                                                            molecmass)) + 20))
-
           }
           if(mode == "versus"){
             refmass <- struct@data@MS2Exp[[ms2id]]@Ident$MS2Features$precmass[[x]]
             refspec <- struct@data@MS2Exp[[ms2id]]@Ident$MS2Features$ssdata[[x]]
             if(is.null(refspec)){return(ggplotly(pl))}
+            
+            a <- list(
+              text = paste("SS comparison between", ssnumber, "and", x),
+              font = f,
+              xref = "paper",
+              yref = "paper",
+              yanchor = "bottom",
+              xanchor = "center",
+              align = "center",
+              x = 0.5,
+              y = 1,
+              showarrow = FALSE
+            )
+            
             refdf <- data.frame(mz = refmass)
             pl <- pl + geom_point(data = refdf, aes(x = mz, y = 0), shape = 25,
                                   size = 4, color = "red", fill = "red") +
@@ -399,11 +432,10 @@ setMethod("MirrorPlot", c("RHermesExp", "numeric", "numeric"),
                       text = element_text(size = 11, family = "Segoe UI Light"),
                       plot.title = element_text(hjust = 0.5)) +
                 geom_text(data = bestdf, aes(x = mz, y = int + 5, label = mz),
-                          family = "Segoe UI Light", check_overlap = TRUE) +
-                ggtitle(title, subtitle)
+                          family = "Segoe UI Light", check_overlap = TRUE)
 
               ggplotly(pl, height = ifelse(length(patform)<5, 850/length(patform), 200)*
-                           length(patform))
+                           length(patform)) %>% layout(annotations = a)
             })
 
 
