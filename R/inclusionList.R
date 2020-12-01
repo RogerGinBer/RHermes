@@ -56,7 +56,7 @@ inclusionList <- function(struct, params, id) {
 
     if (priorization == "yes") {
         message(paste("Prioritizing", adduct))
-        GL <- RHermes:::GLprior(GL, adduct)
+        GL <- RHermes:::GLprior(GL, adduct, rtmargin, ppm)
         low <- which(GL$MaxInt < 50000)
         rare <- which(vapply(GL$ad[low], function(x) {
             !any(unlist(x) %in% c("M+H", "M+NH4", "M+Na", "M+K", "M+", "M-H",
@@ -114,7 +114,7 @@ inclusionList <- function(struct, params, id) {
     return(GL)
 }
 
-GLprior <- function(GL, ad, ppm) {
+GLprior <- function(GL, ad, rtmargin, ppm) {
     if(!"adrows" %in% colnames(GL)){
       warning("No adduct similarity annotation has been found on this SOI list. 
               Adduct priorization failed.
