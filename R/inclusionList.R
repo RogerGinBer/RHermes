@@ -55,7 +55,6 @@ inclusionList <- function(struct, params, id) {
     filterrt <- params@filterrt
 
     if (priorization == "yes") {
-        message(paste("Prioritizing", adduct))
         GL <- RHermes:::GLprior(GL, adduct, rtmargin, ppm)
         low <- which(GL$MaxInt < 50000)
         rare <- which(vapply(GL$ad[low], function(x) {
@@ -121,20 +120,21 @@ GLprior <- function(GL, ad, rtmargin, ppm) {
               Please use SOIcleaner() before priorization.")
       return(GL)
     } 
-
-    originalrows <- seq_len(nrow(GL))
+    
+    GL$originalrows <- seq_len(nrow(GL))
     for (i in ad) {
+        message(paste("Prioritizing", i))
         priorityentries <- GL[unlist(vapply(GL$ad, function(x){any(x %in% i)},
                                             FUN.VALUE = logical(1))), ]
         if (nrow(priorityentries) == 0) {next}
         connections <- unlist(lapply(priorityentries$adrows, function(ads){
           ads[[i]]
         }))
-        toremove <- which(originalrows %in% connections)
+        toremove <- which(GL$originalrows %in% connections)
         for(j in toremove){
-          st <- GL$start[originalrows[j]]
-          end <- GL$end[originalrows[j]]
-          m <- GL$mass[originalrows[j]]
+          st <- GL$start[j]
+          end <- GL$end[j]
+          m <- GL$mass[j]
           idx <- which(between(GL$start, st - rtmargin, end + rtmargin) &
                          between(GL$end, st - rtmargin, end + rtmargin) &
                          between(GL$mass, m - m * 2*ppm/1e+06, m + m * 2*ppm/1e+06))
@@ -142,9 +142,9 @@ GLprior <- function(GL, ad, rtmargin, ppm) {
         }
         
         if (length(toremove) == 0) {next}
-        GL <- GL[-unique(originalrows[toremove]), ]
+        GL <- GL[-unique(toremove), ]
     }
-    return(GL)
+    return(GL[, -c("originalrows")])
 }
 
 GLgroup <- function(GL, rtmargin, ppm) {
