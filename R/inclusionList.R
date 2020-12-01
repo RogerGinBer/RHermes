@@ -59,8 +59,8 @@ inclusionList <- function(struct, params, id) {
         GL <- RHermes:::GLprior(GL, adduct)
         low <- which(GL$MaxInt < 50000)
         rare <- which(vapply(GL$ad[low], function(x) {
-            !any(unlist(x) %in% c("M+H", "M+NH4", "M+Na", "M+K",
-                "M+CH3OH", "M-H", "M+Cl", "M+Br", "M+H2O-H"))
+            !any(unlist(x) %in% c("M+H", "M+NH4", "M+Na", "M+K", "M+", "M-H",
+                                  "M+Cl", "M+Br", "M+H2O-H"))
         }, logical(1)))
         if (length(rare) != 0) {
             GL <- GL[-low[rare], ]
@@ -101,17 +101,12 @@ inclusionList <- function(struct, params, id) {
 
     GL <- RHermes:::GLtidy(GL, filterrt, filtermz)
 
-    # print(ggplot(GL) +
-    #         geom_tile(aes(x = (start+end)/2, y = mass, width = end-(start+end)/2, height = 1)) +
-    #         xlab('RT') + ylab('mz') +
-    #         ggtitle('Representation of IL entries in the mz-rt space'))
-
     GL$entrynames <- vapply(GL$jointentries, function(entry) {
         res <- lapply(entry$metadata, function(subentry) {
-            return(paste(subentry$f, subentry$ad, sep = "$",
-                collapse = "#"))
+            return(paste(unique(paste(subentry$f, subentry$ad, sep = "$"),
+                collapse = "#")))
         })
-        return(paste(unlist(res), sep = "$", collapse = "#"))
+        return(paste(unique(unlist(res)), sep = "$", collapse = "#"))
     }, character(1))
     GL$entrynames <- unlist(GL$entrynames)
     GL <- RHermesIL(IL = as.data.table(GL[, -5]), annotation = GL$jointentries,
@@ -119,23 +114,36 @@ inclusionList <- function(struct, params, id) {
     return(GL)
 }
 
-GLprior <- function(GL, ad) {
+GLprior <- function(GL, ad, ppm) {
+    if(!"adrows" %in% colnames(GL)){
+      warning("No adduct similarity annotation has been found on this SOI list. 
+              Adduct priorization failed.
+              Please use SOIcleaner() before priorization.")
+      return(GL)
+    } 
 
     originalrows <- seq_len(nrow(GL))
-
     for (i in ad) {
-        priorityentries <- GL[GL$ad == i, ]
-        if (nrow(priorityentries) == 0) {
-            next
+        priorityentries <- GL[unlist(vapply(GL$ad, function(x){any(x %in% i)},
+                                            FUN.VALUE = logical(1))), ]
+        if (nrow(priorityentries) == 0) {next}
+        connections <- unlist(lapply(priorityentries$adrows, function(ads){
+          ads[[i]]
+        }))
+        toremove <- which(originalrows %in% connections)
+        for(j in toremove){
+          st <- GL$start[originalrows[j]]
+          end <- GL$end[originalrows[j]]
+          m <- GL$mass[originalrows[j]]
+          idx <- which(between(GL$start, st - rtmargin, end + rtmargin) &
+                         between(GL$end, st - rtmargin, end + rtmargin) &
+                         between(GL$mass, m - m * 2*ppm/1e+06, m + m * 2*ppm/1e+06))
+          toremove <- c(toremove, idx)
         }
-        toremove <- which(originalrows %in% unique(unlist(priorityentries$adrows[[i]])))
-        if (length(toremove) == 0) {
-            next
-        }
-        originalrows <- originalrows[-toremove]
-        GL <- GL[-toremove, ]
+        
+        if (length(toremove) == 0) {next}
+        GL <- GL[-unique(originalrows[toremove]), ]
     }
-
     return(GL)
 }
 
@@ -147,8 +155,8 @@ GLgroup <- function(GL, rtmargin, ppm) {
         st <- cur$start
         end <- cur$end
         m <- cur$mass
-        idx <- which(between(GL$start, st - rtmargin, st + rtmargin) &
-            between(GL$end, end - rtmargin, end + rtmargin) &
+        idx <- which(between(GL$start, st - rtmargin, end + rtmargin) &
+            between(GL$end, st - rtmargin, end + rtmargin) &
             between(GL$mass, m - m * ppm/1e+06, m + m * ppm/1e+06))
         out <- c(out, list(GL[idx, ]))
         GL <- GL[-idx, ]
@@ -170,15 +178,15 @@ GLtidy <- function(GL, filterrt, filtermz) {
         return(chosen)
     })
     GL <- do.call(rbind, GL)
-    GL <- GL[order(GL$start, GL$mass), ]
+    GL <- GL[order(GL$mass), ]
     out <- list()
     repeat {
         cur <- GL[1, ]
         st <- cur$start
         end <- cur$end
         m <- cur$mass
-        idx <- which((between(GL$start, st - filterrt, st + filterrt) |
-            between(GL$end, end - filterrt, end + filterrt)) &
+        idx <- which((between(GL$start, st - filterrt, end + filterrt) |
+            between(GL$end, st - filterrt, end + filterrt)) &
             between(GL$mass, m - filtermz, m + filtermz))
         uniondf <- data.frame(start = min(GL[idx, "start"]),
             end = max(GL[idx, "end"]), mass = mean(unlist(GL[idx,
