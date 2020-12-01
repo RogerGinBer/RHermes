@@ -893,7 +893,11 @@ setMethod("coveragePlot", signature = c("RHermesExp", "numeric"), function(struc
     return(list(p1,p2))
 })
 
-
+ILplot <- function(struct, ILnumber){
+  ggplotly(ggplot(struct@data@MS2Exp[[ILnumber]]@IL@IL) +
+             geom_segment(aes(x=start, xend = end, y=mass, yend=mass,
+                              color = log10(MaxInt))))
+}
 
 
 
