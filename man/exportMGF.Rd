@@ -4,7 +4,7 @@
 \alias{exportMGF}
 \title{exportMGF}
 \usage{
-exportMGF(struct, ID, fname)
+exportMGF(struct, ID, fname, idx = NA)
 }
 \arguments{
 \item{struct}{RHermesExp object}

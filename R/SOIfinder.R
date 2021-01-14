@@ -76,6 +76,9 @@ setMethod("SOIfinder", c("RHermesExp", "ANY", "ANY", "ANY"),
                   params@blanksub <- FALSE)
             }
             if (against[i] != 0) {
+                reticulate::py_available(initialize = TRUE)
+                reticulate::py_module_available("keras")
+                reticulate::py_module_available("tensorflow")
                 cur@blanksub <- TRUE
                 cur@blankname <- struct@data@PL[[against[i]]]@filename
                 blankPL <- struct@data@PL[[against[i]]]@peaklist
@@ -84,13 +87,16 @@ setMethod("SOIfinder", c("RHermesExp", "ANY", "ANY", "ANY"),
                 cur@blankname <- "None"
                 blankPL <- NA
             }
+            message(paste(paste0(rep("*", 20), "\n"),
+                          "Processing SOI", i, "out of", length(fileID), "\n",
+                          paste0(rep("*", 20), "\n")))
             struct@data@SOI <- c(struct@data@SOI,
                                 PLprocesser(struct@data@PL[[idx]],
                                     struct@metadata@ExpParam, cur, blankPL,
                                     struct@metadata@filenames[idx],
                                     struct@metadata@cluster)
                                 )
-            closeAllConnections()  #Closes parallel connections, just in case
+            # closeAllConnections()  #Closes parallel connections, just in case. Removed it, causes bugs with knitr
             if (against[i] == 0) {
                 struct <- setTime(struct, paste("Generated SOI list from",
                   struct@metadata@filenames[idx]))
@@ -423,6 +429,7 @@ blankSubstraction <- function(Groups, blankPL, BiocParallelParam){
     message("Blank substraction:")
     setkeyv(blankPL, c("formv", "rt"))
 
+    message("First cleaning")
     toKeep <- bplapply(seq_len(nrow(Groups)), firstCleaning, Groups, blankPL,
                   BPPARAM = BiocParallelParam) %>% unlist()
     sure <- Groups[which(toKeep), ]
@@ -433,10 +440,10 @@ blankSubstraction <- function(Groups, blankPL, BiocParallelParam){
         model <- load_model_tf(system.file("extdata", "model",
                                            package = "RHermes"))  #ANN
         setkeyv(blankPL, "formv")
-
+        
+        message("Preparing input for ANN")
         RES <- bplapply(seq_len(nrow(Groups)), prepareNetInput, Groups, blankPL,
                         BPPARAM = BiocParallelParam)
-
         Groups$MLdata <- RES
         NAgroups <- do.call(rbind, lapply(RES, function(x){is.na(x[1])}))
 

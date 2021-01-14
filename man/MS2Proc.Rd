@@ -8,8 +8,10 @@ MS2Proc(
   struct,
   id,
   MS2files,
+  sstype = "regular",
+  useDB = FALSE,
   referenceDB = "D:/sp_MassBankEU_20200316_203615.RData",
-  mincos = 0.6
+  mincos = 0.8
 )
 }
 \arguments{

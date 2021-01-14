@@ -1,322 +1,3 @@
-
-#  PLPlotBlank <- function(Sample, Blank, filename = 'PL_Sample+Blank'){
-#   if(class(Sample) != 'rHERMES_PL' | class(Blank) != 'rHERMES_PL'){
-#     stop('Please input valid Sample and Blank objects')}
-#   cairo_pdf(filename = filename, width = 15, onefile = TRUE)
-#   setkey(Sample@peaklist, formv)
-#   setkey(Blank@peaklist, formv)
-#   pb <- txtProgressBar(min = 0, max = length(unlist(unique(Sample@peaklist[,formv]))),style = 3)
-#   count <- 1
-#   for(i in unlist(unique(Sample@peaklist[,formv]))){
-#     setTxtProgressBar(pb, count)
-#     count <- count + 1
-#     curSample <- Sample@peaklist[.(i)]
-#     curBlank <- Blank@peaklist[.(i)]
-#     curSample$ID <- 'Sample'
-#     curBlank$ID <- 'Blank'
-#     data <- rbind(curSample, curBlank)
-#     goodad <- vapply(unique(data$adduct), function(x){
-#       cur <- data[data$adduct == x, ]
-#       if(nrow(cur)>30){return(TRUE)}
-#       else{return(FALSE)}
-#     })
-#     goodad <- unique(data$adduct)[goodad]
-#     data <- data[data$adduct %in% goodad, ]
-#     if(nrow(data) < 30){next}
-#     print(ggplot(data) + geom_point(aes(x = rt, y = rtiv, color = isov),
-#                                     size = 0.05, alpha = 0.8) +
-#             labs(x = 'RT', y = 'Log Intensity', title = i) + scale_y_log10()+
-#             facet_grid(rows = vars(adduct), cols = vars(ID)) + theme_minimal())
-#   }
-#   dev.off()
-# }
-#
-# PLLabelled <- function(Labelled, Unlabelled, filename = 'PL_Labelled+Unlabelled.pdf'){
-#   if(class(Labelled) != 'rHERMES_PL' | class(Unlabelled) != 'rHERMES_PL'){
-#     stop('Please input valid Labelled and Unlabelled objects')}
-#   cairo_pdf(filename = filename, onefile = TRUE)
-#   setkey(Labelled@peaklist, formv)
-#   setkey(Unlabelled@peaklist, formv)
-#   pb <- txtProgressBar(min = 0, max = length(unlist(unique(Labelled@peaklist[,formv]))),style = 3)
-#   count <- 1
-#   for(i in unlist(unique(Labelled@peaklist[,formv]))){
-#     setTxtProgressBar(pb, count)
-#     count <- count + 1
-#     curLabelled <- Labelled@peaklist[.(i)]
-#     curUnlabelled <- Unlabelled@peaklist[.(i)]
-#     curLabelled$ID <- 'Labelled'
-#     curUnlabelled$ID <- 'Unlabelled'
-#     data <- rbind(curLabelled, curUnlabelled)
-#     goodad <- vapply(unique(data$adduct), function(x){
-#       cur <- data[data$adduct == x, ]
-#       if(nrow(cur)>30){return(TRUE)}
-#       else{return(FALSE)}
-#     })
-#     goodad <- unique(data$adduct)[goodad]
-#     data <- data[data$adduct %in% goodad, ]
-#     if(nrow(data) < 30){next}
-#     for(ad in goodad){
-#       addata <- data[data$adduct == ad, ]
-#       goodiso <-vapply(unique(addata$isov), function(x){
-#         cur <- addata[addata$isov == x, ]
-#         if(nrow(cur)>10){return(TRUE)}
-#         else{return(FALSE)}
-#       })
-#       goodiso <- unique(as.character(addata$isov))[goodiso]
-#       addata <- filter(addata, isov %in% goodiso)
-#       print(ggplot(addata) + geom_point(aes(x = rt, y = rtiv, color = ID),
-#                                         size = 0.05, alpha = 0.8) +
-#               scale_color_manual(values = c('#2d3561','#c05c7e','#f3826f'))+
-#               scale_y_log10()+
-#               facet_grid(rows = vars(isov)) + theme_minimal()+
-#               labs(x = '\nRetention time (s)', y = 'Log 10 (Intensity)\n',  title = paste(i, ad))+
-#               theme_minimal()+
-#               theme(plot.margin = unit(c(1,0.7,1,0.8), 'cm'), text = element_text(size = 12, family = 'Roboto Light')))
-#     }
-#   }
-#   dev.off()
-# }
-#
-# PLPlot <- function(Sample, filename = 'PL_Sample'){
-#   if(class(Sample) != 'rHERMES_PL'){
-#     stop('Please input a valid Sample object')}
-#   cairo_pdf(filename = filename, width = 10, onefile = TRUE)
-#   for(i in seq_len(nrow(Sample@params@DB))){
-#     cat(i, ' out of: ', nrow(Sample@params@DB),'\n')
-#     f <- as.character(Sample@params@DB[i, 2])
-#     data <- dplyr::filter(Sample@peaklist, formv == f)
-#     goodad <- vapply(unique(data$adduct), function(x){
-#       cur <- data[data$adduct == x, ]
-#       if(nrow(cur)>30){return(TRUE)}
-#       else{return(FALSE)}
-#     })
-#     goodad <- unique(data$adduct)[goodad]
-#     data <- data[data$adduct %in% goodad, ]
-#     if(nrow(data) < 30){next}
-#     print(ggplot(data) + geom_point(aes(x = rt, y = rtiv, color = isov),
-#                                     size = 0.05, alpha = 0.8) +
-#             labs(x = 'RT', y = 'Log Intensity', title = f) + scale_y_log10()+
-#             facet_grid(rows = vars(adduct)) + theme_minimal())
-#   }
-#   dev.off()
-# }
-# SOIPlotBlank <- function(SampleSOI, SamplePL, BlankPL, filename = 'SOI_Blank+Sample'){
-#   cairo_pdf(filename = filename, onefile = TRUE)
-#
-#   plist <- SampleSOI@PlotDF
-#   datafile <- SamplePL@peaklist
-#   blankfile <- BlankPL@peaklist
-#   setkey(plist, form)
-#   setkey(datafile, formv)
-#   setkey(blankfile, formv)
-#
-#   ##Main loop-----------------------------------------------------------
-#
-#   iter <- unique(plist$form)
-#   pb <- txtProgressBar(min = 0, max = length(iter), style = 3)
-#   count <- 1
-#   for (i in iter){
-#     setTxtProgressBar(pb, count)
-#     count <- count + 1
-#
-#     #Values from groups----------------------------------------------
-#     pks <- plist[.(i)]
-#     if(dim(pks)[1]==0){next}
-#     pks$categ <- 'GR'
-#     pks$sample <- 'Sample'
-#
-#     #Values from raw data--------------------------------------------
-#     praw <- datafile[.(i)] %>% filter(., isov == 'M0')
-#     praw$snr <- 0
-#     praw$categ <-'RAW'
-#     praw$sample <- 'Sample'
-#     praw <- praw[ ,c('rt','rtiv','formv','adduct','snr','isov','categ','sample')]
-#     names(praw) <- names(pks)
-#
-#
-#     #Values from blank raw data--------------------------------------
-#     bpraw <- blankfile[.(i)] %>% filter(., isov == 'M0')
-#     if(nrow(bpraw) != 0){
-#       bpraw$snr <- 0
-#       bpraw$categ <-'RAW'
-#       bpraw$sample <- 'Blank'
-#       bpraw <- bpraw[ ,c('rt','rtiv','formv','adduct','snr','isov','categ','sample')]
-#       names(bpraw) <- names(pks)
-#       pfull <- rbind(pks, praw, bpraw)
-#     }else{
-#       pfull <- rbind(pks, praw) #Case when there aren't any scans on the blank
-#     }
-#
-#     for(j in unique(pfull$ad)){ #Clear adducts with few scans
-#       if(length(which(pfull$ad == j)) < 5){
-#         pfull <- pfull[pfull$ad != j, ]
-#       }
-#     }
-#
-#
-#     if(dim(pfull)[1]>5){ #Check for minimum number of scans
-#       print(ggplot()+
-#               geom_point(data = pfull[pfull$categ == 'GR' & pfull$sample == 'Sample',],
-#                          mapping = aes(x = rt/60, y = log10(rtiv), colour = snr),
-#                          alpha=0.4, size=5,shape=20)+
-#               geom_point(data = pfull[pfull$categ == 'RAW' & pfull$sample == 'Sample',],
-#                          mapping = aes(x = rt/60, y = log10(rtiv)), colour = '#000000',
-#                          alpha=0.5,size=0.8,shape=15)+
-#               geom_point(data = pfull[pfull$sample == 'Blank',],
-#                          mapping = aes(x = rt/60, y = log10(rtiv)), colour = '#CC0000',
-#                          alpha=0.5,size=0.8,shape=15)+
-#               facet_grid(rows = vars(ad))+
-#               xlab('RT (min)')+ylab('Log 10 Intensity\n')+
-#               scale_color_continuous(type = 'viridis')+
-#               ggtitle(label = i)+
-#               theme_minimal()+
-#               theme(plot.margin = unit(c(1,0.4,1,1), 'cm'),
-#                     text = element_text(size = 12, family = 'Roboto Light')))
-#     }
-#     else {print(i)}
-#   }
-#   dev.off()
-# }
-#
-# SOIPlot <- function(SampleSOI, SamplePL, filename = 'SOI_Sample'){
-#   cairo_pdf(filename = filename, onefile = TRUE)
-#
-#   plist <- SampleSOI@PlotDF
-#   datafile <- SamplePL@peaklist
-#
-#   ##Main loop-----------------------------------------------------------
-#
-#   iter <- unique(plist$form)
-#   pb <- txtProgressBar(min = 0, max = length(iter), style = 3)
-#   count <- 1
-#   for (i in iter){
-#     setTxtProgressBar(pb, count)
-#     count <- count + 1
-#
-#     #Values from groups----------------------------------------------
-#     pks <- plist[plist$form == i, ]
-#     if(dim(pks)[1]==0){next}
-#     pks$categ <- 'GR'
-#
-#     #Values from raw data--------------------------------------------
-#     praw <- datafile[formv == i  & isov == 'M0',]
-#     praw$snr <- 0
-#     praw$categ <-'RAW'
-#     praw <- praw[ ,c('rt','rtiv','formv','adduct','snr','isov','categ')]
-#     names(praw) <- names(pks)
-#
-#     pfull <- rbind(pks, praw)
-#
-#     for(j in unique(pfull$ad)){ #Clear adducts with few scans
-#       if(length(which(pfull$ad == j)) < 5){
-#         pfull <- pfull[pfull$ad != j, ]
-#       }
-#     }
-#     pfull$sample <- 'Sample'
-#
-#     if(dim(pfull)[1]>5){ #Check for minimum number of scans
-#       print(ggplot()+
-#               geom_point(data = pfull[pfull$categ == 'GR' & pfull$sample == 'Sample',],
-#                          mapping = aes(x = rt/60, y = log10(rtiv), colour = snr),
-#                          alpha=0.4, size=5,shape=20)+
-#               geom_point(data = pfull[pfull$categ == 'RAW' & pfull$sample == 'Sample',],
-#                          mapping = aes(x = rt/60, y = log10(rtiv)), colour = '#000000',
-#                          alpha=0.5,size=0.8,shape=15)+
-#               facet_grid(rows = vars(ad))+
-#               xlab('RT (min)')+ylab('Log 10 Intensity\n')+
-#               scale_color_continuous(type = 'viridis')+
-#               ggtitle(label = i)+
-#               theme_minimal()+
-#               theme(plot.margin = unit(c(1,0.4,1,1), 'cm'),
-#                     text = element_text(size = 12, family = 'Roboto Light')))
-#     }
-#     else {print(i)}
-#   }
-#   dev.off()
-# }
-#
-#
-# ThermoPlot <- function(markedPL, SamplePL, SampleSOI, filename){
-#   cairo_pdf(filename = filename, onefile = TRUE)
-#   plist <- SampleSOI@PlotDF
-#   datafile <- SamplePL@peaklist
-#   markedfile <- markedPL@peaklist
-#
-#   ##Main loop-----------------------------------------------------------
-#   setkey(plist, form)
-#   setkey(datafile, formv)
-#   setkey(markedfile, formv)
-#
-#   formulas <- unique(plist$form)
-#   adducts <- unique(plist$ad)
-#   pb <- txtProgressBar(min = 0, max = length(formulas), style = 3)
-#   count <- 0
-#   for (i in formulas){
-#     setTxtProgressBar(pb, count)
-#     count <- count + 1
-#     for (j in adducts){
-#
-#
-#       #Values from groups----------------------------------------------
-#       pks <- plist[.(i)]
-#       pks <- pks[pks$ad == j & pks$isov == 'M0']
-#       if(dim(pks)[1]==0){next}
-#       pks$categ <- 'GR'
-#
-#       #Values from raw data--------------------------------------------
-#       praw <- datafile[.(i)]
-#       praw <- praw %>% filter(., adduct == j & isov == 'M0')
-#       praw$snr <- 0
-#       praw$categ <-'RAW'
-#       praw <- praw[ ,c('rt','rtiv','formv','adduct','snr','isov','categ')]
-#       names(praw) <- names(pks)
-#
-#       #Values from marked data-----------------------------------------
-#       pmarked <- markedfile[.(i)]
-#       pmarked <- pmarked %>% filter(., adduct == j & isov != 'M0')
-#       if(dim(pmarked)[1]==0){next}
-#       pmarked$snr <- 0
-#       pmarked$categ <- 'MAR'
-#       pmarked <- pmarked[ ,c('rt','rtiv','formv','adduct','snr','isov','categ')]
-#       for(j in unique(pmarked$isov)){ #Clear isotopes with few scans
-#         if(length(which(pmarked$isov == j)) < 5){
-#           pmarked <- pmarked[pmarked$isov != j, ]
-#         }
-#       }
-#
-#       pfull <- rbind(pks, praw, pmarked, use.names = FALSE)
-#
-#       for(j in unique(pfull$ad)){ #Clear adducts with few scans
-#         if(length(which(pfull$ad == j)) < 5){
-#           pfull <- pfull[pfull$ad != j, ]
-#         }
-#       }
-#       # pfull$sample <- 'Sample'
-#
-#       if(dim(pfull)[1]>5){ #Check for minimum number of scans
-#         print(ggplot()+
-#                 geom_point(data = pfull[pfull$categ == 'GR',],
-#                            mapping = aes(x = rt/60, y = log10(rtiv), colour = snr),
-#                            alpha=0.4, size=5,shape=20)+
-#                 geom_point(data = pfull[pfull$categ == 'RAW',],
-#                            mapping = aes(x = rt/60, y = log10(rtiv)), colour = '#000000',
-#                            alpha=0.5,size=0.8,shape=15)+
-#                 geom_point(data = pfull[pfull$categ == 'MAR',],
-#                            mapping = aes(x = rt/60, y = log10(rtiv)), colour = '#f05c15',
-#                            alpha=0.5,size=0.8,shape=15)+
-#                 facet_grid(rows = vars(isov))+
-#                 xlab('RT (min)')+ylab('Log 10 Intensity\n')+
-#                 scale_color_continuous(type = 'viridis')+
-#                 ggtitle(label = paste(i, j, sep = '-'))+
-#                 theme_minimal()+
-#                 theme(plot.margin = unit(c(1,0.4,1,1), 'cm'),
-#                       text = element_text(size = 12, family = 'Roboto Light')))
-#       }
-#       else {print(i)}
-#     }}
-#   dev.off()
-# }
-
 #'@export
 setGeneric("MirrorPlot", function(struct, ms2id, ssnumber, patform, mode = "hits") {
     standardGeneric("MirrorPlot")
@@ -528,30 +209,35 @@ setMethod("PLPlot", c("RHermesExp", "numeric", "character",
 
 #'@export
 setGeneric("SoiPlot", function(struct, id, formula, rtrange,
-    dynamicaxis, ads, blankid = NA) {
+                               dynamicaxis = TRUE, ads = NA, blankid = NA,
+                               interactive = TRUE) {
     standardGeneric("SoiPlot")
 })
 setMethod("SoiPlot", c("RHermesExp", "numeric", "character",
-    "numeric", "logical", "character", "ANY"), function(struct, id,
-    formula, rtrange, dynamicaxis, ads, blankid = NA) {
+    "numeric", "ANY", "ANY", "ANY", "ANY"), function(struct, id,
+    formula, rtrange, dynamicaxis = TRUE, ads = NA, blankid = NA,
+    interactive = TRUE) {
+
+    if(is.na(ads[1])){
+      ads <- struct@metadata@ExpParam@adlist$adduct
+    }
+      
     plist <- struct@data@SOI[[id]]@PlotDF
     filen <- struct@data@SOI[[id]]@filename
     plid <- which(vapply(struct@data@PL, function(x) {
         return(x@filename == filen)
     }, logical(1)))[1]
 
-
-
     datafile <- struct@data@PL[[plid]]@peaklist
-    datafile <- datafile[datafile$isov == "M0", ]
-    datafile$Class <- "Sample"
+    datafile <- datafile[isov == "M0", ]
+    datafile[, Class := "Sample"]
 
     if(!is.na(blankid)){
         blankfile <- struct@data@PL[[blankid]]@peaklist
-        blankfile <- blankfile[blankfile$isov == "M0", ]
-        blankfile$Class <- "Blank"
-        datafile <- rbind(datafile, blankfile)
-    }
+        blankfile <- blankfile[isov == "M0", ]
+        blankfile[, Class := "Blank"]
+        datafile <- rbindlist(list(datafile, blankfile))
+      }
 
     FA_to_ion <- struct@metadata@ExpParam@ionF[[2]]
     setkey(FA_to_ion, "f")
@@ -592,33 +278,36 @@ setMethod("SoiPlot", c("RHermesExp", "numeric", "character",
     if (nrow(soiinfo) == 0) {return()}
     soiinfo$Class <- "Sample-SOI"
     if(!is.na(blankid)){
-        return(ggplotly(ggplot() +
-                            geom_point(data = datafile[datafile$Class == "Sample", ],
-                                       mapping = aes(x = rt, y = Intensity, color = Class),
-                                       alpha = 0.4) +
-                            geom_point(data = datafile[datafile$Class == "Blank", ],
-                                       mapping = aes(x = rt, y = Intensity, color = Class),
-                                       alpha = 0.5)+
-                            geom_point(data = soiinfo, mapping = aes(x = rt, y = Intensity, color = Class),
-                                       alpha = 0.8) +
-                            scale_color_manual(breaks = c("Blank", "Sample", "Sample-SOI"),
-                                               values = c("#6D9503", "#8E032B", "#370B6B"))+
-                            facet_grid(rows = vars(ad)) + theme_minimal() +
-                            ggtitle(formula), dynamicTicks = dynamicaxis))
+        plot <- ggplot() +
+                  geom_point(data = datafile[datafile$Class == "Sample", ],
+                             mapping = aes(x = rt, y = Intensity, color = Class),
+                             alpha = 0.4) +
+                  geom_point(data = datafile[datafile$Class == "Blank", ],
+                             mapping = aes(x = rt, y = Intensity, color = Class),
+                             alpha = 0.5)+
+                  geom_point(data = soiinfo, mapping = aes(x = rt, y = Intensity, color = Class),
+                             alpha = 0.8) +
+                  scale_color_manual(breaks = c("Blank", "Sample", "Sample-SOI"),
+                                     values = c("#6D9503", "#8E032B", "#370B6B"))+
+                  facet_grid(rows = vars(ad)) + theme_minimal() +
+                  ggtitle(formula)
     } else {
-        return(ggplotly(ggplot() +
-                            geom_point(data = datafile[datafile$Class == "Sample", ],
-                                       mapping = aes(x = rt, y = Intensity, color = Class),
-                                        alpha = 0.3)+
-                            geom_point(data = soiinfo, mapping = aes(x = rt, y = Intensity, color = Class),
-                                        alpha = 0.8) +
-                            scale_color_manual(breaks = c("Sample", "Sample-SOI"),
-                                               values = c("#8E032B", "#370B6B"))+
-                            facet_grid(rows = vars(ad)) + theme_minimal() +
-                            ggtitle(formula), dynamicTicks = dynamicaxis))
+        plot <- ggplot() +
+                  geom_point(data = datafile[datafile$Class == "Sample", ],
+                             mapping = aes(x = rt, y = Intensity, color = Class),
+                              alpha = 0.3)+
+                  geom_point(data = soiinfo, mapping = aes(x = rt, y = Intensity, color = Class),
+                              alpha = 0.8) +
+                  scale_color_manual(breaks = c("Sample", "Sample-SOI"),
+                                     values = c("#8E032B", "#370B6B"))+
+                  facet_grid(rows = vars(ad)) + theme_minimal() +
+                  ggtitle(formula)
     }
-
-
+    if(interactive){
+      return(ggplotly(plot, dynamicTicks = dynamicaxis))
+    } else {
+      return(plot)
+    }
 })
 
 #'@export
@@ -893,6 +582,7 @@ setMethod("coveragePlot", signature = c("RHermesExp", "numeric"), function(struc
     return(list(p1,p2))
 })
 
+#'@export
 ILplot <- function(struct, ILnumber){
   ggplotly(ggplot(struct@data@MS2Exp[[ILnumber]]@IL@IL) +
              geom_segment(aes(x=start, xend = end, y=mass, yend=mass,

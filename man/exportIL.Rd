@@ -30,9 +30,7 @@ Nothing. As a side effect, it generates one/multiple .csv files with the inclusi
 \description{
 Organizes the IL entries into multiple injections taking into account the
 user-specified parameters. Outputs a single or multiple csv files that serve as input
-for the MS to performed MSMS analysis. \strong{REMEMBER}: RHermes \strong{needs} continuous scans along
-the IL entries. A single DDA-style scan for each IL entry will NOT be enough, as the MS2 processing steps
-will remove the MS2 instrumental noise and for that consecutive scans are needed.
+for the MS to performed MSMS analysis.
 }
 \examples{
 if(FALSE){

@@ -1,0 +1,651 @@
+---
+title: "RHermes Paper"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.show = "hold")
+library(magrittr)
+library(ggplot2)
+library(plotly)
+library(CHNOSZ)
+library(data.table)
+library(dplyr)
+library(RHermes)
+library(visNetwork)
+library(slickR)
+```
+
+
+## Recalculate *all* files from the three matrices
+Only run this chunk if there has been a change in the package that may affect results.
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+knitr::knit("SurfaceWater.Rmd", quiet = TRUE, envir = new.env())
+knitr::knit("Ecoli.Rmd", quiet = TRUE, envir = new.env())
+knitr::knit("HumanPlasma.Rmd", quiet = TRUE, envir = new.env())
+```
+
+
+## Results 1: Canal water samples
+
+```{r Load-water}
+waterPos <- readRDS("D:/HermesResults/SurfaceWater/PosSOIFilter.rds")
+waterNeg <- readRDS("D:/HermesResults/SurfaceWater/NegSOIFilter.rds")
+```
+
+### Number of ionic formulas, unique formulas and adducts
+
+```{r Water-formulas}
+#Unique formulas
+print(paste("Unique formulas",
+            waterPos@metadata@ExpParam@DB$MolecularFormula %>% unique() %>%
+            length()))
+#Ionic formulas
+print(paste("Positive Ionic formulas:",
+            waterPos@metadata@ExpParam@ionF[[1]] %>% nrow()))
+print(paste("Negative Ionic formulas:",
+            waterNeg@metadata@ExpParam@ionF[[1]] %>% nrow()))
+
+#Adduct list
+print("Positive adducts:")
+waterPos@metadata@ExpParam@adlist$adduct
+
+print("Negative adducts:") 
+waterNeg@metadata@ExpParam@adlist$adduct
+```
+
+
+### Identified compounds in spike and non-spike samples
+```{r load-spike-compounds} 
+comp_list <- readxl::read_xlsx("D:/HermesResults/SurfaceWater/Compounds.xlsx")
+```
+
+```{r plots-spike}
+plots_spike <- c()
+for(i in 1:nrow(comp_list)){
+  t <- comp_list$`RT(s)`[i]
+  tol <- 50
+  if(comp_list[i, 3] == "[M+H]+"){
+    plot <- RHermes:::SoiPlot(waterPos, 5, formula = comp_list$Formula[i], 
+              rtrange = c(t-tol,t+tol), dynamicaxis = T,
+              ads = waterPos@metadata@ExpParam@adlist$adduct, blankid = 2, interactive = FALSE)
+  } else {
+    plot <- RHermes:::SoiPlot(waterNeg, 5, formula = comp_list$Formula[i],
+              rtrange = c(t-tol,t+tol), dynamicaxis = T,
+              ads = waterNeg@metadata@ExpParam@adlist$adduct, blankid = 1, interactive = FALSE)
+  }
+  if(!is.null(plot)){
+    plot <- plot + labs(title = comp_list$Formula[[i]],
+              subtitle = paste(comp_list$CompoundName[i], "expected at", t))
+    plot <- plot + geom_vline(xintercept = t)
+  }
+  plots_spike <- c(plots_spike, list(plot))
+}
+
+#Number of compounds found in the spiked sample
+nrow(comp_list) - sapply(plots_spike, is.null) %>% which() %>% length()
+```
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+pdf(file = "./SpikePlots.pdf")
+print(plots_spike)
+dev.off()
+```
+
+
+```{r plots-nospike}
+plots_nospike <- c()
+for(i in 1:nrow(comp_list)){
+  t <- comp_list$`RT(s)`[i]
+  tol <- 50
+  if(comp_list[i, 3] == "[M+H]+"){
+    plots_nospike <- c(plots_nospike, list(RHermes:::SoiPlot(waterPos, 3, formula = comp_list$Formula[i],
+                                                             rtrange = c(t-tol,t+tol), dynamicaxis = T,
+                  ads = waterPos@metadata@ExpParam@adlist$adduct, blankid = 1, interactive = FALSE)))
+  } else {
+    plots_nospike <- c(plots_nospike, list(RHermes:::SoiPlot(waterNeg, 3, formula = comp_list$Formula[i],
+                                                             rtrange = c(t-tol,t+tol), dynamicaxis = T,
+                  ads = waterNeg@metadata@ExpParam@adlist$adduct, blankid = 1, interactive = FALSE)))
+  }
+}
+
+#Number of compounds found in the unspiked sample
+nrow(comp_list) - sapply(plots_nospike, is.null) %>% which() %>% length()
+```
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+pdf(file = "./NoSpikePlots.pdf")
+print(plots_nospike)
+dev.off()
+```
+
+## Results 2: E. coli pellet
+### Number of ionic formulas, unique formulas and adducts
+```{r load-Ecoli}
+ecoliPos <- readRDS("D:/HermesResults/Ecoli/PosResults.rds")
+ecoliNeg <- readRDS("D:/HermesResults/Ecoli/NegResults.rds")
+
+#Unique formulas
+print(paste("Unique formulas",
+            ecoliPos@metadata@ExpParam@DB$MolecularFormula %>% unique() %>%
+            length()))
+#Ionic formulas
+print(paste("Positive Ionic formulas:",
+            ecoliPos@metadata@ExpParam@ionF[[1]] %>% nrow()))
+print(paste("Negative Ionic formulas:",
+            ecoliNeg@metadata@ExpParam@ionF[[1]] %>% nrow()))
+
+#Adduct list
+print("Positive adducts:")
+ecoliPos@metadata@ExpParam@adlist$adduct
+
+print("Negative adducts:") 
+ecoliNeg@metadata@ExpParam@adlist$adduct
+```
+
+### Importing DDA and Hermes Raw MS2 data
+```{r importDDAHermes}
+importMS2 <- function (filelist) {
+    filesdata <- mapply(function(f, n) {
+        hand <- mzR::openMSfile(f)
+        pks <- mzR::peaks(hand)
+        h <- mzR::header(hand)
+        pks <- pks[which(h$msLevel == 2)]
+        h <- h[which(h$msLevel == 2), ]
+        h <- cbind(h, runnum = rep(n, times = nrow(h)))
+        return(list(h, pks))
+    }, filelist, seq_along(filelist))
+    heads <- do.call(rbind, filesdata[seq(1, length(filesdata), 
+        2)])
+    peaks <- unlist(filesdata[seq(2, length(filesdata), 2)], 
+        recursive = FALSE)
+    return(list(heads, peaks))
+}
+
+DDAfiles <- list.files("D:/HermesResults/Ecoli/DDA", pattern = "pos.*mzML", full.names = TRUE)
+Herfiles <- list.files("D:/HermesResults/Ecoli/HermesMS2", pattern = "pos.*mzML", full.names = TRUE)
+DDA <- importMS2(DDAfiles)
+Her <- importMS2(Herfiles)
+```
+
+```{r HerDDA-Scatterplot}
+Herscans <- Her[[1]][,c("retentionTime", "precursorMZ")]
+Herscans$class <- "Hermes"
+
+DDAscans <- DDA[[1]][,c("retentionTime", "precursorMZ")]
+DDAscans$class <- "DDA"
+
+Jointscans <- rbind(Herscans, DDAscans)
+ggplot(Jointscans) +
+  geom_point(aes(x=retentionTime, y = precursorMZ, color = class), alpha = 0.4,
+             size = 0.2)
+
+```
+
+### Quantifying overlap between the data
+```{r QuantifyOverlap, message=FALSE, warning=FALSE}
+ecoliPos <- readRDS("D:/HermesResults/Ecoli/PosResults.rds")
+
+ecoliPos@data@MS2Exp[[1]]@IL@ILParam@filtermz <- 0.02
+
+DDAoverlap <- RHermes:::MSMSimporter(ecoliPos@data@MS2Exp[[1]]@IL, DDAfiles)
+DDAoverlap_header <- do.call(rbind, lapply(DDAoverlap, function(x){if(length(x)!= 0){x[[1]]}}))
+DDAoverlap_header_nscans <- do.call(rbind, sapply(DDAoverlap, function(x){if(length(x)!= 0){nrow(x[[1]])}})) %>% as.data.frame()
+DDAoverlap_header_nscans$class <- "DDA"
+
+Hermesoverlap <-RHermes:::MSMSimporter(ecoliPos@data@MS2Exp[[1]]@IL, Herfiles)
+Hermesoverlap_header <- do.call(rbind, lapply(Hermesoverlap, function(x){if(length(x)!= 0){x[[1]]}}))
+Hermesoverlap_header_nscans <- data.frame(V1 = sapply(Hermesoverlap,
+    function(x){
+      if(length(x)!=0){nrow(x[[1]])}
+    }) %>% unlist())
+Hermesoverlap_header_nscans$class <- "Hermes"
+
+
+olap_summary <- data.frame(counts = c(nrow(DDAoverlap_header),nrow(DDAscans) - nrow(DDAoverlap_header)), 
+                                       class = c("Within Hermes IL", "Outside Hermes IL"))
+fig <- plot_ly(olap_summary, labels = ~class, values = ~counts, type = 'pie')
+fig <- fig %>% layout(title = 'DDA scan location respect to Hermes',
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+
+fig
+
+mergeNscans <- rbind(DDAoverlap_header_nscans, Hermesoverlap_header_nscans)
+ggplot(mergeNscans) + geom_density(aes(x=V1, color = class, fill = class), alpha = 0.7) + xlab("Number of scans per IL entry") + scale_x_continuous(breaks=seq(0,75,5), limits = c(0,75))
+
+numOver <- length(which(sapply(DDAoverlap, function(x){length(x)!= 0})))
+numTotal <- nrow(ecoliPos@data@MS2Exp[[1]]@IL@IL)
+
+numOver
+numTotal
+
+```
+
+
+### Labelled processing
+```{r enrichment-calc, message=FALSE, warning=FALSE, results=FALSE}
+ecoliPos13C <- readRDS("D:/HermesResults/Ecoli/Pos13CSOI.rds")
+ecoliNeg13C <- readRDS("D:/HermesResults/Ecoli/Neg13CSOI.rds")
+
+enrichment <- function(struct, soilist, entry, plot = TRUE) {
+    #Extract SOI and PL information from the selected SOI list
+    SOI <- struct@data@SOI[[soilist]]
+    fname <- SOI@filename
+    correspondingPL <- which(struct@metadata@filenames == fname)
+    PL <- struct@data@PL[[correspondingPL]]@peaklist
+
+    #Filter the PL to the selected SOI region
+    curSOI <- SOI@SoiList[entry, ]
+    PL <- filter(PL, formv == curSOI$formula)
+    PL <- filter(PL, data.table::between(rt, curSOI$start, curSOI$end))
+    
+    exp_int <- do.call(rbind, lapply(unique(PL$isov), function(iso){
+      curPL <- PL[PL$isov == iso, ]
+      return(curPL[which.max(curPL$rtiv), ])
+    }))
+    exp_int <- exp_int[,c("rtiv", "isov")]
+    if(is.null(exp_int)){return(c(0,0))}
+    colnames(exp_int) <- c("abundance", "code")
+    exp_int$class <- "Experimental"
+
+    if (plot) {
+        p <- ggplotly(ggplot(PL) +
+                        geom_point(aes(x = rt, y = rtiv, color = isov)) +
+                        theme_minimal() +
+                        xlab("RT(s)"))
+    }
+
+   
+    f <- gsub(x = curSOI$formula, pattern = "[", replacement = "",
+        fixed = TRUE) %>% gsub(x = ., pattern = "]", replacement = "",
+        fixed = TRUE)
+
+
+    #Generate the isopattern plots
+    isotopecode <- data.frame(name = c("13C", "17O", "18O", "2H",
+        "15N", "33S", "34S", "36S", "37Cl", "81Br", "41K", "6Li",
+        "10B", "21Ne", "22Ne", "25Mg", "26Mg", "29Si", "30Si",
+        "42Ca", "43Ca", "44Ca", "48Ca", "46Ti", "47Ti", "49Ti",
+        "50Ti", "50Cr", "53Cr", "54Cr", "54Fe", "57Fe", "58Fe",
+        "60Ni", "61Ni", "62Ni", "64Ni", "65Cu", "66Zn", "67Zn",
+        "68Zn", "70Zn", "76Se", "77Se", "78Se", "82Se", "84Sr",
+        "86Sr", "87Sr", "91Zr", "92Zr", "94Zr", "96Zr"), code = c("M",
+        "[17O]", "[18O]", "D", "[15N]", "[33S]", "[34S]", "[36S]",
+        "[37Cl]", "[81Br]", "[41K]", "[6Li]", "[10B]", "[21Ne]",
+        "[22Ne]", "[25Mg]", "[26Mg]", "[29Si]", "[30Si]", "[42Ca]",
+        "[43Ca]", "[44Ca]", "[48Ca]", "[46Ti]", "[47Ti]", "[49Ti]",
+        "[50Ti]", "[50Cr]", "[53Cr]", "[54Cr]", "[54Fe]", "[57Fe]",
+        "[58Fe]", "[60Ni]", "[61Ni]", "[62Ni]", "[64Ni]", "[65Cu]",
+        "[66Zn]", "[67Zn]", "[68Zn]", "[70Zn]", "[76Se]", "[77Se]",
+        "[78Se]", "[82Se]", "[84Sr]", "[86Sr]", "[87Sr]", "[91Zr]",
+        "[92Zr]", "[94Zr]", "[96Zr]"), stringsAsFactors = FALSE)
+    data("isotopes", package = "enviPat")
+    # pat <- enviPat::isopattern(isotopes = isotopes, chemforms = f, threshold = 10000/PL$rtiv[PL$isov == 'M0'][maxpoint])[[1]]
+
+    pat <- enviPat::isopattern(isotopes = isotopes[c(1,10,11,12,14,17,21,29,30,35,41,44,98),], chemforms = f,
+                    threshold = 0, verbose = F)[[1]]
+
+    pat <- rbind(t(apply(pat, 1, function(x) {
+        x[3:length(x)] <- x[3:length(x)] - pat[1, 3:ncol(pat)]
+        x
+    })))
+    pat[pat < 0] <- 0
+    cols <- which(colnames(pat) %in% isotopecode$name)
+    #Sort the cols in the order the iso appear on the list
+    idx <- vapply(cols, function(x) {
+        which(colnames(pat)[x] == isotopecode$name)[1]
+    }, numeric(1))
+    cols <- cols[order(idx)]
+
+    pat <- as.data.frame(pat)
+    pat$code <- ""
+    for (i in cols) {
+        different <- which(pat[, i] != 0)
+        pat$code[different] <- paste0(pat$code[different], rep(isotopecode$code[colnames(pat)[i] ==
+            isotopecode$name], length(different)), pat[different,
+            i])
+    }
+    pat$code[1] <- "M0"
+    pat$abundance <- pat$abundance * curSOI$MaxInt/100
+    pat$class <- "Theoretical"
+    pat$code <- factor(pat$code, levels = unique(pat$code[order(-pat$abundance)]))  #Sort by abundance
+    pat <- pat[pat$code %in% exp_int$code, ]
+    
+
+    df <- rbind(pat[, c("abundance", "code", "class")], exp_int)
+
+    if (plot) {
+        p2 <- ggplotly(ggplot(df) + geom_col(aes(x = code, y = abundance,
+            fill = class), position = "dodge") +
+            ylab("Expected intensities") + theme_minimal() +
+            theme(axis.text.x = element_text(angle = 90), plot.margin = unit(c(1,
+                1, 1, 1), "cm")))
+
+        # p2 <- p2 %>% style(p2, showlegend = FALSE, traces = 1:nrow(pat))
+        # p3 <- subplot(p, p2, nrows = 2, which_layout = 2) %>%
+        #     layout(title = curSOI$formula)
+        return(p2)
+    } else {
+      if(nrow(pat) != 0){
+        enrich <- max(unlist(sapply(unique(df$code), function(iso){
+        unlab <- df[df$code == iso & df$class == "Theoretical", "abundance"]
+        lab <- df[df$code == iso & df$class == "Experimental", "abundance"]
+        return(lab/unlab)})))
+      } else {
+        enrich <- 0
+      }
+      
+      FC <- sum(sapply(unique(df$code), function(iso){
+        i <- strsplit(as.character(gsub(x=iso, pattern = "\\[.*", replacement = "")), "[A-Z]")[[1]][2] %>% as.numeric()
+        if(is.na(i)){return(0)}
+        lab <- df[df$code == iso & df$class == "Experimental", "abundance"]
+        return(i*lab)
+      })) / (as.numeric(makeup(f)[["C"]]) * sum(df$abundance[df$class == "Experimental"]))
+      return(c(enrich, FC))
+    }
+
+}
+
+enrichPos <- lapply(seq_along(ecoliPos13C@data@SOI), function(soi){
+  print(soi)
+  do.call("rbind", lapply(1:nrow(ecoliPos13C@data@SOI[[soi]]@SoiList), function(i){
+    tryCatch(enrichment(ecoliPos13C, soi, i, F), error = function(cond){return(c(0,0))})
+  }))
+})
+
+enrichNeg <- lapply(seq_along(ecoliNeg13C@data@SOI), function(soi){
+  print(soi)
+  do.call("rbind", lapply(1:nrow(ecoliNeg13C@data@SOI[[soi]]@SoiList), function(i){
+    tryCatch(enrichment(ecoliNeg13C, soi, i, F), error = function(cond){return(c(0,0))})
+  }))
+})
+
+```
+
+```{r enrichment-plots-positive}
+colors_list <- list(
+  "0-0.1" = "#67001f",
+  "0.1-0.2" = "#b2182b",
+  "0.2-0.3" = "#d6604d",
+  "0.3-0.4" = "#f4a582",
+  "0.4-0.5" = "#fddbc7",
+  "0.5-0.6" = "#d1e5f0",
+  "0.6-0.7" = "#92c5de",
+  "0.7-0.8" = "#4393c3",
+  "0.8-0.9" = "#2166ac",
+  "0.9-1" = "#053061"
+)
+
+
+for(i in 1:5){
+  EC_dist <- sapply(seq(0,0.9,0.1), function(x){between(enrichPos[[i]][,2], x, x+0.1) %>% which() %>% length()})
+  labels <- sapply(seq(0,0.9,0.1), function(x){paste(x, x+0.1, sep = "-")})
+  EC_df <- data.frame(EC = EC_dist, labels = labels)
+  EC_df$color <- dplyr::recode(EC_df$labels, !!!colors_list)
+  EC_df <- EC_df[rev(seq(nrow(EC_df))),]
+
+  fig <- plot_ly(EC_df, labels = ~labels, values = ~EC, type = 'pie', marker = list( colors = ~color), sort = FALSE)
+  fig <- fig %>% layout(title = 'EC',
+           xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+           yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+  print(fig)
+}
+
+df <- data.frame(FC = numeric(), sample = character())
+df <- rbind(df, data.frame(FC = enrichPos[[1]][,2], sample = rep("Blank", nrow(enrichPos[[1]]))))
+df <- rbind(df, data.frame(FC = enrichPos[[2]][,2], sample = rep("Labelled", nrow(enrichPos[[2]]))))
+df <- rbind(df, data.frame(FC = enrichPos[[3]][,2], sample = rep("Labelled + BlankSub", nrow(enrichPos[[3]]))))
+ggplot(df) + geom_density(aes(x=FC, fill = sample, colour = sample),
+                          alpha = 0.4, adjust = 0.5) + theme_minimal()
+ggplot(df) + geom_histogram(aes(x=FC, fill = sample, colour = sample), binwidth = 0.03, 
+                          alpha = 0.4, position="identity") + theme_minimal()
+```
+
+```{r enrichment-plots-negative}
+colors_list <- list(
+  "0-0.1" = "#67001f",
+  "0.1-0.2" = "#b2182b",
+  "0.2-0.3" = "#d6604d",
+  "0.3-0.4" = "#f4a582",
+  "0.4-0.5" = "#fddbc7",
+  "0.5-0.6" = "#d1e5f0",
+  "0.6-0.7" = "#92c5de",
+  "0.7-0.8" = "#4393c3",
+  "0.8-0.9" = "#2166ac",
+  "0.9-1" = "#053061"
+)
+
+
+for(i in 1:5){
+  EC_dist <- sapply(seq(0,0.9,0.1), function(x){between(enrichNeg[[i]][,2], x, x+0.1) %>% which() %>% length()})
+  labels <- sapply(seq(0,0.9,0.1), function(x){paste(x, x+0.1, sep = "-")})
+  EC_df <- data.frame(EC = EC_dist, labels = labels)
+  EC_df$color <- dplyr::recode(EC_df$labels, !!!colors_list)
+  EC_df <- EC_df[rev(seq(nrow(EC_df))),]
+  fig <- plot_ly(EC_df, labels = ~labels, values = ~EC, type = 'pie', marker = list( colors = ~color), sort = FALSE)
+  fig <- fig %>% layout(title = 'EC',
+           xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+           yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+  print(fig)
+}
+
+df <- data.frame(FC = numeric(), sample = character())
+df <- rbind(df, data.frame(FC = enrichNeg[[1]][,2], sample = rep("Blank", nrow(enrichNeg[[1]]))))
+df <- rbind(df, data.frame(FC = enrichNeg[[2]][,2], sample = rep("Labelled", nrow(enrichNeg[[2]]))))
+df <- rbind(df, data.frame(FC = enrichNeg[[3]][,2], sample = rep("Labelled + BlankSub", nrow(enrichNeg[[3]]))))
+ggplot(df) + geom_density(aes(x=FC, fill = sample, colour = sample),
+                          alpha = 0.4, adjust = 0.5) + theme_minimal()
+ggplot(df) + geom_histogram(aes(x=FC, fill = sample, colour = sample), binwidth = 0.03, 
+                          alpha = 0.4, position="identity") + theme_minimal()
+```
+
+
+### Enrichment and identifications
+
+```{r include=FALSE}
+inclusionList <- function(struct, params, id) {
+    SoiList <- struct@data@SOI[[id]]
+    ppm <- struct@metadata@ExpParam@ppm
+    GL <- SoiList@SoiList
+    adlist <- struct@metadata@ExpParam@adlist
+
+    rtmargin <- params@rtmargin
+    priorization <- params@priorization
+    adduct <- params@ad
+    filtermz <- params@filtermz
+    filterrt <- params@filterrt
+
+    if (priorization == "yes") {
+        GL <- RHermes:::GLprior(GL, adduct, rtmargin, ppm)
+        low <- which(GL$MaxInt < 50000)
+        rare <- which(vapply(GL$ad[low], function(x) {
+            !any(unlist(x) %in% c("M+H", "M+NH4", "M+Na", "M+K", "M+", "M-H",
+                                  "M+Cl", "M+Br", "M+H2O-H"))
+        }, logical(1)))
+        if (length(rare) != 0) {
+            GL <- GL[-low[rare], ]
+        }
+    }
+    GL <- GL[, c("start", "end", "formula", "mass", "MaxInt", "anot", "EC")]
+    GL$originalSOI <- seq_len(nrow(GL))
+
+    GL <- lapply(seq_len(nrow(GL)), function(x) {
+        cur <- GL[x, ]
+        df <- as.data.frame(matrix(unlist(strsplit(cur$anot[[1]],
+            "_")), ncol = 2, byrow = TRUE))
+        dplyr::bind_cols(cur[rep(1, nrow(df)), ], df)
+    })
+    GL <- do.call(rbind, GL)
+    colnames(GL)[c(8, 9)] <- c("f", "ad")
+    GL$f <- as.character(GL$f)
+    GL$ad <- as.character(GL$ad)
+
+    ##Adduct Priorization ---------------------------------------------------------------
+    if (priorization == "only") {
+        message(paste("Selecting only", adduct))
+        GL <- GL[which(GL$ad %in% unlist(adduct)), ]
+    }
+
+
+    #Group entries by similar characterization attributes------------------------
+    GL <- RHermes:::GLgroup(GL, rtmargin, ppm)
+
+    #Tidy the entries, sort them by relevance and store them into a internal DF
+    #Keep the important info outside for MS/MS acquisition (rti, rtf and mass for
+    #planning injections)------------------------------------------------------------------
+
+    GL <- RHermes:::GLtidy(GL, filterrt, filtermz)
+
+    GL$entrynames <- vapply(GL$jointentries, function(entry) {
+        res <- lapply(entry$metadata, function(subentry) {
+            return(paste(unique(paste(subentry$f, subentry$ad, sep = "$"),
+                collapse = "#")))
+        })
+        return(paste(unique(unlist(res)), sep = "$", collapse = "#"))
+    }, character(1))
+    GL$entrynames <- unlist(GL$entrynames)
+    GL <- RHermesIL(IL = as.data.table(GL[, -5]), annotation = GL$jointentries,
+        SOInum = id, ILParam = params)
+    return(GL)
+}
+```
+
+```{r enrichment-identifications}
+ecoliPosResults <- readRDS("D:/HermesResults/Ecoli/PosResults.rds")
+ecoliNegResults <- readRDS("D:/HermesResults/Ecoli/NegResults.rds")
+
+#First we update the SOI lists with the EC column
+for (i in 1:5) {
+  ecoliPosResults@data@SOI[[i]]@SoiList$EC <- enrichPos[[i]][,2]
+  ecoliNegResults@data@SOI[[i]]@SoiList$EC <- enrichNeg[[i]][,2]
+}
+
+#Then we generate the ILs again
+ILPos <- inclusionList(ecoliPosResults, id = 4, par = ILParam(priorization = "yes", ad = c("M+H", "M+NH4", "M+CH3OH+H")))
+ILNeg <- inclusionList(ecoliNegResults, id = 4, par = ILParam(priorization = "yes", ad = c("M-H")))
+
+#We substitute the anotation part only and keep the identifications intact
+ecoliPosResults@data@MS2Exp[[1]]@IL@annotation <- ILPos@annotation
+ecoliNegResults@data@MS2Exp[[1]]@IL@annotation <- ILNeg@annotation
+
+#For each MS2 feature (superspectra), we retrieve the max EC associated with it
+ecoliPosResults@data@MS2Exp[[1]]@Ident$MS2Features$EC <- 
+  apply(ecoliPosResults@data@MS2Exp[[1]]@Ident$MS2Features, 1, function(x){
+    entry <- x[[4]]
+    sois <- rbindlist(ecoliPosResults@data@MS2Exp[[1]]@IL@annotation[[entry]]$metadata)
+    return(max(sois$EC))
+  })
+
+ecoliNegResults@data@MS2Exp[[1]]@Ident$MS2Features$EC <- 
+  apply(ecoliNegResults@data@MS2Exp[[1]]@Ident$MS2Features, 1, function(x){
+    entry <- x[[4]]
+    sois <- rbindlist(ecoliNegResults@data@MS2Exp[[1]]@IL@annotation[[entry]]$metadata)
+    return(max(sois$EC))
+  })
+
+#Calculate best cosine score for each MS2 feature
+ecoliPosResults@data@MS2Exp[[1]]@Ident$MS2Features$cos <- 
+  apply(ecoliPosResults@data@MS2Exp[[1]]@Ident$MS2Features, 1, function(x){
+    if(!is.data.frame(x[[8]])){return(0)}
+    return(max(x[[8]]$cos))
+  })
+ecoliNegResults@data@MS2Exp[[1]]@Ident$MS2Features$cos <- 
+  apply(ecoliNegResults@data@MS2Exp[[1]]@Ident$MS2Features, 1, function(x){
+    if(!is.data.frame(x[[8]])){return(0)}
+    return(max(x[[8]]$cos))
+  })
+
+#Estimate max precursor intensity for each MS2 feature
+ecoliPosResults@data@MS2Exp[[1]]@Ident$MS2Features$MaxInt <- 
+  apply(ecoliPosResults@data@MS2Exp[[1]]@Ident$MS2Features, 1, function(x){
+    entry <- x[[4]]
+    sois <- rbindlist(ecoliPosResults@data@MS2Exp[[1]]@IL@annotation[[entry]]$metadata)
+    return(max(sois$MaxInt))
+  })
+ecoliNegResults@data@MS2Exp[[1]]@Ident$MS2Features$MaxInt <- 
+  apply(ecoliNegResults@data@MS2Exp[[1]]@Ident$MS2Features, 1, function(x){
+    entry <- x[[4]]
+    sois <- rbindlist(ecoliNegResults@data@MS2Exp[[1]]@IL@annotation[[entry]]$metadata)
+    return(max(sois$MaxInt))
+  })
+
+```
+
+
+```{r plots-enrichment-ident}
+#SOI FC distribution according to mass and intensity
+#Blank Pos
+ggplot(ecoliPosResults@data@SOI[[1]]@SoiList) + geom_point(aes(x=mass, y = log10(MaxInt), color = EC), alpha = 0.8)
+#Labelled sample Pos
+ggplot(ecoliPosResults@data@SOI[[2]]@SoiList) + geom_point(aes(x=mass, y = log10(MaxInt), color = EC), alpha = 0.8)
+#Labelled + Blanksub Pos
+ggplot(ecoliPosResults@data@SOI[[3]]@SoiList) + geom_point(aes(x=mass, y = log10(MaxInt), color = EC), alpha = 0.8)
+
+#Blank Neg
+ggplot(ecoliNegResults@data@SOI[[1]]@SoiList) + geom_point(aes(x=mass, y = log10(MaxInt), color = EC), alpha = 0.8)
+#Labelled sample Neg
+ggplot(ecoliNegResults@data@SOI[[2]]@SoiList) + geom_point(aes(x=mass, y = log10(MaxInt), color = EC), alpha = 0.8)
+#Labelled + Blanksub Neg
+ggplot(ecoliNegResults@data@SOI[[3]]@SoiList) + geom_point(aes(x=mass, y = log10(MaxInt), color = EC), alpha = 0.8)
+
+```
+
+
+```{r plots-enrichment-ident-2}
+dfpos <- ecoliPosResults@data@MS2Exp[[1]]@Ident$MS2Features
+ggplotly(ggplot(dfpos) + geom_point(aes(x=cos, y=EC, color = log10(MaxInt)), alpha = 0.4) + scale_color_viridis_c())
+
+
+dfneg <- ecoliNegResults@data@MS2Exp[[1]]@Ident$MS2Features
+ggplotly(ggplot(dfneg) + geom_point(aes(x=cos, y=EC, color = log10(MaxInt)), alpha = 0.4) + scale_color_viridis_c())
+
+
+table(dfpos$EC > 0.5, dfpos$cos > 0.5,dnn = c("EC > 0.5", "cos > 0.5"))
+table(dfneg$EC > 0.5, dfneg$cos > 0.5,dnn = c("EC > 0.5", "cos > 0.5"))
+
+```
+
+
+```{r alternativeILapproach}
+#Alternative approach - IL centric instead of MS2-feature centric
+ecoliPosResults@data@MS2Exp[[1]]@IL@IL$EC <-
+  lapply(1:nrow(ecoliPosResults@data@MS2Exp[[1]]@IL@IL), function(x){
+    sois <- rbindlist(ecoliPosResults@data@MS2Exp[[1]]@IL@annotation[[x]]$metadata)
+    return(max(sois$EC))
+  }) %>% as.numeric()
+
+ecoliPosResults@data@MS2Exp[[1]]@IL@IL$cos <-
+  lapply(1:nrow(ecoliPosResults@data@MS2Exp[[1]]@IL@IL), function(x){
+    ids <- which(ecoliPosResults@data@MS2Exp[[1]]@Ident$MS2Features$ILentry == x)
+    if(length(ids) == 0){return(0)}
+    return(max(ecoliPosResults@data@MS2Exp[[1]]@Ident$MS2Features$cos[ids]))
+  }) %>% as.numeric()
+
+ggplotly(ggplot(ecoliPosResults@data@MS2Exp[[1]]@IL@IL) + geom_point(aes(x=cos, y=EC, color = log10(MaxInt)), alpha = 0.4) + scale_color_viridis_c())
+
+
+
+ecoliNegResults@data@MS2Exp[[1]]@IL@IL$EC <-
+  lapply(1:nrow(ecoliNegResults@data@MS2Exp[[1]]@IL@IL), function(x){
+    sois <- rbindlist(ecoliNegResults@data@MS2Exp[[1]]@IL@annotation[[x]]$metadata)
+    return(max(sois$EC))
+  }) %>% as.numeric()
+
+ecoliNegResults@data@MS2Exp[[1]]@IL@IL$cos <-
+  lapply(1:nrow(ecoliNegResults@data@MS2Exp[[1]]@IL@IL), function(x){
+    ids <- which(ecoliNegResults@data@MS2Exp[[1]]@Ident$MS2Features$ILentry == x)
+    if(length(ids) == 0){return(0)}
+    return(max(ecoliNegResults@data@MS2Exp[[1]]@Ident$MS2Features$cos[ids]))
+  }) %>% as.numeric()
+
+ggplotly(ggplot(ecoliNegResults@data@MS2Exp[[1]]@IL@IL) + geom_point(aes(x=cos, y=EC, color = log10(MaxInt)), alpha = 0.4) + scale_color_viridis_c())
+
+```
+
+
+## Results 3: Human plasma sample
+ 

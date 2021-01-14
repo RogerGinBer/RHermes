@@ -9,7 +9,8 @@ CliqueMSMS(
   idx,
   contaminant = 173.5,
   delta = 0.1,
-  BPPARAM = BiocParallel::SerialParam()
+  BPPARAM = BiocParallel::SerialParam(),
+  sstype = "regular"
 )
 }
 \value{

@@ -19,7 +19,6 @@ library(dplyr)
 # Positive analysis - E. coli 
 ## Importing DDA and Hermes Raw MS2 data
 ```{r}
-
 DDAfiles <- list.files("D:/Ecoli_GaryMichi/DDA/", pattern = "pos.*mzML", full.names = TRUE)
 
 importMS2 <- function (filelist) {

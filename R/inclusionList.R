@@ -80,10 +80,6 @@ inclusionList <- function(struct, params, id) {
     GL$f <- as.character(GL$f)
     GL$ad <- as.character(GL$ad)
 
-    ##1st Step: Remove confirmed isotope entries from the SoiList--------------------------
-    # message('Removing isotopes:')
-    # GL <- GLisorem(GL, rtmargin, ppm)
-
     ##Adduct Priorization ---------------------------------------------------------------
     if (priorization == "only") {
         message(paste("Selecting only", adduct))
@@ -91,10 +87,10 @@ inclusionList <- function(struct, params, id) {
     }
 
 
-    #2nd Step: Group entries by similar characterization attributes------------------------
+    #Group entries by similar characterization attributes------------------------
     GL <- RHermes:::GLgroup(GL, rtmargin, ppm)
 
-    #3rd Step: Tidy the entries, sort them by relevance and store them into a internal DF
+    #Tidy the entries, sort them by relevance and store them into a internal DF
     #Keep the important info outside for MS/MS acquisition (rti, rtf and mass for
     #planning injections)------------------------------------------------------------------
 

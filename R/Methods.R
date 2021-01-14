@@ -343,8 +343,8 @@ setMethod("remAd", c("RHermesExp", "character"), function(struct,
         struct@metadata@ExpParam@adlist <- struct@metadata@ExpParam@adlist[-tosub,
             ]
     }
-    message("This is the new adduct list: ")
-    show(struct@metadata@ExpParam@adlist)
+    # message("This is the new adduct list: ")
+    # show(struct@metadata@ExpParam@adlist)
     struct <- setTime(struct, paste("Removed the adduct/s", name))
     return(struct)
 })
@@ -428,16 +428,50 @@ setMethod("getSOIpar", c("ANY"), function(tag = "double") {
 
 
 
-
+#'@title filterIL
+#'@md
+#'@description Filters out IL entries lower than a specified intensity in a given RT interval. 
+#'@param struct The RHermesExp object.
+#'@param id The IL ID in the RHermesExp object. The IDs are assigned by the order in
+#'which the IL are generated.
+#'@param rts Time interval to filter (two numeric values - start, end), in seconds
+#'@param minint Minimum entry intensity to be retained. All entries <= minint will be removed in the
+#'specified rt interval. Defaults to infinity, so *all* IL entries in the range are removed.
+#'@return Nothing. As a side effect, it generates one/multiple .csv files with the inclusion list data
+#'@examples
+#'if(FALSE){
+#' filterIL(myHermes, 1, c(0,200), minint = 1e6)
+#'}
+#'@export
+setGeneric("filterIL", function(struct, id, rts, minint = Inf) {
+  standardGeneric("filterIL")
+})
+setMethod("filterIL", c("RHermesExp", "numeric", "numeric", "ANY"),
+          function(struct, id, rts, minint = Inf) {
+    if(length(rts) != 2){
+      stop("Please input just two RT values corresponding to the starting RT and 
+           ending RT you want to filter")
+    }
+    IL <- struct@data@MS2Exp[[id]]@IL@IL
+    anot <- struct@data@MS2Exp[[id]]@IL@annotation
+    which_to_remove <- which(IL$start >= rts[1] & IL$end <= rts[2] &
+                               IL$MaxInt < minint)
+    if(length(which_to_remove) != 0){
+      struct@data@MS2Exp[[id]]@IL@IL <- IL[-which_to_remove]
+      struct@data@MS2Exp[[id]]@IL@annotation <- anot[-which_to_remove]
+      struct <- setTime(struct, paste("IL entry", id, "filtered between",
+                                      rts[1], "and", rts[2], "taking", minint,
+                                      "as minimum intensity"))
+    }
+    return(struct)
+})
 
 
 #'@title exportIL
 #'@md
 #'@description Organizes the IL entries into multiple injections taking into account the
 #'user-specified parameters. Outputs a single or multiple csv files that serve as input
-#'for the MS to performed MSMS analysis. **REMEMBER**: RHermes **needs** continuous scans along
-#'the IL entries. A single DDA-style scan for each IL entry will NOT be enough, as the MS2 processing steps
-#'will remove the MS2 instrumental noise and for that consecutive scans are needed.
+#'for the MS to performed MSMS analysis.
 #'
 #'@param struct The RHermesExp object.
 #'@param id The IL ID in the RHermesExp object. The IDs are assigned by the order in

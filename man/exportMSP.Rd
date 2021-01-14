@@ -4,7 +4,7 @@
 \alias{exportMSP}
 \title{exportMSP}
 \usage{
-exportMSP(struct, ID, fname)
+exportMSP(struct, ID, fname, idx = NA)
 }
 \arguments{
 \item{struct}{RHermesExp object}

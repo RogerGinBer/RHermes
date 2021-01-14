@@ -15,7 +15,8 @@ OptScanSearch <- function(DB, raw, mzList, ppm, IsoList, labelled = FALSE,
         }))
     }
 
-    ncores <- BiocParallelParam$workers
+    ncores <- ifelse(is.numeric(BiocParallelParam$workers[[1]]),
+                     yes = BiocParallelParam$workers, no = 1)
     #Splitting the formulas into a list (with l = number of workers) to reduce
     #time loss associated with variable loading (in SOCK only)
     flist <- split(DB, f = seq_len(ncores))
