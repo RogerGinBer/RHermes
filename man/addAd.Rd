@@ -28,13 +28,13 @@ An updated RHermesExp object with the new adduct list
 Adds new custom adducts to the RHermesExp adduct list
 }
 \details{
-The function adds a new row to the Envipat-style dataframe containing
+The function adds an entry to the Envipat-style dataframe containing
 the adducts used for the experiment. It is important to specify what atoms to
 add or substract to the molecular formula. Polarity is inferred directly from
 the specified charge.
 }
 \examples{
 if(FALSE){
- addAd(myHermes, 'M+H', 1.0072, ch = 1, mult = 1, toadd = 'H1') #Basic example
+ addAd(myHermes, 'M+H', 1.0072, ch = 1, mult = 1, toadd = 'H1')
 }
 }

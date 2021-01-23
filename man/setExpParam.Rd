@@ -10,27 +10,35 @@ setExpParam(struct, params = ExpParam(), template = character(0))
 An RHermesExp object with the desired experimental parameters set.
 }
 \description{
-Main interface to set the experimental parameters into a RHermesExp object.
-The user can either provide an ExpParam object (partially or fully customized) or provide
-a template tag to use a pre-made parameter set.
+Main interface to set the experimental parameters into a
+ RHermesExp object. The user can either provide an ExpParam object 
+(partially or fully customized) or provide a template tag to use a pre-made
+ parameter set.
 }
 \section{Slots}{
 
 \describe{
 \item{\code{struct}}{The RHermesExp object to modify.}
 
-\item{\code{params}}{Optional if using template. An ExpParam object detailing a custom set of parameters.}
+\item{\code{params}}{Optional if using template. An ExpParam object detailing a
+custom set of parameters.}
 
-\item{\code{template}}{Ignored if using params. A character describing the ID of the pre-made parameter set
-to use. Currently you can use: 'orbi-pos', 'orbi-neg', 'qtof-pos' and 'qtof-neg'. The parameters can
-be found, modified or even expanded in the csv at app/www/InstrumentTemplates.csv}
+\item{\code{template}}{Ignored if using params. A character describing the ID of
+ the pre-made parameter set to use. Currently you can use: 'orbi-pos',
+'orbi-neg', 'qtof-pos' and 'qtof-neg'. The parameters can be found,
+ modified or even expanded in the csv at app/www/InstrumentTemplates.csv}
 }}
 
 \examples{
 if(FALSE){
 myHermes <- RHermesExp()
-myHermes <- setExpParam(myHermes, template = 'orbi-pos') #Using template
-myHermes <- setExpParam(myHermes, ExpParam(ppm = 10, res = 135000, ion = '-')) #Custom parameters
+
+#Using template
+myHermes <- setExpParam(myHermes, template = 'orbi-pos') 
+
+#Custom parameters
+myHermes <- setExpParam(myHermes,
+                        ExpParam(ppm = 10, res = 135000, ion = '-')) 
 }
 
 }

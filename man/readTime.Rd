@@ -14,8 +14,8 @@ None, just prints the timestamps
 }
 \description{
 Prints all timestamps of a given RHermesExp object. Useful to
-keep track of all changes made to the object (added files, generated SOI lists,
-changed parameters, etc.)
+keep track of all changes made to the object (added files, generated SOI
+ lists, changed parameters, etc.)
 }
 \examples{
 if(FALSE){

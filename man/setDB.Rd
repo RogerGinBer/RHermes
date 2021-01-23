@@ -17,8 +17,9 @@ setDB(
 An RHermesExp object with the formula and adduct database set.
 }
 \description{
-It updates the RHermesExp object and sets the formula database and adduct list to use
-in the following steps of the workflow. The adduct list used is based on the
+It updates the RHermesExp object and sets the formula database
+ and adduct list to use in the following steps of the workflow. The adduct
+  list used is based on the
  \href{http://pubs.acs.org/doi/abs/10.1021/acs.analchem.5b00941}{EnviPat}
 package
 }
@@ -27,22 +28,24 @@ package
 \describe{
 \item{\code{struct}}{The RHermesExp object to update}
 
-\item{\code{db}}{A character defining which database to use. Currently we only support
-'hmdb' \href{https://hmdb.ca/}{HMDB} and 'norman' \href{https://www.norman-network.com/nds/susdat/}{NORMAN},
-but hopefully new database support and customizability will come in future releases.}
+\item{\code{db}}{A character defining which database to use. Currently we only 
+support 'hmdb' \href{https://hmdb.ca/}{HMDB} and 'norman'
+ \href{https://www.norman-network.com/nds/susdat/}{NORMAN},
+ but  new database support and customizability will come in future releases.}
 
-\item{\code{adcharge}}{The maximum charge (in absolute terms, so polarity does not matter)
-the adducts in the list can have. Defaults to 1.}
+\item{\code{adcharge}}{The maximum charge (in absolute value, so polarity does not
+matter) the adducts in the list can have. Defaults to 1.}
 
-\item{\code{admult}}{The maximum multiplicity (M, 2M, 3M and so on) the adducts can have. Defaults to 1.}
+\item{\code{admult}}{The maximum multiplicity (M, 2M, 3M and so on) the adducts
+can have. Defaults to 1.}
 
 \item{\code{folder}}{Folder where the database is located.}
 }}
 
 \examples{
 if(FALSE){
-myHermes <- setDB(myHermes, 'hmdb') #Adcharge and admult default to 1
-myHermes <- setDB(myHermes, 'norman', 2, 1) #Charge 1 multiplicity 1
+    myHermes <- setDB(myHermes, 'hmdb') #Adcharge and admult default to 1
+    myHermes <- setDB(myHermes, 'norman', 2, 1) #Charge 2, multiplicity 1
 }
 
 

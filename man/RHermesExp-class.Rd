@@ -4,23 +4,22 @@
 \name{RHermesExp-class}
 \alias{RHermesExp-class}
 \alias{RHermesExp}
-\title{The main RHermes class: The RHermesExp. It is a container for all the information
-you need. All main RHermes functions use it and return an updated version of
-the object.}
+\title{RHermesExp}
 \description{
-The main RHermes class: The RHermesExp. It is a container for all the information
-you need. All main RHermes functions use it and return an updated version of
-the object.
+The main RHermes class: The RHermesExp. It is a container for
+all generated information. All main RHermes functions use it and return an
+updated version of the object.
 }
 \section{Slots}{
 
 \describe{
 \item{\code{metadata}}{Where all the complementary info is stored (experimental
-parameters, timestamps, databases, etc.). See RHermesMeta for more info.}
+parameters, timestamps, databases, etc.). See [RHermes]{RHermesMeta} for more
+info.}
 
-\item{\code{data}}{All experimental info is stored in data. It is divided into PL (peaklist)
-SOI (scans of interest), MS2Exp (for the MS/MS experiments and identifications) and
-Quant (for quantifications, still not developed). See RHermesData for more info.}
+\item{\code{data}}{All experimental info is stored in data. It is divided into PL
+(peaklist) SOI (scans of interest) and MS2Exp (for the IL, MS2 data and 
+identifications). See [RHermes]{RHermesData} for more info.}
 }}
 
 \examples{

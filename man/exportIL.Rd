@@ -9,31 +9,32 @@ exportIL(struct, id, folder = getwd(), maxOver = 5, sepFiles = FALSE)
 \arguments{
 \item{struct}{The RHermesExp object.}
 
-\item{id}{The IL ID in the RHermesExp object. The IDs are assigned by the order in
-which the IL are generated.}
+\item{id}{The IL ID in the RHermesExp object. The IDs are assigned by the
+order in which the IL are generated.}
 
-\item{folder}{A string containing the folder to save the IL csv/s into. By default will be your
-working directory}
+\item{folder}{A string containing the folder to save the IL csv/s into. By
+default will be your working directory}
 
-\item{maxOver}{Numeric, very important. It's the number of mz-rt segments that can be
-monitored at the same time by the MS instrument. Higher numbers will give you less
-injections but the number of scans for each IL entry will inevitably be reduced
-and thus lead to problems later on.}
+\item{maxOver}{Numeric, very important. It's the number of mz-rt segments
+that can be monitored at the same time by the MS instrument. Higher numbers
+lead to less injections but the number of scans for each IL entry will
+be reduced and gives problems when deconvoluting the MS2 spectras.}
 
-\item{sepFiles}{Logical, whether to generate a single csv file or multiple csvs, each
-corresponding to each injection/chromatographic run. From our experience with
-an Orbitrap Fusion, separate csvs will make your life easier.}
+\item{sepFiles}{Logical, whether to generate a single csv file or multiple
+csvs, each corresponding to each injection/chromatographic run. From our
+experience with an Orbitrap Fusion, separate csvs will simplify the task.}
 }
 \value{
-Nothing. As a side effect, it generates one/multiple .csv files with the inclusion list data
+Nothing. As a side effect, it generates one/multiple .csv files
+with the inclusion list data
 }
 \description{
-Organizes the IL entries into multiple injections taking into account the
-user-specified parameters. Outputs a single or multiple csv files that serve as input
-for the MS to performed MSMS analysis.
+Organizes the IL entries into multiple injections taking into
+account the user-specified parameters. Outputs a single or multiple csv
+files that serve as input for the MS to performed MSMS analysis.
 }
 \examples{
 if(FALSE){
-exportIL(myHermes, 1, 'C:/SomeFolder', maxOver = 5, sepFiles = FALSE)
+   exportIL(myHermes, 1, 'C:/SomeFolder', maxOver = 5, sepFiles = FALSE)
 }
 }

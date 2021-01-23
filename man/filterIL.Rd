@@ -9,19 +9,23 @@ filterIL(struct, id, rts, minint = Inf)
 \arguments{
 \item{struct}{The RHermesExp object.}
 
-\item{id}{The IL ID in the RHermesExp object. The IDs are assigned by the order in
-which the IL are generated.}
+\item{id}{The IL ID in the RHermesExp object. The IDs are assigned by the
+order in which the IL are generated.}
 
-\item{rts}{Time interval to filter (two numeric values - start, end), in seconds}
+\item{rts}{Time interval to filter (two numeric values - start, end),
+in seconds}
 
-\item{minint}{Minimum entry intensity to be retained. All entries <= minint will be removed in the
-specified rt interval. Defaults to infinity, so \emph{all} IL entries in the range are removed.}
+\item{minint}{Minimum entry intensity to be retained. All entries <= minint
+will be removed in the specified rt interval. Defaults to infinity, so \emph{all}
+IL entries in the range are removed.}
 }
 \value{
-Nothing. As a side effect, it generates one/multiple .csv files with the inclusion list data
+Nothing. As a side effect, it generates one/multiple .csv files with
+the inclusion list data
 }
 \description{
-Filters out IL entries lower than a specified intensity in a given RT interval.
+Filters out IL entries lower than a specified intensity in a
+given RT interval.
 }
 \examples{
 if(FALSE){

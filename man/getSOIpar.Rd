@@ -18,7 +18,7 @@ A SoiParam object
 }
 \description{
 Returns a SOIParam object for posterior SOI detection. This function does NOT
-require the RHermesExp object as multple SOIParam can be used at once. See \link[RHermes]{SOIfinder}
+require the RHermesExp object as multple SOIParam can be used at once. See \link[RHermes]{findSOI}
 for more info.
 }
 \examples{

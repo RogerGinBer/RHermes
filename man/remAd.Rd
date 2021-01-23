@@ -9,8 +9,8 @@ remAd(struct, name)
 \arguments{
 \item{struct}{The RHermesExp object}
 
-\item{name}{The names of the adducts to remove. If they aren't in the RHermesExp
-will raise a warning but no rows will be substracted.}
+\item{name}{The names of the adducts to remove. If they aren't in the
+RHermesExp will raise a warning but no rows will be substracted.}
 }
 \value{
 An updated RHermesExp object
@@ -19,7 +19,8 @@ An updated RHermesExp object
 Remove adducts from an RHermesExp adduct list
 }
 \details{
-Removes a row (or many) from the adduct list slot inside the RHermesExp object
+Removes a row (or many) from the adduct list slot inside the
+RHermesExp object
 }
 \examples{
 if(FALSE){

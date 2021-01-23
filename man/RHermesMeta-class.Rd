@@ -4,27 +4,26 @@
 \name{RHermesMeta-class}
 \alias{RHermesMeta-class}
 \alias{RHermesMeta}
-\title{The metadata storage class. It holds the experimental parameters, all the names
-of the processed files and the timestamps for all operations performed on the
-parental RHermesExp object}
+\title{RHermesMeta}
 \description{
-The metadata storage class. It holds the experimental parameters, all the names
-of the processed files and the timestamps for all operations performed on the
-parental RHermesExp object
+The metadata storage class. It holds the experimental parameters,
+all the names of the processed files and the timestamps for all operations
+performed on the parental RHermesExp object
 }
 \section{Slots}{
 
 \describe{
-\item{\code{ExpParam}}{Contains all experimental information (ppm error, resolution, polarity, etc.),
-as well as the formula and adduct databases used. See ExpParam for more info.}
+\item{\code{ExpParam}}{Contains all experimental information (ppm error, resolution,
+polarity, etc.), as well as the formula and adduct databases used.
+ See [RHermes]{ExpParam} for more info.}
 
-\item{\code{filenames}}{All filenames of the processed files. This info is also available
-for individual PL and SOI objects in their respective slot.}
+\item{\code{filenames}}{All filenames of the processed files. This info is also
+available for individual PL and SOI objects in their respective slot.}
 
-\item{\code{timestamps}}{Timestamps generated when any operation was performed on the parental object.
-You can easily check them with readTime().}
+\item{\code{timestamps}}{Timestamps generated when any operation was performed on the
+parental object. You can easily check them with readTime().}
 
-\item{\code{cluster}}{Selected automatically based on your operating system and your number of cores.
-Can be set to any valid BiocParallelParam.}
+\item{\code{cluster}}{Selected automatically based on your operating system and your
+number of cores. Can be set to any valid BiocParallelParam.}
 }}
 
