@@ -47,7 +47,7 @@ And the development version from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("RogerGinBer/Proves")
+devtools::install_github("RogerGinBer/RHermes")
 ```
 
 ## Setup
@@ -93,12 +93,25 @@ their website and letting reticulate know where to find the environment.
 
 Also check out Keras and Tensorflow R tutorials.
 
-## Example
-
-This is a basic example which shows you how to solve a common problem:
+## Analyzing LC-MS data with RHermes
 
 ```{r example}
 library(RHermes)
-## basic example code
+#Generate a Exp object
+example <- RHermesExp()
+
+#Set your formula and adduct database
+example <- setDB(example, db = "hmdb")
+
+#Process your MS1 files
+example <- FileProc(example,
+                    system.file("extdata", "MS1TestData.mzML",
+                                package = "RHermes"))
+#Generate SOIs
+example <- SOIfinder(example, getSOIpar(), 1)
+
+#Generate an IL and export it
+example <- genIL(example, 1, ILParam())
 ```
 
+Also check the User Guide for more detailed info.

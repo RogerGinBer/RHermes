@@ -10,10 +10,9 @@ coverage](https://codecov.io/gh/RogerGinBer/RHermes/branch/master/graph/badge.sv
 
 <!-- badges: end -->
 
-The goal of RHermes is to analyse LC-MS and LC-MS/MS files to identify
+The goal of RHermes is to analyse LC-MS and LC-MS/MS data to identify
 compounds in biological or environmental samples. The RHermes workflow
-can work with either Orbitrap or q-TOF instrument data, but the former
-will yield best results.
+works with both Orbitrap and q-TOF instrument data.
 
 ## System requirements
 

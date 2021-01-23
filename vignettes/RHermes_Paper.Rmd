@@ -122,6 +122,64 @@ print(plots_nospike)
 dev.off()
 ```
 
+### Isotopic fidelity
+```{r}
+#Load unfiltered data
+waterPosUnfiltered <- readRDS("D:/HermesResults/SurfaceWater/PosSOI.rds")
+chloridazon <- "[C10H9ClN3O]+"
+RHermes::IsoFidelity(waterPosUnfiltered, soilist = 6,
+                     entry = which(waterPosUnfiltered@data@SOI[[6]]@SoiList$formula == chloridazon)[2], plot = T)
+
+alphaC <- "[C11H9KN3]+"
+RHermes::IsoFidelity(waterPosUnfiltered, soilist = 6,
+                     entry = which(waterPosUnfiltered@data@SOI[[6]]@SoiList$formula == alphaC)[2], plot = T)
+
+m1 <- with(waterPosUnfiltered@data@SOI[[6]]@SoiList, mass[formula == chloridazon])[2]
+m2 <- with(waterPosUnfiltered@data@SOI[[6]]@SoiList, mass[formula == alphaC])[2]
+cat("Mass difference: ", round(m1-m2, digits = 5), " Da\n",
+             "  ppm distance: ", (m1-m2)/m1*1e6, "\n")
+```
+
+### ISF annotation
+```{r}
+DB <- readRDS("D:/MS2ID_B2R_20201113_083214.rds")
+anotatedSL <- RHermes:::anotateISF(waterPosUnfiltered@data@SOI[[6]]@SoiList, DB, polarity = 1,
+                                   BiocParallelParam = SnowParam(4, progressbar = T))
+
+
+```
+
+### Ionic formula overlap
+```{r}
+calculateOverlap <- function(file){
+  myHermes <- readRDS(file)
+  m <- sort(myHermes@metadata@ExpParam@ionF[[1]]$m)
+  diffs <- lapply(seq_along(m), function(x){
+    deltas <- (m[seq(max(x-200,0), min(x+200, length(m)))] - m[x])/ m[x] * 1e6
+    return(abs(deltas[abs(deltas) < 10]))
+  })
+  collisiondata <- lapply(seq(0,5), function(colisions){
+    message(colisions)
+    lapply(seq(0,10,0.1), function(ppm){
+      length(which(sapply(diffs, function(deltas){
+        length(which(deltas < ppm & deltas != 0)) <= colisions
+      })))
+    })
+  })
+  df_to_plot <- lapply(seq_along(collisiondata), function(x){
+    cur <- unlist(collisiondata[[x]])
+    df <- data.frame(x=cur, ppm = seq(0,10,0.1), overlaps = rep(x-1, length(cur)))
+  })
+  df_to_plot <- do.call(rbind, df_to_plot)
+  print(ggplot(df_to_plot) + geom_point(aes(x=ppm, y = x/length(m)*100, color = overlaps)) +
+          scale_y_continuous(limits = c(0,100)) + scale_x_continuous(limits = c(0,10))+
+          theme_minimal()+
+          ylab("% of uniquely distinguishable ionic formulas"))
+  return(unlist(diffs))  
+}
+```
+
+
 ## Results 2: E. coli pellet
 ### Number of ionic formulas, unique formulas and adducts
 ```{r load-Ecoli}

@@ -186,7 +186,6 @@ saveRDS(negHermes, file = "D:/HermesResults/SurfaceWater/NegSOIFilter.rds")
 
 ## Quality control - Plotting
 ```{r}
-
 ```
 
 

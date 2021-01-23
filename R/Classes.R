@@ -33,14 +33,11 @@ ExpParam <- setClass("ExpParam", slots = list(ppm = "numeric",
     isoList = list()))
 
 
-
-
 #'@export SOIParam
 SOIParam <- setClass("SOIParam", slots = list(specs = "data.frame",
     maxlen = "numeric", minint = "numeric", blanksub = "logical",
     blankname = "character"), prototype = list(specs = data.frame(),
     maxlen = 30, minint = 100, blanksub = FALSE, blankname = "None"))
-
 
 
 #'@export RHermesPL
@@ -60,9 +57,11 @@ ILParam <- setClass("ILParam", slots = list(filtermz = "numeric",
     ad = "character"), prototype = list(filtermz = 0.5, filterrt = 10,
     rtmargin = 5, priorization = "only", ad = c("M+H")))
 
+
 #'@export RHermesIL
 RHermesIL <- setClass("RHermesIL", slots = list(IL = "data.table",
     annotation = "list", SOInum = "numeric", ILParam = "ILParam"))
+
 
 #' @export RHermesMS2Exp
 RHermesMS2Exp <- setClass("RHermesMS2Exp", slots = list(IL = "RHermesIL",
@@ -121,6 +120,7 @@ RHermesMeta <- setClass("RHermesMeta",
                      cluster = RHermes:::setRHermesCluster()
                      ))
 
+
 #'The experimental data storage class. Holds all information of the peaklists, SOI lists
 #'inclusion lists, identifications and compound quantifications (still in development).
 #'
@@ -131,7 +131,6 @@ RHermesMeta <- setClass("RHermesMeta",
 #'
 RHermesData <- setClass("RHermesData", slots = list(PL = "list",
     SOI = "list", MS2Exp = "list", Quant = "list"))
-
 
 
 #' The main RHermes class: The RHermesExp. It is a container for all the information
