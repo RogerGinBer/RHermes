@@ -4,6 +4,7 @@
 #' @import KEGGREST
 #' @import slickR
 #' @import DT
+#' @import shinyFiles
 
 #' @export
 RHermesGUI <- function() {

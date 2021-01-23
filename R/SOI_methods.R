@@ -45,7 +45,7 @@ setMethod("removeSOI", c("RHermesExp", "numeric"), function(struct,
 
 #' @title getSOIpar
 #' @description Returns a SOIParam object for posterior SOI detection. This function does NOT
-#' require the RHermesExp object as multple SOIParam can be used at once. See \link[RHermes]{SOIfinder}
+#' require the RHermesExp object as multple SOIParam can be used at once. See \link[RHermes]{findSOI}
 #' for more info.
 #' @param tag A character string that tells which premade SOI parameter object to use.
 #' Currently the following tags are available: 'single', 'double', 'triple', and their

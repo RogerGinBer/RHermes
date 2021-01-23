@@ -471,8 +471,8 @@ setMethod("MirrorPlot", c("RHermesExp", "numeric", "numeric"),
 #'@export
 ILplot <- function(struct, ILnumber){
   ggplotly(ggplot(struct@data@MS2Exp[[ILnumber]]@IL@IL) +
-             geom_segment(aes(x=start, xend = end, y=mass, yend=mass,
-                              color = log10(MaxInt))))
+             geom_segment(aes(x=..start.., xend = ..end.., y=..mass..,
+                              yend=..mass.., color = log10(MaxInt))))
 }
 
 #'@export
@@ -514,6 +514,7 @@ setMethod("SSPlot", c("RHermesExp", "numeric", "numeric"),
 
 
 #'@export
+#'@import networkD3
 setGeneric("RawMS2Plot", function(struct, ms2id, entryid, bymz) {
     standardGeneric("RawMS2Plot")
 })

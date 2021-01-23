@@ -1,17 +1,16 @@
-
 #'@export
 setMethod("show", "RHermesExp", function(object) {
     show(object@metadata@ExpParam)
     nfiles <- length(object@metadata@filenames)
-    if(nfiles != 0){
+    if (nfiles != 0) {
         message(paste0("Number of processed MS1 files: ", nfiles ))
         lapply(object@metadata@filenames, function(x){message(paste0("\t", x))})
         show(object@data@PL)
         nsoi <- length(object@data@SOI)
-        if(nsoi != 0){
+        if (nsoi != 0) {
             show(object@data@SOI)
             nMS2 <- length(object@data@MS2Exp)
-            if(nMS2 != 0){
+            if (nMS2 != 0) {
                 show(object@data@MS2Exp)
             }
         } else {
@@ -40,8 +39,8 @@ setMethod("setTime", c("RHermesExp", "character"), function(struct,
 
 #' @title readTime
 #' @description Prints all timestamps of a given RHermesExp object. Useful to
-#' keep track of all changes made to the object (added files, generated SOI lists,
-#' changed parameters, etc.)
+#' keep track of all changes made to the object (added files, generated SOI
+#'  lists, changed parameters, etc.)
 #'
 #' @param struct The RHermesExp object you want to read the timestamps from.
 #'
