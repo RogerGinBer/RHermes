@@ -1,6 +1,8 @@
 ---
-title: "DDA vs Hermes: A thorough comparison in 3 different matrices"
+title: "DDA vs Hermes"
 output: html_document
+vignette: |
+  %\VignetteIndexEntry{DDA vs Hermes} %\VignetteEngine{knitr::rmarkdown} 
 ---
 
 ```{r setup, include=FALSE}
@@ -160,11 +162,11 @@ fig
 myHermes@data@MS2Exp[[2]] <- myHermes@data@MS2Exp[[1]] #Copy IL to compare between DDA and Hermes more easily
 myHermes@data@MS2Exp[[3]] <- myHermes@data@MS2Exp[[1]]
 
-myHermes <- MS2Proc(myHermes, 2, Herfiles, useDB = T, mincos = 0.7,
+myHermes <- processMS2(myHermes, 2, Herfiles, useDB = TRUE, mincos = 0.7,
                     referenceDB = "D:/MS2ID_B2R_20201113_083214.rds",
                     sstype = "1scan")
 
-myHermes <- MS2Proc(myHermes, 3, DDAfiles, useDB = T, mincos = 0.7,
+myHermes <- processMS2(myHermes, 3, DDAfiles, useDB = TRUE, mincos = 0.7,
                     referenceDB = "D:/MS2ID_B2R_20201113_083214.rds",
                     sstype = "1scan")
 
@@ -202,7 +204,6 @@ matchInfo <- apply(DDAscans[,c(1,2)], 1, function(x){
 
 matchInfo <- apply(DDAscans[,c(1,2)], 1, function(x){
   paste(sapply(c(1,2,4), function(SOI){
-    browser()
     ifelse(any(with(myHermes@data@SOI[[SOI]]@SoiList, x[1] > start & x[1] < end &
                     between(mass, x[2]-0.01, x[2]+0.01))), 1, 0)
   }), collapse = "")

@@ -219,7 +219,7 @@ PLServer <- function(id, struct){
             ads <- struct$dataset@metadata@ExpParam@adlist[sel,]
             struct$dataset@metadata@ExpParam@adlist <- ads
             pth <- parseFilePaths(roots, input$files)$datapath
-            struct$dataset <- FileProc(struct$dataset, pth,
+            struct$dataset <- processMS1(struct$dataset, pth,
                                        labelled = as.logical(input$labelled))
             sendSweetAlert(
                 session = session,

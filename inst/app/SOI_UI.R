@@ -172,7 +172,7 @@ SOIServer <- function(id, struct){
 
       toReturn <- reactiveValues(dataset = RHermesExp(), trigger = 0)
       observeEvent(input$startSOIdetect, {
-        #Parse the user input configdf to get the right input for SOIfinder
+        #Parse the user input configdf to get the right input for findSOI
         fileidx <- c()
         blankidx <- c()
         paramlist <- c()
@@ -188,7 +188,7 @@ SOIServer <- function(id, struct){
         }
 
         #Process and output
-        toReturn$dataset <- SOIfinder(struct$dataset, paramlist, fileidx,
+        toReturn$dataset <- findSOI(struct$dataset, paramlist, fileidx,
                                       blankidx)
         toReturn$trigger <- toReturn$trigger + 1
 
@@ -244,7 +244,7 @@ SOIServer <- function(id, struct){
       observeEvent(input$soiClean,{
 
 
-        SOIcleaner(struct$dataset, as.numeric(input$soiChoices),
+        cleanSOI(struct$dataset, as.numeric(input$soiChoices),
                    as.numeric(input$minfilter), input$isofiltering)
         sendSweetAlert(session = session, title = "Finished",
                        text = paste("The SOI list", input$soiChoices,

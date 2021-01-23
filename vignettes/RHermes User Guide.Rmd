@@ -8,7 +8,7 @@ output:
       toc_float: true
   pdf_document: default
 vignette: |
-  %\VignetteIndexEntry{RHermes User Guide} %\VignetteEngine{knitr::rmarkdown} \usepackage[utf8]{inputenc}
+  %\VignetteIndexEntry{RHermes User Guide} %\VignetteEngine{knitr::rmarkdown}
 ---
 
 ```{r setup, include=FALSE}
@@ -92,7 +92,7 @@ myHermes #Shows a summary of all set parameters and object info
 ```
 
 ### Processing the MS1 files into PL
-The main interface to process files is the function FileProc(), which accepts an
+The main interface to process files is the function processMS1(), which accepts an
 RHermesExp object and a list of paths to the MS1 files to process. All the files 
 must share the used experimental parameters (eg. data acquired in different
 polarities or in different instruments can't be processed at the same time).

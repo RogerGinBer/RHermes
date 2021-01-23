@@ -12,7 +12,6 @@ output:
 vignette: >
   %\VignetteIndexEntry{Andrea Brunner Plasma Workflow}
   %\VignetteEngine{knitr::rmarkdown}
-  \usepackage[utf8]{inputenc}
 ---
 
 # Context
@@ -101,7 +100,7 @@ negHermes <- remAd(negHermes, negHermes@metadata@ExpParam@adlist$adduct[-c(1,7)]
 ## File processing into PLs
 
 Once the basic parameters have been set it is time to process some files. To do
-this we just need to use the function FileProc with the names of the files we 
+this we just need to use the function processMS1 with the names of the files we 
 want processed. There is the possibility to process labelled data so that all 
 possible C isotopes are searched but, in that case, the labelled files must be 
 processed in a separate function call (or just process everything in _labelled 
@@ -110,10 +109,10 @@ mode_, just bear in mind it is significantly slower).
 ```{r, message = 1, warning = FALSE}
 dir <- "D:/ABrunner Plasma/"
 fil <- list.files(dir, pattern = ".*pos.*.mzML", full.names = TRUE)[c(3,5)] #Blank and Sample
-myHermes <- FileProc(myHermes, files = fil)
+myHermes <- processMS1(myHermes, files = fil)
 
 fil <- list.files(dir, pattern = ".*neg.*.mzML", full.names = TRUE)[c(3,5)]
-negHermes <- FileProc(negHermes, files = fil)
+negHermes <- processMS1(negHermes, files = fil)
 ```
 ## SOI generation
 
@@ -141,7 +140,7 @@ more lines with your desired parameters using the same ID in the first column
 and it will be available to getSOIpar().
 
 It is quite likely that you may want to test some filtering parameters before
-commiting to perform a set of MSMS runs. Having this in mind, SOIfinder() allows
+commiting to perform a set of MSMS runs. Having this in mind, findSOI() allows
 the input of multiple parameter objects in the form of a list (or c()). One 
 important thing to keep in mind is that, in the case the length of parameters is
 shorter than the number of SOI lists to generate, **only** the last parameter of
@@ -164,20 +163,20 @@ injections needed afterwards. It works like this:
 ```{r , warning=FALSE}
 setwd("../") #For unknitted use of the chunk
 s <- getSOIpar("double")
-myHermes <- SOIfinder(myHermes, params = s, fileID = c(1,2,2),
+myHermes <- findSOI(myHermes, params = s, fileID = c(1,2,2),
                       against = c(0,0,1))
-# myHermes <- SOIcleaner(myHermes, soiid = 3, minint = 10000, FALSE)
-myHermes <- SOIcleaner(myHermes, soiid = 3, minint = 10000, TRUE)
-myHermes <- ISFproc(myHermes, 3)
+# myHermes <- cleanSOI(myHermes, soiid = 3, minint = 10000, FALSE)
+myHermes <- cleanSOI(myHermes, soiid = 3, minint = 10000, TRUE)
+myHermes <- removeISF(myHermes, 3)
 
 saveRDS(myHermes, file = "D:/HermesResults/HumanPlasma/PosSOIFilter.rds")
 
 
-negHermes <- SOIfinder(negHermes, params = s, fileID = c(1,2,2),
+negHermes <- findSOI(negHermes, params = s, fileID = c(1,2,2),
                       against = c(0,0,1))
-# negHermes <- SOIcleaner(negHermes, soiid = 3, minint = 10000, FALSE)
-negHermes <- SOIcleaner(negHermes, soiid = 3, 10000, TRUE)
-negHermes <- ISFproc(negHermes, 3)
+# negHermes <- cleanSOI(negHermes, soiid = 3, minint = 10000, FALSE)
+negHermes <- cleanSOI(negHermes, soiid = 3, 10000, TRUE)
+negHermes <- removeISF(negHermes, 3)
 saveRDS(negHermes, file = "D:/HermesResults/HumanPlasma/NegSOIFilter.rds")
 
 
@@ -209,11 +208,11 @@ object@metadata@ExpParam@adlist to ensure proper spelling.
  values can yield convoluted the MSMS spectra. 
 
 ```{r}
-myHermes <- genIL(myHermes, id = 3, par = ILParam(priorization = "full"))
-myHermes <- genIL(myHermes, id = 3, par = ILParam(priorization = "yes", ad = c("M+H", "M+NH4", "M+CH3OH+H")))
+myHermes <- generateIL(myHermes, id = 3, par = ILParam(priorization = "full"))
+myHermes <- generateIL(myHermes, id = 3, par = ILParam(priorization = "yes", ad = c("M+H", "M+NH4", "M+CH3OH+H")))
 
-negHermes <- genIL(negHermes, id = 3, par = ILParam(priorization = "full"))
-negHermes <- genIL(negHermes, id = 3, par = ILParam(priorization = "yes", ad = c("M-H")))
+negHermes <- generateIL(negHermes, id = 3, par = ILParam(priorization = "full"))
+negHermes <- generateIL(negHermes, id = 3, par = ILParam(priorization = "yes", ad = c("M-H")))
 ```
 
 Creating an inclusion list will generate an instance of an MS2Exp, a container
@@ -234,19 +233,19 @@ exportIL(myHermes, 2, folder = getwd(), maxOver = 10, sepFiles = TRUE)
 After performing the MSMS runs with the exported IL you can process the
 generated data with RHermes and obtain compound identifications.
 
-## Using MS2Proc
+## Using processMS2
 
 ```{r}
 ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*pos.*.mzML", full.names = TRUE)
 ms2f <- ms2f[c(seq(5,14), seq(16, 25))]
-# myHermes <- MS2Proc(myHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_B2R_20201113_083214.rds", mincos = 0.5, useDB = TRUE, sstype = "regular")
-myHermes <- MS2Proc(myHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_B2R_20201113_083214.rds", mincos = 0.5, useDB = TRUE, sstype = "regular")
+# myHermes <- processMS2(myHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_B2R_20201113_083214.rds", mincos = 0.5, useDB = TRUE, sstype = "regular")
+myHermes <- processMS2(myHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_B2R_20201113_083214.rds", mincos = 0.5, useDB = TRUE, sstype = "regular")
 saveRDS(myHermes, file = "D:/HermesResults/HumanPlasma/PosResults.rds")
 
 ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*neg.*.mzML", full.names = TRUE)
 ms2f <- ms2f[c(seq(5,14), seq(16, 22))]
-# negHermes <- MS2Proc(negHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_B2R_20201113_083214.rds", mincos = 0.5, useDB = TRUE, sstype = "regular")
-negHermes <- MS2Proc(negHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_B2R_20201113_083214.rds", mincos = 0.5, useDB = TRUE, sstype = "regular")
+# negHermes <- processMS2(negHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_B2R_20201113_083214.rds", mincos = 0.5, useDB = TRUE, sstype = "regular")
+negHermes <- processMS2(negHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_B2R_20201113_083214.rds", mincos = 0.5, useDB = TRUE, sstype = "regular")
 saveRDS(negHermes, file = "D:/HermesResults/HumanPlasma/NegResults.rds")
 ```
 
@@ -257,45 +256,45 @@ saveRDS(negHermes, file = "D:/HermesResults/HumanPlasma/NegResults.rds")
 <!-- # myHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_pos_filtered.rds") -->
 <!-- ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*pos.*.mzML", full.names = TRUE) -->
 <!-- ms2f <- ms2f[27] -->
-<!-- myHermes <- MS2Proc(myHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
-<!-- myHermes <- MS2Proc(myHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
+<!-- myHermes <- processMS2(myHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
+<!-- myHermes <- processMS2(myHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
 <!-- saveRDS(myHermes, file = "D:/ABrunner Plasma/MS1_pos_ident_plasma_35ms.rds") -->
 
 <!-- # negHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_neg_filtered.rds") -->
 <!-- ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*neg.*.mzML", full.names = TRUE) -->
 <!-- ms2f <- ms2f[24] -->
-<!-- negHermes <- MS2Proc(negHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
-<!-- negHermes <- MS2Proc(negHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
+<!-- negHermes <- processMS2(negHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
+<!-- negHermes <- processMS2(negHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
 <!-- saveRDS(negHermes, file = "D:/ABrunner Plasma/MS1_neg_ident_plasma_35ms.rds") -->
 
 <!-- #50ms -->
 <!-- # myHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_pos_filtered.rds") -->
 <!-- ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*pos.*.mzML", full.names = TRUE) -->
 <!-- ms2f <- ms2f[5] -->
-<!-- myHermes <- MS2Proc(myHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
-<!-- myHermes <- MS2Proc(myHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
+<!-- myHermes <- processMS2(myHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
+<!-- myHermes <- processMS2(myHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
 <!-- saveRDS(myHermes, file = "D:/ABrunner Plasma/MS1_pos_ident_plasma_50ms.rds") -->
 
 <!-- # negHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_neg_filtered.rds") -->
 <!-- ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*neg.*.mzML", full.names = TRUE) -->
 <!-- ms2f <- ms2f[5] -->
-<!-- negHermes <- MS2Proc(negHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
-<!-- negHermes <- MS2Proc(negHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
+<!-- negHermes <- processMS2(negHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
+<!-- negHermes <- processMS2(negHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
 <!-- saveRDS(negHermes, file = "D:/ABrunner Plasma/MS1_neg_ident_plasma_50ms.rds") -->
 
 <!-- #70ms -->
 <!-- # myHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_pos_filtered.rds") -->
 <!-- ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*pos.*.mzML", full.names = TRUE) -->
 <!-- ms2f <- ms2f[28] -->
-<!-- myHermes <- MS2Proc(myHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
-<!-- myHermes <- MS2Proc(myHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
+<!-- myHermes <- processMS2(myHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
+<!-- myHermes <- processMS2(myHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
 <!-- saveRDS(myHermes, file = "D:/ABrunner Plasma/MS1_pos_ident_plasma_70ms.rds") -->
 
 <!-- # negHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_neg_filtered.rds") -->
 <!-- ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*neg.*.mzML", full.names = TRUE) -->
 <!-- ms2f <- ms2f[25] -->
-<!-- negHermes <- MS2Proc(negHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
-<!-- negHermes <- MS2Proc(negHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
+<!-- negHermes <- processMS2(negHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
+<!-- negHermes <- processMS2(negHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
 <!-- saveRDS(negHermes, file = "D:/ABrunner Plasma/MS1_neg_ident_plasma_70ms.rds") -->
 
 
@@ -304,15 +303,15 @@ saveRDS(negHermes, file = "D:/HermesResults/HumanPlasma/NegResults.rds")
 <!-- # myHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_pos_filtered.rds") -->
 <!-- ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*pos.*.mzML", full.names = TRUE) -->
 <!-- ms2f <- ms2f[29] -->
-<!-- myHermes <- MS2Proc(myHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
-<!-- myHermes <- MS2Proc(myHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
+<!-- myHermes <- processMS2(myHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
+<!-- myHermes <- processMS2(myHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
 <!-- saveRDS(myHermes, file = "D:/ABrunner Plasma/MS1_pos_ident_plasma_100ms.rds") -->
 
 <!-- # negHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_neg_filtered.rds") -->
 <!-- ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*neg.*.mzML", full.names = TRUE) -->
 <!-- ms2f <- ms2f[26] -->
-<!-- negHermes <- MS2Proc(negHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
-<!-- negHermes <- MS2Proc(negHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
+<!-- negHermes <- processMS2(negHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
+<!-- negHermes <- processMS2(negHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
 <!-- saveRDS(negHermes, file = "D:/ABrunner Plasma/MS1_neg_ident_plasma_100ms.rds") -->
 
 
@@ -321,15 +320,15 @@ saveRDS(negHermes, file = "D:/HermesResults/HumanPlasma/NegResults.rds")
 <!-- # myHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_pos_filtered.rds") -->
 <!-- ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*pos.*.mzML", full.names = TRUE) -->
 <!-- ms2f <- ms2f[30] -->
-<!-- myHermes <- MS2Proc(myHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
-<!-- myHermes <- MS2Proc(myHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
+<!-- myHermes <- processMS2(myHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
+<!-- myHermes <- processMS2(myHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
 <!-- saveRDS(myHermes, file = "D:/ABrunner Plasma/MS1_pos_ident_plasma_200ms.rds") -->
 
 <!-- # negHermes <- readRDS("D:/ABrunner Plasma/MS1_custom_neg_filtered.rds") -->
 <!-- ms2f <- list.files("D:/ABrunner Plasma/MS2data", pattern = ".*neg.*.mzML", full.names = TRUE) -->
 <!-- ms2f <- ms2f[27] -->
-<!-- negHermes <- MS2Proc(negHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
-<!-- negHermes <- MS2Proc(negHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
+<!-- negHermes <- processMS2(negHermes, 1, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
+<!-- negHermes <- processMS2(negHermes, 2, MS2files = ms2f, referenceDB = "D:/MS2ID_20200824_202808.rds", mincos = 0.5, useDB = TRUE) -->
 <!-- saveRDS(negHermes, file = "D:/ABrunner Plasma/MS1_neg_ident_plasma_200ms.rds") -->
 <!-- ``` -->
 
@@ -402,15 +401,14 @@ saveRDS(negHermes, file = "D:/HermesResults/HumanPlasma/NegResults.rds")
 
 <!-- dir <- "D:/ABrunner Plasma/" -->
 <!-- fil <- list.files(dir, pattern = ".*pos.*.mzML", full.names = TRUE)[c(3,5)] #Blank and Sample -->
-<!-- myHermes <- FileProc(myHermes, files = fil) -->
+<!-- myHermes <- processMS1(myHermes, files = fil) -->
 <!-- s <- getSOIpar("double") -->
-<!-- myHermes <- SOIfinder(myHermes, params = s, fileID = c(1,2,2), -->
+<!-- myHermes <- findSOI(myHermes, params = s, fileID = c(1,2,2), -->
 <!--                       against = c(0,0,1)) -->
-<!-- myHermes <- SOIcleaner(myHermes, soiid = 3, minint = 10000, TRUE) -->
-<!-- myHermes <- genIL(myHermes, id = 3, par = ILParam(priorization = "full")) -->
-<!-- myHermes <- genIL(myHermes, id = 3, par = ILParam(priorization = "yes", ad = c("M+H", "M+NH4", "M+CH3OH+H"))) -->
+<!-- myHermes <- cleanSOI(myHermes, soiid = 3, minint = 10000, TRUE) -->
+<!-- myHermes <- generateIL(myHermes, id = 3, par = ILParam(priorization = "full")) -->
+<!-- myHermes <- generateIL(myHermes, id = 3, par = ILParam(priorization = "yes", ad = c("M+H", "M+NH4", "M+CH3OH+H"))) -->
 <!-- saveRDS(myHermes, file = "D:/ABrunner Plasma/REDUCED_MS1_pos_SOI_filter.rds") -->
 
 <!-- ``` -->
-
 

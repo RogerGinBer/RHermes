@@ -233,7 +233,7 @@ SOIPlotServer <- function(id, struct){
                 m <- sois$mass[[selected]]
                 sois$deltam <- sois$mass - m
                 sois$cos <- cos
-                output$cos_table <- renderDataTable(sois[order(cos, decreasing = T), -c("length","width","peaks")],
+                output$cos_table <- renderDataTable(sois[order(cos, decreasing = TRUE), -c("length","width","peaks")],
                                                     options = list(scrollX = TRUE, autoWidth = TRUE))
 
             }, error = function(e){message(e)})

@@ -136,7 +136,7 @@ ILServer <- function(id, struct){
         ad <- ifelse(is.null(input$adlist), character(0), input$adlist)
         par <- ILParam(filtermz = filtermz, filterrt = 10, rtmargin = 5,
                        priorization = mode, ad = ad)
-        toReturn$dataset <- genIL(struct$dataset, id = as.numeric(input$soiid), par = par)
+        toReturn$dataset <- generateIL(struct$dataset, id = as.numeric(input$soiid), par = par)
         toReturn$trigger <- toReturn$trigger + 1
         sendSweetAlert(
           session = session,

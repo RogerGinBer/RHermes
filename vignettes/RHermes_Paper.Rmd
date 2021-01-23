@@ -4,6 +4,8 @@ output:
   html_document:
     toc: true
     toc_float: true
+vignette: |
+  %\VignetteIndexEntry{RHermes Paper} %\VignetteEngine{knitr::rmarkdown}
 ---
 
 ```{r setup, include=FALSE}
@@ -70,11 +72,11 @@ for(i in 1:nrow(comp_list)){
   tol <- 50
   if(comp_list[i, 3] == "[M+H]+"){
     plot <- RHermes:::SoiPlot(waterPos, 5, formula = comp_list$Formula[i], 
-              rtrange = c(t-tol,t+tol), dynamicaxis = T,
+              rtrange = c(t-tol,t+tol), dynamicaxis = TRUE,
               ads = waterPos@metadata@ExpParam@adlist$adduct, blankid = 2, interactive = FALSE)
   } else {
     plot <- RHermes:::SoiPlot(waterNeg, 5, formula = comp_list$Formula[i],
-              rtrange = c(t-tol,t+tol), dynamicaxis = T,
+              rtrange = c(t-tol,t+tol), dynamicaxis = TRUE,
               ads = waterNeg@metadata@ExpParam@adlist$adduct, blankid = 1, interactive = FALSE)
   }
   if(!is.null(plot)){
@@ -103,11 +105,11 @@ for(i in 1:nrow(comp_list)){
   tol <- 50
   if(comp_list[i, 3] == "[M+H]+"){
     plots_nospike <- c(plots_nospike, list(RHermes:::SoiPlot(waterPos, 3, formula = comp_list$Formula[i],
-                                                             rtrange = c(t-tol,t+tol), dynamicaxis = T,
+                                                             rtrange = c(t-tol,t+tol), dynamicaxis = TRUE,
                   ads = waterPos@metadata@ExpParam@adlist$adduct, blankid = 1, interactive = FALSE)))
   } else {
     plots_nospike <- c(plots_nospike, list(RHermes:::SoiPlot(waterNeg, 3, formula = comp_list$Formula[i],
-                                                             rtrange = c(t-tol,t+tol), dynamicaxis = T,
+                                                             rtrange = c(t-tol,t+tol), dynamicaxis = TRUE,
                   ads = waterNeg@metadata@ExpParam@adlist$adduct, blankid = 1, interactive = FALSE)))
   }
 }
@@ -128,11 +130,11 @@ dev.off()
 waterPosUnfiltered <- readRDS("D:/HermesResults/SurfaceWater/PosSOI.rds")
 chloridazon <- "[C10H9ClN3O]+"
 RHermes::IsoFidelity(waterPosUnfiltered, soilist = 6,
-                     entry = which(waterPosUnfiltered@data@SOI[[6]]@SoiList$formula == chloridazon)[2], plot = T)
+                     entry = which(waterPosUnfiltered@data@SOI[[6]]@SoiList$formula == chloridazon)[2], plot = TRUE)
 
 alphaC <- "[C11H9KN3]+"
 RHermes::IsoFidelity(waterPosUnfiltered, soilist = 6,
-                     entry = which(waterPosUnfiltered@data@SOI[[6]]@SoiList$formula == alphaC)[2], plot = T)
+                     entry = which(waterPosUnfiltered@data@SOI[[6]]@SoiList$formula == alphaC)[2], plot = TRUE)
 
 m1 <- with(waterPosUnfiltered@data@SOI[[6]]@SoiList, mass[formula == chloridazon])[2]
 m2 <- with(waterPosUnfiltered@data@SOI[[6]]@SoiList, mass[formula == alphaC])[2]
@@ -144,7 +146,7 @@ cat("Mass difference: ", round(m1-m2, digits = 5), " Da\n",
 ```{r}
 DB <- readRDS("D:/MS2ID_B2R_20201113_083214.rds")
 anotatedSL <- RHermes:::anotateISF(waterPosUnfiltered@data@SOI[[6]]@SoiList, DB, polarity = 1,
-                                   BiocParallelParam = SnowParam(4, progressbar = T))
+                                   BiocParallelParam = SnowParam(4, progressbar = TRUE))
 
 
 ```
@@ -345,7 +347,7 @@ enrichment <- function(struct, soilist, entry, plot = TRUE) {
     # pat <- enviPat::isopattern(isotopes = isotopes, chemforms = f, threshold = 10000/PL$rtiv[PL$isov == 'M0'][maxpoint])[[1]]
 
     pat <- enviPat::isopattern(isotopes = isotopes[c(1,10,11,12,14,17,21,29,30,35,41,44,98),], chemforms = f,
-                    threshold = 0, verbose = F)[[1]]
+                    threshold = 0, verbose = FALSE)[[1]]
 
     pat <- rbind(t(apply(pat, 1, function(x) {
         x[3:length(x)] <- x[3:length(x)] - pat[1, 3:ncol(pat)]
@@ -411,14 +413,14 @@ enrichment <- function(struct, soilist, entry, plot = TRUE) {
 enrichPos <- lapply(seq_along(ecoliPos13C@data@SOI), function(soi){
   print(soi)
   do.call("rbind", lapply(1:nrow(ecoliPos13C@data@SOI[[soi]]@SoiList), function(i){
-    tryCatch(enrichment(ecoliPos13C, soi, i, F), error = function(cond){return(c(0,0))})
+    tryCatch(enrichment(ecoliPos13C, soi, i, FALSE), error = function(cond){return(c(0,0))})
   }))
 })
 
 enrichNeg <- lapply(seq_along(ecoliNeg13C@data@SOI), function(soi){
   print(soi)
   do.call("rbind", lapply(1:nrow(ecoliNeg13C@data@SOI[[soi]]@SoiList), function(i){
-    tryCatch(enrichment(ecoliNeg13C, soi, i, F), error = function(cond){return(c(0,0))})
+    tryCatch(enrichment(ecoliNeg13C, soi, i, FALSE), error = function(cond){return(c(0,0))})
   }))
 })
 

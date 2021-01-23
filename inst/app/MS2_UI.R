@@ -74,7 +74,7 @@ MS2Server <- function(id, struct){
             type = "error"
           )
         } else {
-          toReturn$dataset <- MS2Proc(struct = struct$dataset, id = as.numeric(input$selectIL),
+          toReturn$dataset <- processMS2(struct = struct$dataset, id = as.numeric(input$selectIL),
                                       MS2files = unname(parseFilePaths(roots, input$files)$datapath),
                                       referenceDB = db,
                                       mincos = input$costhr)

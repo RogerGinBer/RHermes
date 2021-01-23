@@ -1,8 +1,10 @@
 ---
-title: "R Notebook"
+title: "Ecoli"
 output:
   html_document:
     df_print: paged
+vignette: |
+  %\VignetteIndexEntry{Ecoli} %\VignetteEngine{knitr::rmarkdown}
 ---
 
 ```{r "setup", include=FALSE}
@@ -52,32 +54,32 @@ negHermes <- remAd(negHermes, negHermes@metadata@ExpParam@adlist$adduct[-c(1,7)]
 ```{r, message = 1, warning = FALSE}
 dir <- "D:/Ecoli_GaryMichi/20201109_MSH_ID-X_pHILIC_E-coli_MS1_Yanes-Lab/MS1_positive/"
 fil <- list.files(dir, pattern = ".*pos.*.mzML", full.names = TRUE)[c(6,9)] #Blank and Sample
-myHermes <- FileProc(myHermes, files = fil)
+myHermes <- processMS1(myHermes, files = fil)
 
 
 dir <- "D:/Ecoli_GaryMichi/20201109_MSH_ID-X_pHILIC_E-coli_MS1_Yanes-Lab/MS1_negative/"
 fil <- list.files(dir, pattern = ".*neg.*.mzML", full.names = TRUE)[c(6,9)]
-negHermes <- FileProc(negHermes, files = fil)
+negHermes <- processMS1(negHermes, files = fil)
 
 ```
 
 ```{r, message = FALSE, warning=FALSE}
 s <- getSOIpar("double")
-myHermes <- SOIfinder(myHermes, params = s, fileID = c(1,2,2,2,2),
+myHermes <- findSOI(myHermes, params = s, fileID = c(1,2,2,2,2),
                       against = c(0,0,1,1,1))
-myHermes <- SOIcleaner(myHermes, soiid = 4, minint = 10000, FALSE)
-myHermes <- SOIcleaner(myHermes, soiid = 5, minint = 10000, TRUE)
-myHermes <- ISFproc(myHermes, id = 4)
-myHermes <- ISFproc(myHermes, id = 5)
+myHermes <- cleanSOI(myHermes, soiid = 4, minint = 10000, FALSE)
+myHermes <- cleanSOI(myHermes, soiid = 5, minint = 10000, TRUE)
+myHermes <- removeISF(myHermes, id = 4)
+myHermes <- removeISF(myHermes, id = 5)
 saveRDS(myHermes, file = "D:/HermesResults/Ecoli/PosSOIFilter.rds")
 
 
-negHermes <- SOIfinder(negHermes, params = s, fileID = c(1,2,2,2,2),
+negHermes <- findSOI(negHermes, params = s, fileID = c(1,2,2,2,2),
                       against = c(0,0,1,1,1))
-negHermes <- SOIcleaner(negHermes, soiid = 4, 10000, FALSE)
-negHermes <- SOIcleaner(negHermes, soiid = 5, 10000, TRUE)
-negHermes <- ISFproc(negHermes, id = 4)
-negHermes <- ISFproc(negHermes, id = 5)
+negHermes <- cleanSOI(negHermes, soiid = 4, 10000, FALSE)
+negHermes <- cleanSOI(negHermes, soiid = 5, 10000, TRUE)
+negHermes <- removeISF(negHermes, id = 4)
+negHermes <- removeISF(negHermes, id = 5)
 
 saveRDS(negHermes, file = "D:/HermesResults/Ecoli/NegSOIFilter.rds")
 
@@ -85,24 +87,24 @@ saveRDS(negHermes, file = "D:/HermesResults/Ecoli/NegSOIFilter.rds")
 
 
 ```{r}
-myHermes <- genIL(myHermes, id = 4, par = ILParam(priorization = "yes", ad = c("M+H", "M+NH4", "M+CH3OH+H")))
+myHermes <- generateIL(myHermes, id = 4, par = ILParam(priorization = "yes", ad = c("M+H", "M+NH4", "M+CH3OH+H")))
 # exportIL(myHermes, 1, maxOver = 15, sepFiles = TRUE)
 
-negHermes <- genIL(negHermes, id = 4, par = ILParam(priorization = "yes", ad = c("M-H")))
+negHermes <- generateIL(negHermes, id = 4, par = ILParam(priorization = "yes", ad = c("M-H")))
 # exportIL(negHermes, 1, maxOver = 15, sepFiles = TRUE)
 
 ```
 
 ```{r}
 ms2f <- list.files("D:/Ecoli_GaryMichi/tMS2_positive/", pattern = ".*pos.*.mzML", full.names = TRUE)
-myHermes <- MS2Proc(myHermes, 1, MS2files = ms2f, useDB = TRUE, 
+myHermes <- processMS2(myHermes, 1, MS2files = ms2f, useDB = TRUE, 
                     referenceDB = "D:/MS2ID_B2R_20201113_083214.rds",
                     sstype = "regular", mincos = 0.1)
 saveRDS(myHermes, file = "D:/HermesResults/Ecoli/PosResults.rds")
 
 
 ms2f <- list.files("D:/Ecoli_GaryMichi/tMS2_negative/", pattern = ".*neg.*.mzML", full.names = TRUE)
-negHermes <- MS2Proc(negHermes, 1, MS2files = ms2f, useDB = TRUE,
+negHermes <- processMS2(negHermes, 1, MS2files = ms2f, useDB = TRUE,
                      referenceDB = "D:/MS2ID_B2R_20201113_083214.rds",
                      sstype = "regular", mincos = 0.1)
 saveRDS(negHermes, file = "D:/HermesResults/Ecoli/NegResults.rds")
@@ -156,25 +158,25 @@ saveRDS(negHermes, file = "D:/HermesResults/Ecoli/NegResults.rds")
 <!-- ```{r, message = 1, warning = FALSE} -->
 <!-- dir <- "D:/Ecoli_GaryMichi/20201109_MSH_ID-X_pHILIC_E-coli_MS1_Yanes-Lab/MS1_positive/" -->
 <!-- fil <- list.files(dir, pattern = ".*pos.*.mzML", full.names = TRUE)[5:10] -->
-<!-- myHermes <- FileProc(myHermes, files = fil) -->
+<!-- myHermes <- processMS1(myHermes, files = fil) -->
 <!-- saveRDS(myHermes, file ="D:/Ecoli_GaryMichi/Ranges_MS1_pos_PL.rds") -->
 
 
 <!-- dir <- "D:/Ecoli_GaryMichi/20201109_MSH_ID-X_pHILIC_E-coli_MS1_Yanes-Lab/MS1_negative/" -->
 <!-- fil <- list.files(dir, pattern = ".*neg.*.mzML", full.names = TRUE)[5:10] -->
-<!-- negHermes <- FileProc(negHermes, files = fil) -->
+<!-- negHermes <- processMS1(negHermes, files = fil) -->
 <!-- saveRDS(negHermes, file ="D:/Ecoli_GaryMichi/Ranges_MS1_neg_PL.rds") -->
 
 <!-- ``` -->
 
 <!-- ```{r, message = FALSE, warning=FALSE} -->
 <!-- s <- getSOIpar("double") -->
-<!-- myHermes <- SOIfinder(myHermes, params = s, fileID = c(1,2,3,4,5,6,3,5,5), -->
+<!-- myHermes <- findSOI(myHermes, params = s, fileID = c(1,2,3,4,5,6,3,5,5), -->
 <!--                       against = c(0,0,0,0,0,0,5,3,6)) -->
 <!-- saveRDS(myHermes, file = "D:/Ecoli_GaryMichi/Ranges_MS1_pos_SOI_filter.rds") -->
 
 
-<!-- negHermes <- SOIfinder(negHermes, params = s, fileID = c(1,2,3,4,5,6,3,5,5), -->
+<!-- negHermes <- findSOI(negHermes, params = s, fileID = c(1,2,3,4,5,6,3,5,5), -->
 <!--                       against = c(0,0,0,0,0,0,5,3,6)) -->
 <!-- saveRDS(negHermes, file = "D:/Ecoli_GaryMichi/Ranges_MS1_neg_SOI_filter.rds") -->
 
@@ -183,12 +185,12 @@ saveRDS(negHermes, file = "D:/HermesResults/Ecoli/NegResults.rds")
 ## Low intensity High IT study
 
 ```{r}
-myHermes <- MS2Proc(myHermes, 1, MS2files = "D:/Ecoli_GaryMichi/Curated_lowint/Curated_lowint/UNL_Ecoli_low-int_pos.mzML",
-                    useDB = T, mincos = 0.1, referenceDB = "D:/MS2ID_B2R_20201113_083214.rds", sstype = "1scan")
+myHermes <- processMS2(myHermes, 1, MS2files = "D:/Ecoli_GaryMichi/Curated_lowint/Curated_lowint/UNL_Ecoli_low-int_pos.mzML",
+                    useDB = TRUE, mincos = 0.1, referenceDB = "D:/MS2ID_B2R_20201113_083214.rds", sstype = "1scan")
 
 myHermes@data@MS2Exp[[2]] <- myHermes@data@MS2Exp[[1]] 
-myHermes <- MS2Proc(myHermes, 2, MS2files = "D:/Ecoli_GaryMichi/Curated_lowint/Curated_lowint/UNL_Ecoli_low-int_HCD50_pos.mzML",
-                    useDB = T, mincos = 0.1, referenceDB = "D:/MS2ID_B2R_20201113_083214.rds")
+myHermes <- processMS2(myHermes, 2, MS2files = "D:/Ecoli_GaryMichi/Curated_lowint/Curated_lowint/UNL_Ecoli_low-int_HCD50_pos.mzML",
+                    useDB = TRUE, mincos = 0.1, referenceDB = "D:/MS2ID_B2R_20201113_083214.rds")
 saveRDS(myHermes, "D:/HermesResults/Ecoli/Lowint.rds")
 ```
 
@@ -220,11 +222,11 @@ negHermes <- remAd(negHermes, negHermes@metadata@ExpParam@adlist$adduct[-c(1,7)]
 ```{r, message = 1, warning = FALSE}
 dir <- "D:/Ecoli_GaryMichi/20201109_MSH_ID-X_pHILIC_E-coli_MS1_Yanes-Lab/MS1_positive/"
 fil <- list.files(dir, pattern = ".*pos.*.mzML", full.names = TRUE)[c(6,3)] #Blank and Sample
-myHermes <- FileProc(myHermes, files = fil, labelled = TRUE)
+myHermes <- processMS1(myHermes, files = fil, labelled = TRUE)
 
 dir <- "D:/Ecoli_GaryMichi/20201109_MSH_ID-X_pHILIC_E-coli_MS1_Yanes-Lab/MS1_negative/"
 fil <- list.files(dir, pattern = ".*neg.*.mzML", full.names = TRUE)[c(6,3)]
-negHermes <- FileProc(negHermes, files = fil, labelled = TRUE)
+negHermes <- processMS1(negHermes, files = fil, labelled = TRUE)
 
 ```
 
