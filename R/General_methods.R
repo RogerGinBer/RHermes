@@ -61,3 +61,72 @@ setMethod("readTime", "RHermesExp", function(struct) {
     })
     message("")
 })
+
+## Object getters ##
+#'@export
+setGeneric("DB", function(struct) {
+    standardGeneric("DB")
+})
+setMethod("DB", c("RHermesExp"), function(struct) {
+    validObject(struct)
+    struct@metadata@ExpParam@DB
+})
+
+#'@export
+setGeneric("adlist", function(struct) {
+    standardGeneric("adlist")
+})
+setMethod("adlist", c("RHermesExp"), function(struct) {
+    validObject(struct)
+    struct@metadata@ExpParam@adlist
+})
+
+#'@export
+setGeneric("PL", function(struct, id) {
+    standardGeneric("PL")
+})
+setMethod("PL", c("RHermesExp", "numeric"), function(struct, id) {
+    validObject(struct)
+    struct@data@PL[[id]]
+})
+
+
+#'@export
+setGeneric("SOI", function(struct, id) {
+    standardGeneric("SOI")
+})
+setMethod("SOI", c("RHermesExp", "numeric"), function(struct, id) {
+    validObject(struct)
+    struct@data@SOI[[id]]
+})
+
+
+#'@export
+setGeneric("IL", function(struct, id) {
+    standardGeneric("IL")
+})
+setMethod("IL", c("RHermesExp", "numeric"), function(struct, id) {
+    validObject(struct)
+    struct@data@MS2Exp[[id]]@IL
+})
+
+
+#'@export
+setGeneric("MS2Data", function(struct, id) {
+    standardGeneric("MS2Data")
+})
+setMethod("MS2Data", c("RHermesExp", "numeric"), function(struct, id) {
+    validObject(struct)
+    struct@data@MS2Exp[[id]]@MS2Data
+})
+
+#'@export
+setGeneric("Ident", function(struct, id) {
+    standardGeneric("Ident")
+})
+setMethod("Ident", c("RHermesExp", "numeric"), function(struct, id) {
+    validObject(struct)
+    struct@data@MS2Exp[[id]]@Ident[[1]]
+})
+
+
