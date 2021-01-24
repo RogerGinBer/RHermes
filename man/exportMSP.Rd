@@ -17,7 +17,8 @@ exportMSP(struct, ID, fname, idx = NA)
 An .msp file
 }
 \description{
-Exports the superspectra of a given MS2Exp ID into an .msp format file
+Exports the superspectra of a given MS2Exp ID into an
+.msp format file
 }
 \examples{
   if(FALSE){

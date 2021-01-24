@@ -22,8 +22,8 @@ setMethod("removeSOI", c("RHermesExp", "numeric"), function(struct, idx) {
     tosub <- c()
     for (i in idx) {
         if (i > nSOI) {
-            warning(paste("The index", i, 
-                          "is larger than the number of SOI lists"))
+            warning(paste("The index", i,
+                            "is larger than the number of SOI lists"))
         } else {
             tosub <- c(tosub, i)
         }
@@ -41,15 +41,15 @@ setMethod("removeSOI", c("RHermesExp", "numeric"), function(struct, idx) {
 
 
 #' @title getSOIpar
-#' @description Returns a SOIParam object for posterior SOI detection. 
-#' This function does NOT require the RHermesExp object as multple SOIParam 
+#' @description Returns a SOIParam object for posterior SOI detection.
+#' This function does NOT require the RHermesExp object as multple SOIParam
 #' can be used at once. See \link[RHermes]{findSOI} for more info.
-#' @param tag A character string that tells which premade SOI parameter 
-#' object to use. Currently the following tags are available: 'single', 
-#' 'double', 'triple', and their extended counterparts for longer 
-#' chromatography experiments, 'single-x', 'double-x' and 'triple-x'. 
+#' @param tag A character string that tells which premade SOI parameter
+#' object to use. Currently the following tags are available: 'single',
+#' 'double', 'triple', and their extended counterparts for longer
+#' chromatography experiments, 'single-x', 'double-x' and 'triple-x'.
 #' These are all stored in /app/www/SOIFilterParams.csv, feel free to
-#' locally change them or add new ones for your use (if you know what 
+#' locally change them or add new ones for your use (if you know what
 #' you're doing).
 #' @return A SoiParam object
 #' @examples
@@ -62,13 +62,13 @@ setGeneric("getSOIpar", function(tag = "double") {
     standardGeneric("getSOIpar")
 })
 setMethod("getSOIpar", c("ANY"), function(tag = "double") {
-    temp <- read.csv2(system.file("extdata", "SOITemplates.csv", 
-                                  package = "RHermes"))
+    temp <- read.csv2(system.file("extdata", "SOITemplates.csv",
+                                    package = "RHermes"))
     specdf <- filter(temp, name == tag)[, seq(2, 6)]
     if (nrow(specdf) == 0) {
         stop("No templated was found with that ID", call. = FALSE, )
     }
-    return(SOIParam(specs = specdf[, seq(1, 3)], maxlen = specdf[1, 4], 
+    return(SOIParam(specs = specdf[, seq(1, 3)], maxlen = specdf[1, 4],
         minint = specdf[1, 5]))
 })
 

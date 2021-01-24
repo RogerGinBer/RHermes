@@ -11,7 +11,7 @@ An RHermesExp object with the desired experimental parameters set.
 }
 \description{
 Main interface to set the experimental parameters into a
- RHermesExp object. The user can either provide an ExpParam object 
+ RHermesExp object. The user can either provide an ExpParam object
 (partially or fully customized) or provide a template tag to use a pre-made
  parameter set.
 }
@@ -34,11 +34,11 @@ if(FALSE){
 myHermes <- RHermesExp()
 
 #Using template
-myHermes <- setExpParam(myHermes, template = 'orbi-pos') 
+myHermes <- setExpParam(myHermes, template = 'orbi-pos')
 
 #Custom parameters
 myHermes <- setExpParam(myHermes,
-                        ExpParam(ppm = 10, res = 135000, ion = '-')) 
+                        ExpParam(ppm = 10, res = 135000, ion = '-'))
 }
 
 }

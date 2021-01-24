@@ -13,13 +13,14 @@ updated version of the object.
 \section{Slots}{
 
 \describe{
-\item{\code{metadata}}{Where all the complementary info is stored (experimental
-parameters, timestamps, databases, etc.). See [RHermes]{RHermesMeta} for more
-info.}
+\item{\code{metadata}}{Where all the complementary info is stored
+(experimental parameters, timestamps, databases, etc.).
+See [RHermes]{RHermesMeta} for more info.}
 
-\item{\code{data}}{All experimental info is stored in data. It is divided into PL
-(peaklist) SOI (scans of interest) and MS2Exp (for the IL, MS2 data and 
-identifications). See [RHermes]{RHermesData} for more info.}
+\item{\code{data}}{All experimental info is stored in data. It is
+divided into PL (peaklist) SOI (scans of interest) and MS2Exp
+(for the IL, MS2 data and identifications).
+See [RHermes]{RHermesData} for more info.}
 }}
 
 \examples{

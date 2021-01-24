@@ -17,7 +17,8 @@ exportMGF(struct, ID, fname, idx = NA)
 An .msf file
 }
 \description{
-Exports the superspectra of a given MS2Exp into an .mgf format file
+Exports the superspectra of a given MS2Exp into an
+ .mgf format file
 }
 \examples{
   if(FALSE){

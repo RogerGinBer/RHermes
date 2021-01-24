@@ -7,19 +7,21 @@
 getSOIpar(tag = "double")
 }
 \arguments{
-\item{tag}{A character string that tells which premade SOI parameter object to use.
-Currently the following tags are available: 'single', 'double', 'triple', and their
-extended counterparts for longer chromatography experiments, 'single-x', 'double-x'
-and 'triple-x'. These are all stored in /app/www/SOIFilterParams.csv, feel free to
-locally change them or add new ones for your use (if you know what you're doing).}
+\item{tag}{A character string that tells which premade SOI parameter
+object to use. Currently the following tags are available: 'single',
+'double', 'triple', and their extended counterparts for longer
+chromatography experiments, 'single-x', 'double-x' and 'triple-x'.
+These are all stored in /app/www/SOIFilterParams.csv, feel free to
+locally change them or add new ones for your use (if you know what
+you're doing).}
 }
 \value{
 A SoiParam object
 }
 \description{
-Returns a SOIParam object for posterior SOI detection. This function does NOT
-require the RHermesExp object as multple SOIParam can be used at once. See \link[RHermes]{findSOI}
-for more info.
+Returns a SOIParam object for posterior SOI detection.
+This function does NOT require the RHermesExp object as multple SOIParam
+can be used at once. See \link[RHermes]{findSOI} for more info.
 }
 \examples{
 if(FALSE){

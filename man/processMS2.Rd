@@ -25,7 +25,7 @@ processMS2(
 against.}
 
 \item{mincos}{Numeric, between 0 and 1, the minimum spectral cosine
-between query and reference spectrum for a match to be reported 
+between query and reference spectrum for a match to be reported
 (see the paper for more detail on this).}
 }
 \value{

@@ -28,13 +28,13 @@ package
 \describe{
 \item{\code{struct}}{The RHermesExp object to update}
 
-\item{\code{db}}{A character defining which database to use. Currently we only 
+\item{\code{db}}{A character defining which database to use. Currently we only
 support 'hmdb' \href{https://hmdb.ca/}{HMDB} and 'norman'
  \href{https://www.norman-network.com/nds/susdat/}{NORMAN},
  but  new database support and customizability will come in future releases.}
 
-\item{\code{adcharge}}{The maximum charge (in absolute value, so polarity does not
-matter) the adducts in the list can have. Defaults to 1.}
+\item{\code{adcharge}}{The maximum charge (in absolute value, so polarity
+does not matter) the adducts in the list can have. Defaults to 1.}
 
 \item{\code{admult}}{The maximum multiplicity (M, 2M, 3M and so on) the adducts
 can have. Defaults to 1.}

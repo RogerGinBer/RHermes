@@ -13,31 +13,36 @@ ExpParam holds all experimental data as well as database-related
 \section{Slots}{
 
 \describe{
-\item{\code{ppm}}{The mass spectrometer (MS) mass error in parts per million (ppm)}
+\item{\code{ppm}}{The mass spectrometer (MS) mass error in
+parts per million (ppm)}
 
 \item{\code{res}}{The MS resolution at m/z = 200}
 
-\item{\code{nthr}}{The noise threshold to consider. Any signal weaker than it will
-NOT be considered in the PL. Useful to filter 'grass-like' peaks in a Q-TOF
-instrument. Defaults to 1000.}
+\item{\code{nthr}}{The noise threshold to consider. Any signal
+weaker than it will NOT be considered in the PL. Useful to filter
+'grass-like' peaks in a Q-TOF instrument. Defaults to 1000.}
 
-\item{\code{minmz}}{Minimum mz registered in the MS1 experiment. Defaults to 80}
+\item{\code{minmz}}{Minimum mz registered in the MS1 experiment.
+Defaults to 80}
 
-\item{\code{maxmz}}{Maximum mz registered in the MS1 experiment. Defaults to 1000.}
+\item{\code{maxmz}}{Maximum mz registered in the MS1 experiment.
+Defaults to 1000.}
 
-\item{\code{ion}}{Polarity used in the experiment. RHermes currently only supports
-one polarity at a time per RHermesExp, so if you're performing both + and
-- polarity you will have to use 2 different RHermesExp objects, one for 
-each. Important: must be described ONLY as '+' or '-'.}
+\item{\code{ion}}{Polarity used in the experiment. RHermes currently
+only supports  one polarity at a time per RHermesExp, so if you're
+performing both + and - polarity you will have to use 2 different
+RHermesExp objects, one for each. Important: must be described ONLY as
+'+' or '-'.}
 
-\item{\code{instr}}{MS instrument type used to acquire the data. It can be either
-'QTOF' or 'Orbitrap'.}
+\item{\code{instr}}{MS instrument type used to acquire the data. It can be
+either QTOF' or 'Orbitrap'.}
 
 \item{\code{DB}}{Formula database}
 
 \item{\code{adlist}}{Adduct list}
 
-\item{\code{ionF}}{Ionic formula list. Formed by all formula-adduct combinations}
+\item{\code{ionF}}{Ionic formula list. Formed by all formula-adduct
+combinations}
 
 \item{\code{isoList}}{Isotopic pattern exploration results.}
 }}

@@ -20,7 +20,7 @@ setMethod("show", "ExpParam", function(object){
 
 #' @title setExpParam
 #' @description Main interface to set the experimental parameters into a
-#'  RHermesExp object. The user can either provide an ExpParam object 
+#'  RHermesExp object. The user can either provide an ExpParam object
 #' (partially or fully customized) or provide a template tag to use a pre-made
 #'  parameter set.
 #' @slot struct The RHermesExp object to modify.
@@ -34,13 +34,13 @@ setMethod("show", "ExpParam", function(object){
 #' @examples
 #' if(FALSE){
 #' myHermes <- RHermesExp()
-#' 
+#'
 #' #Using template
-#' myHermes <- setExpParam(myHermes, template = 'orbi-pos') 
-#' 
+#' myHermes <- setExpParam(myHermes, template = 'orbi-pos')
+#'
 #' #Custom parameters
 #' myHermes <- setExpParam(myHermes,
-#'                         ExpParam(ppm = 10, res = 135000, ion = '-')) 
+#'                         ExpParam(ppm = 10, res = 135000, ion = '-'))
 #' }
 #'
 #'@export
@@ -86,12 +86,12 @@ function(struct, params = ExpParam(), template = character(0)) {
 #'  \href{http://pubs.acs.org/doi/abs/10.1021/acs.analchem.5b00941}{EnviPat}
 #' package
 #' @slot struct The RHermesExp object to update
-#' @slot db A character defining which database to use. Currently we only 
+#' @slot db A character defining which database to use. Currently we only
 #' support 'hmdb' \href{https://hmdb.ca/}{HMDB} and 'norman'
 #'  \href{https://www.norman-network.com/nds/susdat/}{NORMAN},
 #'  but  new database support and customizability will come in future releases.
-#' @slot adcharge The maximum charge (in absolute value, so polarity does not
-#'  matter) the adducts in the list can have. Defaults to 1.
+#' @slot adcharge The maximum charge (in absolute value, so polarity
+#'  does not matter) the adducts in the list can have. Defaults to 1.
 #' @slot admult The maximum multiplicity (M, 2M, 3M and so on) the adducts
 #'  can have. Defaults to 1.
 #' @slot folder Folder where the database is located.
@@ -234,7 +234,7 @@ setMethod("remAd", c("RHermesExp", "character"), function(struct, name) {
         tosub <- c(tosub, cur)
     }
     if (length(tosub) != 0) {
-        struct@metadata@ExpParam@adlist <- 
+        struct@metadata@ExpParam@adlist <-
             struct@metadata@ExpParam@adlist[-tosub,]
     }
     struct <- setTime(struct, paste("Removed the adduct/s", name))

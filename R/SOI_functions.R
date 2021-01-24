@@ -10,9 +10,9 @@
 #'list, findSOI will use each object for each SOI list it generates
 #'until it has used them all. When that happens, the function will keep using
 #'the same SOIparam object for the rest of SOIs.
-#'@param fileID Numeric vector of the indexes of the peaklists you want to 
+#'@param fileID Numeric vector of the indexes of the peaklists you want to
 #'process into a SOI.
-#'@param against Optional. Numeric vector of the indexes of peaklists to use 
+#'@param against Optional. Numeric vector of the indexes of peaklists to use
 #'as a 'blank' against the correspoding fileID PL.
 #'If you enter 0 (or don't input anything at all), no blank substraction will
 #'be performed. In case you want to process multiple SOIs and only some of
@@ -47,74 +47,74 @@
 #'
 
 setGeneric("findSOI", function(struct, params, fileID, against = numeric(0)) {
-  standardGeneric("findSOI")
+    standardGeneric("findSOI")
 })
 setMethod("findSOI", c("RHermesExp", "ANY", "ANY", "ANY"),
-            function(struct, params, fileID, against = numeric(0)) {
-                if (length(against) == 0) {
-                    against <- rep(0, length(fileID))
-                }
-                maxn <- length(struct@data@PL)
-                if (any(c(fileID, against) > maxn)) {
-                    stop("Some indexes are above the number of current PL")
-                }
-                if (is.list(params)) {
-                    multParams <- TRUE
-                    specID <- c(seq_along(params),
-                                rep(length(params),
-                                times = length(fileID) - length(params)))
-                } else {
-                    multParams <- FALSE
-                }
-                for (i in seq_along(fileID)) {
-                    idx <- fileID[i]
-                    if (idx == against[i]) {
-                        stop(paste0("You've tried to substract the blank from the same",
-                                    "file. That's not allowed."))
-                    }
-                    if (multParams) {
-                        cur <- params[[specID[i]]]
-                        ifelse(against[i] != 0, cur@blanksub <- TRUE, 
-                            cur@blanksub <- FALSE)
-                    } else {
-                        cur <- params
-                        ifelse(against[i] != 0, params@blanksub <- TRUE,
-                            params@blanksub <- FALSE)
-                    }
-                    if (against[i] != 0) {
-                        reticulate::py_available(initialize = TRUE)
-                        reticulate::py_module_available("keras")
-                        reticulate::py_module_available("tensorflow")
-                        cur@blanksub <- TRUE
-                        cur@blankname <- struct@data@PL[[against[i]]]@filename
-                        blankPL <- struct@data@PL[[against[i]]]@peaklist
-                    } else {
-                        cur@blanksub <- FALSE
-                        cur@blankname <- "None"
-                        blankPL <- NA
-                    }
-                    message(paste(paste0(rep("*", 20), "\n"), "Processing SOI", 
-                                  i, "out of", length(fileID), "\n",
-                            paste0(rep("*", 20), "\n")))
-                    struct@data@SOI <- c(struct@data@SOI,
-                                        PLprocesser(struct@data@PL[[idx]],
-                                        struct@metadata@ExpParam, cur, blankPL, 
-                                        struct@metadata@filenames[idx],
-                                        struct@metadata@cluster))
-                    if (against[i] == 0) {
-                        struct <- setTime(struct, 
-                                        paste("Generated SOI list from",
-                                        struct@metadata@filenames[idx]))
-                    } else {
-                        struct <- setTime(struct, 
-                                        paste("Generated SOI list from",
-                                        struct@metadata@filenames[idx], "using",
-                                        struct@metadata@filenames[against[i]],
-                                        "as blank"))
-                    }
-                }
-                return(struct)
-                })
+function(struct, params, fileID, against = numeric(0)) {
+    if (length(against) == 0) {
+        against <- rep(0, length(fileID))
+    }
+    maxn <- length(struct@data@PL)
+    if (any(c(fileID, against) > maxn)) {
+        stop("Some indexes are above the number of current PL")
+    }
+    if (is.list(params)) {
+        multParams <- TRUE
+        specID <- c(seq_along(params),
+                    rep(length(params),
+                    times = length(fileID) - length(params)))
+    } else {
+        multParams <- FALSE
+    }
+    for (i in seq_along(fileID)) {
+        idx <- fileID[i]
+        if (idx == against[i]) {
+            stop(paste("You've tried to substract the blank from",
+                        "the same file. That's not allowed."))
+        }
+        if (multParams) {
+            cur <- params[[specID[i]]]
+            ifelse(against[i] != 0, cur@blanksub <- TRUE,
+                cur@blanksub <- FALSE)
+        } else {
+            cur <- params
+            ifelse(against[i] != 0, params@blanksub <- TRUE,
+                params@blanksub <- FALSE)
+        }
+        if (against[i] != 0) {
+            reticulate::py_available(initialize = TRUE)
+            reticulate::py_module_available("keras")
+            reticulate::py_module_available("tensorflow")
+            cur@blanksub <- TRUE
+            cur@blankname <- struct@data@PL[[against[i]]]@filename
+            blankPL <- struct@data@PL[[against[i]]]@peaklist
+        } else {
+            cur@blanksub <- FALSE
+            cur@blankname <- "None"
+            blankPL <- NA
+        }
+        message(paste(paste0(rep("*", 20), "\n"), "Processing SOI",
+                        i, "out of", length(fileID), "\n",
+                paste0(rep("*", 20), "\n")))
+        struct@data@SOI <- c(struct@data@SOI,
+                            PLprocesser(struct@data@PL[[idx]],
+                            struct@metadata@ExpParam, cur, blankPL,
+                            struct@metadata@filenames[idx],
+                            struct@metadata@cluster))
+        if (against[i] == 0) {
+            struct <- setTime(struct,
+                            paste("Generated SOI list from",
+                            struct@metadata@filenames[idx]))
+        } else {
+            struct <- setTime(struct,
+                            paste("Generated SOI list from",
+                            struct@metadata@filenames[idx], "using",
+                            struct@metadata@filenames[against[i]],
+                            "as blank"))
+        }
+    }
+    return(struct)
+})
 
 
 PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename,
@@ -124,22 +124,22 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename,
     h <- PL@header
     formulaDB <- ExpParam@ionF[[1]]
     FA_to_ion <- ExpParam@ionF[[2]]
-  
+
     params <- SOIParam@specs
     maxlen <- SOIParam@maxlen
     noise <- SOIParam@minint
     useblank <- SOIParam@blanksub
-  
-    ## Setting up PeakList 
+
+    ## Setting up PeakList
     DataPL <- as.data.table(DataPL)
     #Filtering M0 beforehand to improve indexing performance later on
-    DataPL <- DataPL[DataPL$isov == "M0", ]  
+    DataPL <- DataPL[DataPL$isov == "M0", ]
     DataPL <- DataPL[DataPL$rtiv > noise, ]
     setkeyv(DataPL, c("formv", "rt"))
     setkeyv(formulaDB, c("f"))
     setkeyv(FA_to_ion, c("ion"))
-  
-    ## Density filtering 
+
+    ## Density filtering
     message("Starting density filtering: ")
     GR <- apply(params, 1, function(x) {
         RHermes:::densityProc(x, DataPL, h, BiocParallelParam)
@@ -154,13 +154,13 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename,
         }
     }
     Groups <- distinct(Groups)
-  
-    ## Initial Peak Retrieval 
+
+    ## Initial Peak Retrieval
     message("Initial peak retrieval:")
     peakscol <- bplapply(seq_len(nrow(Groups)), RHermes:::retrievePeaks,
                         Groups, DataPL, BPPARAM = BiocParallelParam)
     Groups$peaks <- peakscol
-    ## Group Characterization 
+    ## Group Characterization
     message("")
     message("Starting group characterization:")
     message("Mass calculation:")
@@ -169,13 +169,13 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename,
     if (any(Groups$length > maxlen)) {
         Groups <- RHermes:::groupShort(Groups, maxlen, BiocParallelParam)
     }
-    ## Blank substraction 
+    ## Blank substraction
     if (useblank) {
-        Groups <- RHermes:::blankSubstraction(Groups, blankPL, 
+        Groups <- RHermes:::blankSubstraction(Groups, blankPL,
                                             BiocParallelParam)
         if (nrow(Groups) == 0) {return(RHermesSOI())}
     }
-    ## Rest of characterization 
+    ## Rest of characterization
     message("")
     message("Width calculation:")
     width <- apply(Groups, 1, function(x) {
@@ -188,7 +188,7 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename,
         return(w)
     })
     Groups$width <- width
-  
+
     message("Maximum intensity calculation:")
     suppressWarnings({
         MaxI <- apply(Groups, 1, function(x) {
@@ -198,7 +198,7 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename,
     })
     Groups$MaxInt <- MaxI
     Groups <- Groups[Groups$MaxInt > 0, ]
-  
+
     message("Number of scans:")
     nscans <- apply(Groups, 1, function(x) {
         d <- x["peaks"][[1]]
@@ -206,25 +206,25 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename,
     })
     Groups$nscans <- nscans
     Groups <- Groups[Groups$nscans > 2, ]
-  
+
     message("Converting from ionic formula to F/A combinations:")
     Groups$anot <- lapply(Groups$formula, function(x) {
         apply(FA_to_ion[.(x), c(1, 3)], 1, function(y) {
             paste(y, collapse = "_")
         })
     })
-  
+
     setkeyv(Groups, c("formula"))
     message("Generating peaklist for plotting:")
     plist <- bplapply(unique(Groups$formula), RHermes:::preparePlottingDF,
                         Groups, BPPARAM = BiocParallelParam)
     plist <- do.call(rbind, plist)
     plist$isov <- rep("M0", nrow(plist))
-  
+
     # Constructing S4 output object
     output <- RHermesSOI(SoiList = Groups, PlotDF = as.data.table(plist),
                         SoiParam = SOIParam, filename = filename)
-    
+
         return(output)
     }
 
@@ -233,26 +233,26 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename,
     scanspercent <- x[2]
     shift <- x[3]
     message("Running Density Filter")
-    BinRes <- RHermes:::densityFilter(DataPL, h, rtbin, "M0", shift, 
+    BinRes <- RHermes:::densityFilter(DataPL, h, rtbin, "M0", shift,
                                     BiocParallelParam)
     cutoff <- BinRes[[1]] * scanspercent
-  
+
     #Correcting CUT < 1 cases to avoid errors (eg. if it was 0, any time region
     #would be included). Added a 1 for robustness.
-    cutoff[cutoff < 1] <- median(c(cutoff[cutoff > 1], 1)) 
+    cutoff[cutoff < 1] <- median(c(cutoff[cutoff > 1], 1))
     message("Running Density Interpreter")
     nwork <- BiocParallelParam$workers
     if (!is.numeric(nwork)) nwork <- 1
         uf <- unique(DataPL$formv)
         suppressWarnings({uf <- split(uf, seq_len(nwork))})
         id <- cumsum(vapply(c(0, uf), length, numeric(1))) - 1
-    RES <- bplapply(seq_along(uf), RHermes:::parallelInterpreter, uf, cutoff, 
+    RES <- bplapply(seq_along(uf), RHermes:::parallelInterpreter, uf, cutoff,
                     BinRes, id, BPPARAM = BiocParallelParam)
     RES <- do.call(rbind, RES)
     RES$formula <- unlist(uf)[RES$formula]
-  
+
     #Changing from index to corresponding RT
-    RES[, 1] <- (RES[, 1] * rtbin) - rtbin + floor(min(h$retentionTime)) + shift  
+    RES[, 1] <- (RES[, 1] * rtbin) - rtbin + floor(min(h$retentionTime)) + shift
     RES[, 2] <- (RES[, 2] * rtbin) - rtbin + floor(min(h$retentionTime)) + shift
     RES %<>% dplyr::mutate(., length = end - start)
     RES <- RES[, c(1, 2, 4, 3)]
@@ -275,29 +275,29 @@ groupGrouper <- function(GR, i, Groups, BiocParallelParam){
     ## Overlap between current group element and the next
     # Ordered by formula, start and end time
     links <- foverlaps(Groups, first_df, by.x = c(4, 1, 2),
-                    by.y = c(4, 1, 2), type = "any", which = TRUE)  
-  
+                    by.y = c(4, 1, 2), type = "any", which = TRUE)
+
     nomatched <- links[is.na(links$yid), ]$xid
     #Which are found to be overlapping in both dfs
-    matched <- links[!is.na(links$yid), ] 
+    matched <- links[!is.na(links$yid), ]
     setkeyv(matched, "yid")
-  
+
     ## Grouping entries and choosing lowest start and highest end time
     res <- bplapply(unique(matched$yid), RHermes:::resolveGroup, Groups,
                 matched, first_df, BPPARAM = BiocParallelParam)
     res <- do.call(rbind, res)
     res[, `:=`(length, end - start)]
     res <- distinct(res)
-  
+
     message("Adding entries unique from the first DF")
     res <- rbind(res, Groups[nomatched, ])
-  
+
     message("Adding entries unique from the second DF")
     links <- foverlaps(first_df, Groups, by.x = c(4, 1, 2),
                     by.y = c(4, 1, 2), type = "any", which = TRUE)
     other_unmatched <- links[is.na(links$yid), ]$xid
     res <- rbind(res, first_df[other_unmatched, ])
-  
+
     iter <- 1
     repeat {
         setkeyv(res, c("formula", "start", "end"))
@@ -323,7 +323,7 @@ groupGrouper <- function(GR, i, Groups, BiocParallelParam){
         res2[, `:=`(length, end - start)]
         res2 <- distinct(res2)
         res <- rbind(res[links2[links2$yid %in%
-                                  which(table(links2$yid) == 1)]$yid,], res2)
+                                which(table(links2$yid) == 1)]$yid,], res2)
         iter <- iter + 1
         if (iter > 10) {break} #Break for safety
     }
@@ -359,7 +359,7 @@ parallelGroupShort <- function(i, LG, maxlen){
                                     snthresh = 0, noise = 0, fitgauss = FALSE,
                                     firstBaselineCheck = FALSE)
     }, error = function(cond){})
-  
+
     if (nrow(pks) != 0) {
         pks <- as.data.frame(pks)
         pks <- pks[order(pks[,2]), ]
@@ -392,7 +392,7 @@ parallelGroupShort <- function(i, LG, maxlen){
             curstart <- starts[i]
             curend <- ends[i]
             times <- seq(from = curstart, to = curend,
-                     length.out = ceiling((curend - curstart) / maxlen) + 1)
+                        length.out = ceiling((curend - curstart) / maxlen) + 1)
             starts <- c(starts, times[-length(times)])
             ends <- c(ends, times[-1])
             }
@@ -412,7 +412,7 @@ parallelGroupShort <- function(i, LG, maxlen){
                             length = deltat, formula = curGR$formula,
                             peaks = curGR$peaks, mass = curGR$mass)
     }
-  
+
     #Reestructuration of the groups: data point 'splitting'
     NewGR[, "peaks"] <- apply(NewGR, 1, function(x) {
         pks <- x[5][[1]]
@@ -424,7 +424,7 @@ parallelGroupShort <- function(i, LG, maxlen){
 blankSubstraction <- function(Groups, blankPL, BiocParallelParam){
     message("Blank substraction:")
     setkeyv(blankPL, c("formv", "rt"))
-  
+
     message("First cleaning")
     toKeep <- bplapply(seq_len(nrow(Groups)), firstCleaning, Groups, blankPL,
                         BPPARAM = BiocParallelParam) %>% unlist()
@@ -433,16 +433,16 @@ blankSubstraction <- function(Groups, blankPL, BiocParallelParam){
     reticulate::py_available(initialize = TRUE)
     if (reticulate::py_module_available("keras") &
         reticulate::py_module_available("tensorflow")) {
-        model <- load_model_tf(system.file("extdata", "model", 
+        model <- load_model_tf(system.file("extdata", "model",
                                         package = "RHermes"))  #ANN
         setkeyv(blankPL, "formv")
-    
+
         message("Preparing input for ANN")
         RES <- bplapply(seq_len(nrow(Groups)), prepareNetInput, Groups, blankPL,
                         BPPARAM = BiocParallelParam)
         Groups$MLdata <- RES
         NAgroups <- do.call(rbind, lapply(RES, function(x){is.na(x[1])}))
-    
+
         if (any(NAgroups)) {
             Groups <- Groups[-which(NAgroups), ]
             RES <- RES[-which(NAgroups)]
@@ -455,7 +455,7 @@ blankSubstraction <- function(Groups, blankPL, BiocParallelParam){
                                                 c(nrow(organizeddata), 400),
                                                 order = "C")  #ANN input
         q <- model %>% keras::predict_classes(organizeddata)
-      
+
         Groups <- Groups[-which(q == 0), ]  #ANN output
         Groups <- Groups[, -c("MLdata")]
         }
@@ -473,20 +473,20 @@ firstCleaning <- function(i, Groups, blankPL){
     f <- cur$formula
     deltat <- 10
     peaks <- cur$peaks[[1]]
-    blankpks <- blankPL[.(f)] %>% filter(., rt >= st - deltat & 
+    blankpks <- blankPL[.(f)] %>% filter(., rt >= st - deltat &
                                             rt <= end + deltat & isov == "M0")
     blankpks <- distinct(blankpks[, c(1, 2)])
     if (nrow(blankpks) < 5) {return(TRUE)} #No blank signals
-  
+
     sampleCV <- sd(peaks$rtiv)/mean(peaks$rtiv)
     blankCV <- sd(blankpks$rtiv)/mean(blankpks$rtiv)
     sampleMax <- max(peaks$rtiv)
     blankMax <- max(blankpks$rtiv)
-  
-    #We have to be a bit stringent with the conditions, otherwise we collect junk
+
+    #We have to be restrictive with the conditions, otherwise we collect junk
     if (sampleCV/blankCV > 5) {return(TRUE)}
     if (sampleMax/blankMax > 3 & sampleMax > 15000) {return(TRUE)}
-  
+
     return(FALSE) #Can't decide if the SOI is good enough, let the ANN decide
 }
 
@@ -502,8 +502,8 @@ prepareNetInput <- function(i, Groups, blankPL){
         if (nrow(peaks) <= 2 | length(unique(peaks$rt)) <= 2) {
             return(NA) #No signal
         }
-    smooth_pks <- data.frame(approx(x = peaks, xout = seq(from = st, to = end, 
-                                                        length.out = Npoints), 
+    smooth_pks <- data.frame(approx(x = peaks, xout = seq(from = st, to = end,
+                                                        length.out = Npoints),
                                     rule = 1)) #Interpolate to N points
     smooth_pks[is.na(smooth_pks[, "y"]), "y"] <- 0
     blankpks <- blankPL[.(f)] %>% filter(., rt >= st - deltat &
@@ -558,7 +558,7 @@ parallelFilter <- function(j, ScanResults, bins, timebin){
         }
     l <- mapply(function(b1, b2) {
         return(length(which(data > b1 & data < b2)))
-    }, goodbins[-length(goodbins)], goodbins[-1]) #nº of entries in the time bin
+    }, goodbins[-length(goodbins)], goodbins[-1]) #n? of entries in the time bin
     if (length(l) == 0) {
         return(res)
     }
@@ -574,22 +574,22 @@ densityFilter <- function(ScanResults, h, timebin, iso = "M0", tshift = 0,
     rtmin <- floor(min(h$retentionTime))
     rtmax <- ceiling(max(h$retentionTime))
     bins <- seq(from = rtmin + tshift, to = rtmax + tshift, by = timebin)
-  
+
     #Getting how many scans were taken on each bin
     scans <- lapply(bins, function(curbin) {
         return(h %>% filter(., retentionTime > curbin & retentionTime <=
                         curbin + timebin) %>% dim(.) %>% .[1])
         })
-  
+
     #Counting how many scan entries are on each bin
     nwork <- BiocParallelParam$workers
     if (!is.numeric(nwork)) nwork <- 1
-  
+
     idx <- split(unique(ScanResults$formv), seq_len(nwork) * 5)
     setkeyv(ScanResults, c("formv", "rt"))
     RES <- bplapply(idx, parallelFilter, ScanResults, bins, timebin,
                     BPPARAM = BiocParallelParam)
-  
+
     RES <- unlist(RES, recursive = FALSE)
     names(RES) <- unlist(idx)
     RES <- c(list(unlist(scans)), list(bins), RES)
@@ -602,7 +602,7 @@ parallelInterpreter <- function(x, uf, cutoff, BinRes, id) {
         bin <- BinRes[[i]]
         interlist <- RHermes:::densityInterpreter(bin, cutoff)
         if (length(interlist[[1]]) == 0) {return()}
-        df1 <- data.frame(start = interlist[[1]], end = interlist[[2]], 
+        df1 <- data.frame(start = interlist[[1]], end = interlist[[2]],
                         formula = rep(i - 2, times = length(interlist[[1]])))
         return(df1)
     }))
@@ -615,7 +615,7 @@ densityInterpreter <- function(list, cutoff) {
     if (!any(bool)) {return(list(c(), c()))}
     good <- which(bool)
     if (length(good) == 1) {return(list(good, good + 1))}
-    
+
     #Define stretches of consecutive good bins
     diff <- diff(good)
     start <- good[c(1, which(diff != 1) + 1)]
@@ -638,11 +638,11 @@ setMethod("cleanSOI", signature = c("RHermesExp", "numeric", "ANY", "ANY"),
         ppm <- struct@metadata@ExpParam@ppm
         soilist <- soiobject@SoiList
         BiocParallelParam <- struct@metadata@cluster
-        
+
         ##Filter by maximum intensity
         intense_enough <- which(soilist$MaxInt > minint)
         soilist <- soilist[intense_enough, ]
-        
+
         ##Filter by isotopic fidelity
         if (isofidelity) {
             # Isotopic elution similarity
@@ -651,16 +651,16 @@ setMethod("cleanSOI", signature = c("RHermesExp", "numeric", "ANY", "ANY"),
             good <- which(!(soilist$MaxInt > 1e+06 & soilist$isofound == 0))
             soilist <- soilist[good, ]
             with_isos <- intense_enough[good]
-            
+
             # Isotopic pattern similarity
             message("Calculating isotopic fidelity metrics:")
             isodata <- bplapply(with_isos, IsoFidelity, struct = struct,
                                 soilist = soiid, plot = FALSE,
                                 BPPARAM = SerialParam(progressbar = TRUE))
-            
+
             cos <- vapply(isodata, function(x){x[[3]]}, numeric(1))
             soilist <- soilist[cos > 0.5, ]
-            
+
             rtmargin <- 20
             # Removing confirmed isotopic signals
             soilist <- soilist[order(-soilist$MaxInt), ]
@@ -676,7 +676,7 @@ setMethod("cleanSOI", signature = c("RHermesExp", "numeric", "ANY", "ANY"),
                 entrymass <- soilist[idx, ]$mass
                 overlaps <- lapply(isomasses, function(x) {
                     #Multiply ppm range to cover possible isotope mishaps
-                    thr <- c(x - 3 * ppm * 1e-06 * x, x + 3 * ppm * 1e-06 * x) 
+                    thr <- c(x - 3 * ppm * 1e-06 * x, x + 3 * ppm * 1e-06 * x)
                     if (any(entrymass > thr[1] & entrymass < thr[2])) {
                         return(which(entrymass > thr[1] & entrymass < thr[2]))
                     }
@@ -690,7 +690,7 @@ setMethod("cleanSOI", signature = c("RHermesExp", "numeric", "ANY", "ANY"),
             }
             if (length(toRemove) != 0) {soilist <- soilist[-unique(toRemove)]}
         }
-        
+
         ##Recalculate peaklist for plotting
         setkeyv(soilist, c("formula"))
         message("Recalculating peaklist for plotting:")
@@ -698,7 +698,7 @@ setMethod("cleanSOI", signature = c("RHermesExp", "numeric", "ANY", "ANY"),
                         BPPARAM = BiocParallelParam)
         plist <- do.call(rbind, plist)
         plist$isov <- rep("M0", nrow(plist))
-        
+
         ##Annotate adducts by cosine similarity
         soilist <- RHermes:::adCos(soilist, adthr = 0.8,
                                 FATable = struct@metadata@ExpParam@ionF[[2]],
@@ -731,7 +731,7 @@ isoCos <- function(soilist, PL, isothr = 0.99, BiocParallelParam) {
     PL <- PL@peaklist
     setkeyv(PL, c("formv"))
     message("Calculating isotope similarity:")
-    clist <- bplapply(seq_len(nrow(soilist)), parallelIsoCos, soilist, PL, 
+    clist <- bplapply(seq_len(nrow(soilist)), parallelIsoCos, soilist, PL,
                     isothr,
                     BPPARAM = BiocParallelParam)
     hits <- lapply(clist, function(x) {return(x[[1]])})
@@ -778,9 +778,9 @@ parallelIsoCos <- function(i, soilist, PL, isothr){
                                 query = cur[which(cur$isov == j),])
         if (!is.na(cos) & cos > isothr) {
         count <- count + 1
-        hitdf <- rbind(hitdf, data.frame(iso = j, 
-                                         mass = mean(cur$mz[cur$isov == j]), 
-                                         stringsAsFactors = FALSE))
+        hitdf <- rbind(hitdf, data.frame(iso = j,
+                                        mass = mean(cur$mz[cur$isov == j]),
+                                        stringsAsFactors = FALSE))
         }
     }
     return(list(count, hitdf))
@@ -805,7 +805,8 @@ parallelAdCos <- function(i, soilist, FATable, adthr){
             } else {
                 return(lapply(candidates, function(row){
                     score <- cosineSim(pattern = SOI$peaks[[1]],
-                                        query = soilist$peaks[row][[1]], nscans = 5)
+                                        query = soilist$peaks[row][[1]],
+                                        nscans = 5)
                 if (score > adthr) {return(row)}
                 else {return()}
                 }))
@@ -825,31 +826,30 @@ generateDiffDB <- function(DB, formulas, polarity = 1){
     metamet <- DB$df_metabolite
     espmet <- DB$df_spectraMetabolite
     list_fragments <- DB$list_fragments
-  
+
     lapply(formulas, function(f){
         idmet <- metamet[.(f), ]$ID_metabolite
         if (is.na(idmet[1])) return(list())
         RES <- lapply(idmet, function(id) {
             idesp <- espmet[.(id), ]$ID_spectra
             metadata <- metaesp[.(idesp), ]
-      
+
             #Filtering by low energy
-            idesp <- espmet[.(id), ]$ID_spectra[metadata$REFCE %in% c("0", "10",
-                                                                    "20", 
-                                                                    "10eV")]
+            idesp <- espmet[.(id), ]$ID_spectra[metadata$REFCE %in%
+                                                    c("0", "10","20","10eV")]
             metadata <- metadata[metadata$REFCE %in% c("0","10","20","10eV"), ]
-            
+
             #Filtering by adduct
-            idesp <- espmet[.(id), ]$ID_spectra[metadata$REFadduct %in% c("M+H",
-                                                                        "M-H",
-                                                                        "M+")]
+            idesp <- espmet[.(id), ]$ID_spectra[metadata$REFadduct %in%
+                                                    c("M+H", "M-H", "M+")]
             metadata <- metadata[metadata$REFadduct %in% c("M+H","M-H", "M+"), ]
             which_polarity <- which(metadata$REFpolarity == polarity)
-            spec <- list_fragments[.(idesp[which_polarity]), 
+            spec <- list_fragments[.(idesp[which_polarity]),
                                 "spectra"] %>% unlist(., recursive = FALSE)
             if (length(spec) == 0) {return(spec)}
-            energies <- apply(metadata[which_polarity, c("REFprecursor_mz","REFCE", "REFnature")], 1,
-                            function(x){paste(x, collapse = "_")})
+            energies <- apply(metadata[which_polarity, c("REFprecursor_mz",
+                                                        "REFCE", "REFnature")],
+                                1, function(x){paste(x, collapse = "_")})
             names(spec) <- energies
             return(spec)
         })
@@ -864,7 +864,7 @@ generateDiffDB <- function(DB, formulas, polarity = 1){
                                 metamet[.(f), ]$ID_metabolite[!novalidspec],
                                 unlist(lapply(metamet[.(f), ]$REFname,
                                         function(x) {x[[1]]}))[!novalidspec],
-                                metamet[.(f),]$REFsmiles[!novalidspec], 
+                                metamet[.(f),]$REFsmiles[!novalidspec],
                                 sep = "#")
         } else {
         names(RES) <- paste(rep(f, times = nrow(metamet[.(f),])),
@@ -874,8 +874,8 @@ generateDiffDB <- function(DB, formulas, polarity = 1){
                             metamet[.(f), ]$REFsmiles, sep = "#")
         }
         common_deltas <- lapply(RES, function(structure){
-            prec_m <- lapply(names(structure), 
-                            function(x){as.numeric(strsplit(x, 
+            prec_m <- lapply(names(structure),
+                            function(x){as.numeric(strsplit(x,
                                                             "_")[[1]][1])}) %>%
                             unlist(.)
             structure <- structure[!is.na(prec_m)]
@@ -893,9 +893,9 @@ generateDiffDB <- function(DB, formulas, polarity = 1){
             return(sort(unique(observed_mzs)))
         })
     common_deltas <- common_deltas[vapply(common_deltas, length,
-                                          FUN.VALUE = numeric(length(common_deltas))) != 0]
+                            FUN.VALUE = numeric(length(common_deltas))) != 0]
     unlist(common_deltas) %>% unique() %>% sort()
-    
+
     })
 }
 
@@ -911,9 +911,9 @@ anotateISF <- function(SL, DB, polarity = 1, BiocParallelParam = SerialParam()){
     setkeyv(DB$df_spectraMetabolite, c("ID_metabolite"))
     setkeyv(DB$df_metabolite, c("REFformula"))
     setkeyv(DB$list_fragments, c("ID_spectra"))
-  
+
     SL$ISF <- bplapply(seq_len(nrow(SL)), RHermes:::anotateParallelISF,
-                        SL = SL, DB = DB, polarity = polarity, 
+                        SL = SL, DB = DB, polarity = polarity,
                         BPPARAM  = BiocParallelParam)
     return(SL)
 }
@@ -940,41 +940,48 @@ anotateParallelISF <- function(i, SL, DB, polarity){
 #' @import visNetwork
 plotISF <- function(SOIlist){
     net <- graph_from_adj_list(SOIlist$ISF)
-    net <- set.vertex.attribute(net, "value", value = log10(SOIlist$MaxInt),
-                                index = which(seq_along(V(net)) %in% unique(SOIlist$originalID))) 
-    net <- set.vertex.attribute(net, "title",
-                                value = paste0("<p>Mz: ", SOIlist$mass,"</p>",
-                                            "<p>Intensity: ",
-                                            round(SOIlist$MaxInt,digits = 2),
-                                            "</p>", "<p>Anot: ",
-                                            lapply(SOIlist$anot, function(an){
-                                            paste(an, collapse = ",")}) %>% 
-                                            unlist(), "</p>"),
-                                index = which(seq_along(V(net)) %in% 
-                                                unique(SOIlist$originalID)))
+    net <- set.vertex.attribute(net,
+        "value",
+        value = log10(SOIlist$MaxInt),
+        index = which(seq_along(V(net)) %in% unique(SOIlist$originalID))
+    )
+    net <- set.vertex.attribute(net,
+        "title",
+        value = paste0(
+            "<p>Mz: ", SOIlist$mass,"</p>",
+            "<p>Intensity: ",
+            round(SOIlist$MaxInt,digits = 2),
+            "</p>", "<p>Anot: ",
+            lapply(SOIlist$anot, function(an){
+            paste(an, collapse = ",")}) %>%
+            unlist(), "</p>"),
+        index = which(seq_along(V(net)) %in% unique(SOIlist$originalID))
+    )
     col <- colorRamp(c(rgb(1,0,0),rgb(0,1,0), rgb(0,0,1)), bias = 0.1)
-    defaultcol <- rep("#777777", length(V(net)))  
+    defaultcol <- rep("#777777", length(V(net)))
     node_color <- apply(col(SOIlist$mass/max(SOIlist$mass)), 1, function(x){
         x <- x/255
-        rgb(x[1],x[2],x[3])})
-    defaultcol[which(seq_along(V(net)) %in% unique(SOIlist$originalID))] <- node_color
-  
+        rgb(x[1],x[2],x[3])
+    })
+    defaultcol[seq_along(V(net)) %in% unique(SOIlist$originalID)] <- node_color
+
     net <- set.vertex.attribute(net, "color", value = defaultcol)
     visnet <- toVisNetworkData(net)
-  
+
     # distances <- apply(visnet[[2]], 1, function(x){
     #   SOIlist$mass[[x[2]]] - SOIlist$mass[[x[1]]]
     # })
-    # edge_color <- apply(col(abs(distances)/max(abs(distances))), 1, function(x){
+    # edge_color <- apply(col(abs(distances)/max(abs(distances))),
+    #   1, function(x){
     #   x <- x/255
     #   rgb(x[1],x[2],x[3])})
-    # 
+    #
     # visnet[[2]]$label <-  as.character(round(distances, 5))
-  
+
     visNetwork(nodes = visnet[[1]], edges = visnet[[2]]) %>%
-        visEdges(arrows = list(to = list(enabled = TRUE, 
-                                        scaleFactor = 0.5))) %>% 
-        visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE) %>% 
+        visEdges(arrows = list(to = list(enabled = TRUE,
+                                        scaleFactor = 0.5))) %>%
+        visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE) %>%
         visPhysics(stabilization = FALSE)
 }
 
@@ -1013,7 +1020,7 @@ removeISF <- function(struct, id, DBpath = "D:/MS2ID_B2R_20201113_083214.rds"){
     DB <- readRDS(DBpath)
     BiocParallelParam <- struct@metadata@cluster
     polarity <- ifelse(struct@metadata@ExpParam@ion == "+", 1, 0)
-  
+
     #Anotate and remove ISF
     SoiObj <- struct@data@SOI[[id]]
     SL <- SoiObj@SoiList
@@ -1023,13 +1030,13 @@ removeISF <- function(struct, id, DBpath = "D:/MS2ID_B2R_20201113_083214.rds"){
     SL <- cleanupISF(SL)
     SL <- as.data.table(SL)
     setkeyv(SL, "formula")
-  
+
     #Recalculate plotting DF
     plist <- bplapply(unique(SL$formula), RHermes:::preparePlottingDF,
                     SL, BPPARAM = BiocParallelParam)
     plist <- do.call(rbind, plist)
     plist$isov <- rep("M0", nrow(plist))
-  
+
     #Update object and return
     SoiObj@SoiList <- SL
     SoiObj@PlotDF <- as.data.table(plist)

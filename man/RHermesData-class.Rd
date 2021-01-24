@@ -12,13 +12,15 @@ peaklists, SOI lists, inclusion lists, MS2 data and identifications.
 \section{Slots}{
 
 \describe{
-\item{\code{PL}}{A list object that holds all RHermesPL objects containing a PL each.
+\item{\code{PL}}{A list object that holds all RHermesPL objects
+containing a PL each.
 See [RHermes]{RHermesPL} for more info}
 
-\item{\code{SOI}}{List that holds RHermesSOI objects with a SOI list inside each.
+\item{\code{SOI}}{List that holds RHermesSOI objects with a SOI list
+inside each.
 See [RHermes]{RHermesSOI} for more info.}
 
-\item{\code{MS2Exp}}{List to hold inclusion lists, MSMS experimental data and compound
-identifications.}
+\item{\code{MS2Exp}}{List to hold inclusion lists, MSMS experimental
+data and compound identifications.}
 }}
 

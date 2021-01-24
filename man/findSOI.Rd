@@ -16,10 +16,10 @@ list, findSOI will use each object for each SOI list it generates
 until it has used them all. When that happens, the function will keep using
 the same SOIparam object for the rest of SOIs.}
 
-\item{fileID}{Numeric vector of the indexes of the peaklists you want to 
+\item{fileID}{Numeric vector of the indexes of the peaklists you want to
 process into a SOI.}
 
-\item{against}{Optional. Numeric vector of the indexes of peaklists to use 
+\item{against}{Optional. Numeric vector of the indexes of peaklists to use
 as a 'blank' against the correspoding fileID PL.
 If you enter 0 (or don't input anything at all), no blank substraction will
 be performed. In case you want to process multiple SOIs and only some of

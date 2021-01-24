@@ -2,22 +2,27 @@
 #' @description ExpParam holds all experimental data as well as database-related
 #'  info generated during the processing steps. Use setExpParams to save it into
 #'  your RHermesExp object
-#' @slot ppm The mass spectrometer (MS) mass error in parts per million (ppm)
+#' @slot ppm The mass spectrometer (MS) mass error in
+#'  parts per million (ppm)
 #' @slot res The MS resolution at m/z = 200
-#' @slot nthr The noise threshold to consider. Any signal weaker than it will
-#'  NOT be considered in the PL. Useful to filter 'grass-like' peaks in a Q-TOF
-#'  instrument. Defaults to 1000.
-#' @slot minmz Minimum mz registered in the MS1 experiment. Defaults to 80
-#' @slot maxmz Maximum mz registered in the MS1 experiment. Defaults to 1000.
-#' @slot ion Polarity used in the experiment. RHermes currently only supports
-#'  one polarity at a time per RHermesExp, so if you're performing both + and
-#'  - polarity you will have to use 2 different RHermesExp objects, one for 
-#'  each. Important: must be described ONLY as '+' or '-'.
-#' @slot instr MS instrument type used to acquire the data. It can be either
-#' 'QTOF' or 'Orbitrap'.
+#' @slot nthr The noise threshold to consider. Any signal
+#'  weaker than it will NOT be considered in the PL. Useful to filter
+#'  'grass-like' peaks in a Q-TOF instrument. Defaults to 1000.
+#' @slot minmz Minimum mz registered in the MS1 experiment.
+#' Defaults to 80
+#' @slot maxmz Maximum mz registered in the MS1 experiment.
+#' Defaults to 1000.
+#' @slot ion Polarity used in the experiment. RHermes currently
+#'  only supports  one polarity at a time per RHermesExp, so if you're
+#'  performing both + and - polarity you will have to use 2 different
+#'  RHermesExp objects, one for each. Important: must be described ONLY as
+#'  '+' or '-'.
+#' @slot instr MS instrument type used to acquire the data. It can be
+#' either QTOF' or 'Orbitrap'.
 #' @slot DB Formula database
 #' @slot adlist Adduct list
-#' @slot ionF Ionic formula list. Formed by all formula-adduct combinations
+#' @slot ionF Ionic formula list. Formed by all formula-adduct
+#'  combinations
 #' @slot isoList Isotopic pattern exploration results.
 #' @export ExpParam
 #' @examples
@@ -73,7 +78,7 @@ RHermesMS2Exp <- setClass("RHermesMS2Exp", slots = list(IL = "RHermesIL",
 
 RHermesIdent <- setClass("RHermesIdent",
                             slots = list(IdentifiedSOI = "data.table",
-    CompoundList = "list", MSMSMatchings = "list", Metadata = "list")) 
+    CompoundList = "list", MSMSMatchings = "list", Metadata = "list"))
 
 
 #' @import BiocParallel
@@ -85,9 +90,9 @@ setRHermesCluster <- function(){
         ram <- gsub("FreePhysicalMemory=", "", ram, fixed = TRUE)
         ram <- gsub("\r", "", ram, fixed = TRUE)
         ram <- as.integer(ram)
-        
+
         #Suppose max 2GB per worker
-        nwork <- min(floor(ram/2e6), BiocParallel::snowWorkers()) 
+        nwork <- min(floor(ram/2e6), BiocParallel::snowWorkers())
         if (nwork == 1) {
             warning(paste("Maybe you have too little RAM.",
                             "Proceeding with SerialParam()"))
@@ -106,14 +111,18 @@ setRHermesCluster <- function(){
 #'@description The metadata storage class. It holds the experimental parameters,
 #' all the names of the processed files and the timestamps for all operations
 #' performed on the parental RHermesExp object
-#'@slot ExpParam  Contains all experimental information (ppm error, resolution,
+#'@slot ExpParam  Contains all experimental information
+#'(ppm error, resolution,
 #' polarity, etc.), as well as the formula and adduct databases used.
 #'  See [RHermes]{ExpParam} for more info.
-#'@slot filenames All filenames of the processed files. This info is also
+#'@slot filenames All filenames of the processed files. This info
+#' is also
 #' available for individual PL and SOI objects in their respective slot.
-#'@slot timestamps Timestamps generated when any operation was performed on the
+#'@slot timestamps Timestamps generated when any operation was
+#'performed on the
 #' parental object. You can easily check them with readTime().
-#'@slot cluster Selected automatically based on your operating system and your
+#'@slot cluster Selected automatically based on your operating
+#'system and your
 #' number of cores. Can be set to any valid BiocParallelParam.
 RHermesMeta <- setClass("RHermesMeta",
     slots = list(
@@ -135,12 +144,14 @@ RHermesMeta <- setClass("RHermesMeta",
 #'@title RHermesData
 #'@description The experimental data storage class. Holds all information of the
 #' peaklists, SOI lists, inclusion lists, MS2 data and identifications.
-#'@slot PL A list object that holds all RHermesPL objects containing a PL each.
+#'@slot PL A list object that holds all RHermesPL objects
+#'containing a PL each.
 #' See [RHermes]{RHermesPL} for more info
-#'@slot SOI List that holds RHermesSOI objects with a SOI list inside each.
+#'@slot SOI List that holds RHermesSOI objects with a SOI list
+#' inside each.
 #' See [RHermes]{RHermesSOI} for more info.
-#'@slot MS2Exp List to hold inclusion lists, MSMS experimental data and compound
-#' identifications.
+#'@slot MS2Exp List to hold inclusion lists, MSMS experimental
+#'data and compound identifications.
 RHermesData <- setClass("RHermesData",
                         slots = list(PL = "list", SOI = "list",
                                         MS2Exp = "list")
@@ -151,19 +162,20 @@ RHermesData <- setClass("RHermesData",
 #' all generated information. All main RHermes functions use it and return an
 #' updated version of the object.
 #'
-#' @slot metadata Where all the complementary info is stored (experimental
-#' parameters, timestamps, databases, etc.). See [RHermes]{RHermesMeta} for more
-#' info.
-#' @slot data All experimental info is stored in data. It is divided into PL
-#'  (peaklist) SOI (scans of interest) and MS2Exp (for the IL, MS2 data and 
-#'  identifications). See [RHermes]{RHermesData} for more info.
+#' @slot metadata Where all the complementary info is stored
+#' (experimental parameters, timestamps, databases, etc.).
+#' See [RHermes]{RHermesMeta} for more info.
+#' @slot data All experimental info is stored in data. It is
+#' divided into PL (peaklist) SOI (scans of interest) and MS2Exp
+#' (for the IL, MS2 data and identifications).
+#' See [RHermes]{RHermesData} for more info.
 #' @export RHermesExp
 #' @examples
 #' if(FALSE){
 #'  myHermes <- RHermesExp() #Initializing empty object
 #' }
-RHermesExp <- setClass("RHermesExp", 
-                        slots = list(metadata = "RHermesMeta", 
+RHermesExp <- setClass("RHermesExp",
+                        slots = list(metadata = "RHermesMeta",
                                         data = "RHermesData")
 )
 

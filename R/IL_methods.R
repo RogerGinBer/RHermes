@@ -30,19 +30,18 @@ injectionPlanner <- function(IL, injections, maxover, byMaxInt = TRUE,
 }
 
 #'@title filterIL
-#'@md
 #'@description Filters out IL entries lower than a specified intensity in a
-#' given RT interval. 
+#' given RT interval.
 #'@param struct The RHermesExp object.
 #'@param id The IL ID in the RHermesExp object. The IDs are assigned by the
 #' order in which the IL are generated.
 #'@param rts Time interval to filter (two numeric values - start, end),
 #' in seconds
-#'@param minint Minimum entry intensity to be retained. All entries <= minint
-#'will be removed in the specified rt interval. Defaults to infinity, so *all*
-#' IL entries in the range are removed.
-#'@return Nothing. As a side effect, it generates one/multiple .csv files with
-#' the inclusion list data
+#'@param minint Minimum entry intensity to be retained. All entries
+#'<= minint will be removed in the specified rt interval. Defaults to
+#'infinity, so all IL entries in the range are removed.
+#'@return Nothing. As a side effect, it generates one/multiple .csv
+#' files with the inclusion list data
 #'@examples
 #'if(FALSE){
 #' filterIL(myHermes, 1, c(0,200), minint = 1e6)
@@ -54,7 +53,7 @@ setGeneric("filterIL", function(struct, id, rts, minint = Inf) {
 setMethod("filterIL", c("RHermesExp", "numeric", "numeric", "ANY"),
 function(struct, id, rts, minint = Inf) {
     if (length(rts) != 2) {
-        stop("Please input just two RT values corresponding to the starting RT 
+        stop("Please input just two RT values corresponding to the starting RT
                 and ending RT you want to filter")
     }
     IL <- struct@data@MS2Exp[[id]]@IL@IL
@@ -90,7 +89,7 @@ function(struct, id, rts, minint = Inf) {
 #'@param sepFiles Logical, whether to generate a single csv file or multiple
 #' csvs, each corresponding to each injection/chromatographic run. From our
 #' experience with an Orbitrap Fusion, separate csvs will simplify the task.
-#'@return Nothing. As a side effect, it generates one/multiple .csv files 
+#'@return Nothing. As a side effect, it generates one/multiple .csv files
 #'with the inclusion list data
 #'@examples
 #'if(FALSE){
@@ -117,11 +116,11 @@ function(struct, id, folder = getwd(), maxOver = 5, sepFiles = FALSE) {
         p <- plan[[x]]
         p <- p[, c("start", "end", "mass")]
         #Setting column style for Thermo Xcalibur import
-        colnames(p) <- c("t start (min)", "t stop (min)", "m/z")  
+        colnames(p) <- c("t start (min)", "t stop (min)", "m/z")
         p[, 1] <- p[, 1]/60
         p[, 2] <- p[, 2]/60
         #Added as result of Michi's comment
-        p <- cbind(data.frame(Compound = seq_len(nrow(p))), p) 
+        p <- cbind(data.frame(Compound = seq_len(nrow(p))), p)
         write.csv(p, file = paste0(folder, "/Injection_", x, ".csv"),
                     row.names = FALSE)
     }
