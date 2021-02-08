@@ -3,7 +3,7 @@
 #' @import tidyverse
 #' @import igraph
 #' @import methods
-#' @import plotly
+#' @rawNamespace import(plotly, except = c(groups, last_plot))
 #' @importFrom dplyr distinct
 #'
 #'@title processMS2
@@ -31,14 +31,14 @@
 setGeneric("processMS2",
         function(struct, id, MS2files, sstype = "regular", useDB = FALSE,
                     referenceDB = "D:/sp_MassBankEU_20200316_203615.RData",
-                    mincos = 0.8) {
+                    mincos = 0.8, minhits = 1) {
     standardGeneric("processMS2")
 })
 setMethod("processMS2",
             c("RHermesExp", "numeric", "character", "character", "ANY", "ANY"),
 function(struct, id, MS2files, sstype = "regular", useDB = FALSE,
             referenceDB = "D:/sp_MassBankEU_20200316_203615.RData",
-            mincos = 0.8) {
+            mincos = 0.8, minhits = 1) {
     ## MS2 Data Importation and sorting within IL
     validObject(struct)
     MS2Exp <- struct@data@MS2Exp[[id]]
@@ -66,8 +66,7 @@ function(struct, id, MS2files, sstype = "regular", useDB = FALSE,
 
     ##Superspectra Generation
     message("Starting superspectra generation. This may take a while...")
-    purifiedSpectra <- RHermes:::CliqueMSMS(MS2Exp, idx, sstype = sstype)
-
+    purifiedSpectra <- CliqueMSMS(MS2Exp, idx, sstype = sstype)
     if (!useDB) {
         message("No spectral matching was performed. Done!")
         purifiedSpectra$results <- rep("No DB matching",
@@ -162,7 +161,7 @@ function(struct, id, MS2files, sstype = "regular", useDB = FALSE,
         curspec <- unlist(curspec, recursive = FALSE, use.names = FALSE)
         names(curspec) <- n
         cos <- rapply(curspec, function(compound) {
-            MSMScosineSim(entry, t(compound), minhits = 1)
+            MSMScosineSim(entry, t(compound), minhits = minhits)
         }, classes = "matrix", how = "replace")
         cos[which(lapply(cos, length) != 0)]
     }, purifiedSpectra$ssdata, corresponding)
@@ -294,10 +293,14 @@ CliqueMSMS <- function(MS2Exp, idx, contaminant = 173.5, delta = 0.1,
                             MS2list, contaminant, delta, fs, idx, FALSE)
         )
         RES <- do.call(rbind, RES)
-        RES <- RHermes:::purify_ss(RES, minint = 30000, minpks = 2)
-    } else {
+        RES <- purify_ss(RES, minint = 30000, minpks = 2)
+    } else if(sstype == "onescan"){
         RES <-  lapply(seq_along(idx), wrapper_failsafe_ss, idx = idx,
                         MS2list = MS2list, fs = fs)
+        RES <- do.call(rbind, RES)
+    } else {
+        RES <-  lapply(seq_along(idx), wrapper_allscan_ss, idx = idx,
+                       MS2list = MS2list, fs = fs)
         RES <- do.call(rbind, RES)
     }
     RES$start <- as.numeric(RES$start)
@@ -306,6 +309,7 @@ CliqueMSMS <- function(MS2Exp, idx, contaminant = 173.5, delta = 0.1,
     return(RES)
 }
 
+#'@import igraph 
 generate_ss <- function(curentry, MS2list, contaminant, delta, fs, idx,
                         to_plot) {
     header <- MS2list[[curentry]][[1]]
@@ -358,21 +362,9 @@ generate_ss <- function(curentry, MS2list, contaminant, delta, fs, idx,
     avgmz <- avgmz[good]
 
     # Trying to salvage a spectra from suboptimal data
-    if (length(soi) == 0) {
-        if (any(data$rtiv > 30000)) {
-            return(failsafe_ss(data, header, idx[curentry], fs[curentry]))
-        } else {
-            return()
-        }
-    } else if (length(soi) < 3) {
-        # In case we have a few traces but we're missing the most intense
-        # signal registered in the data
-        if (max(vapply(soi, function(x) {
-            max(x$rtiv)
-        }, FUN.VALUE = numeric(1))) < max(data$rtiv)) {
-            return(failsafe_ss(data, header, idx[curentry], fs[curentry]))
-        }
-    }
+    if (length(soi) < 3) {
+        return(failsafe_ss(data, header, idx[curentry], fs[curentry]))
+    } 
 
     ## Tidying the regions
     for (i in seq_along(avgmz)) {
@@ -414,8 +406,8 @@ generate_ss <- function(curentry, MS2list, contaminant, delta, fs, idx,
         return(df)
     })
     pks <- do.call(rbind, soipks)
-    if (nrow(pks) == 0)
-        return()
+    if (nrow(pks) == 0) return(failsafe_ss(data, header, idx[curentry], fs[curentry]))
+    
 
     ## Matching data to the peaks found
     soi <- do.call(rbind, soi)
@@ -425,15 +417,16 @@ generate_ss <- function(curentry, MS2list, contaminant, delta, fs, idx,
                                                 pks$rtmax[i])] <- i
     }
     ## Deconvolution based on previous peak-picking -- Centwave-Propagation
-    results <- RHermes:::centwavePropag(pks, soi)
+    results <- centwavePropag(pks, soi)
     pks <- results[[1]]
     soi <- results[[2]]
-    if (nrow(pks) == 0) return()
+    if (nrow(pks) == 0) return(failsafe_ss(data, header, idx[curentry], fs[curentry]))
+
 
     ## Calculate all similarities
     cos <- lapply(seq_len(nrow(pks)), function(x) {
         lapply(seq_len(nrow(pks)), function(y) {
-            score <- RHermes:::pearsonSim(soi[soi$peak == x, ],
+            score <- pearsonSim(soi[soi$peak == x, ],
                                             soi[soi$peak == y, ])
             if (is.na(score)) {
                 score <- 0
@@ -569,7 +562,7 @@ centwavePropag <- function(pks, soi){
         rows_to_add <- rows_to_add[rows_to_add$maxo != -Inf, ]
         pks <- rbind(pks, rows_to_add)
 
-        res <- RHermes:::reassign_and_check(pks, soi)
+        res <- reassign_and_check(pks, soi)
         pks <- res[[1]]
         soi <- res[[2]]
 
@@ -604,7 +597,7 @@ centwavePropag <- function(pks, soi){
                 }
                 pks <- rbind(pks,
                             splits,
-                            data.frame(rt = 0, tmin = cur$rt[jumps[j] + 1],
+                            data.frame(rt = 0, rtmin = cur$rt[jumps[j] + 1],
                                         rtmax = max(cur$rt), into = 0, intb = 0,
                                         maxo = max(cur$rtiv[seq((jumps[j] + 1),
                                                                 nrow(cur))]),
@@ -612,7 +605,7 @@ centwavePropag <- function(pks, soi){
                                         mz = pks$mz[i]))
             }
         }
-        res <- RHermes:::reassign_and_check(pks, soi)
+        res <- reassign_and_check(pks, soi)
         pks <- res[[1]]
         soi <- res[[2]]
         if (nrow(pks) == 0) {break}
@@ -624,7 +617,7 @@ centwavePropag <- function(pks, soi){
 purify_ss <- function(sslist, minint = 30000, minpks = 2) {
     good_ss <- vapply(sslist$ssdata, function(data) {
         has_int <- any(data$int > minint)
-        has_many_pks <- (nrow(data) > minpks)
+        has_many_pks <- (nrow(data) >= minpks)
         return(has_int | has_many_pks)
     }, logical(1))
     sslist <- sslist[good_ss, ]
@@ -658,3 +651,21 @@ failsafe_ss <- function(data, header, idx, fs) {
     ss$anot <- fs
     return(ss)
 }
+
+wrapper_allscan_ss <- function(curentry, idx, MS2list, fs) {
+    header <- MS2list[[curentry]][[1]]
+    data <- MS2list[[curentry]][[2]]
+    names(data)[2] <- "rtiv"
+    
+    # Select by TIC
+    lapply(seq_len(nrow(header)), function(ss){
+        rt <- header$retentionTime[ss]
+        data <- data[data$rt == rt, ]
+        if(nrow(data) == 0){return()}
+        header <- header[ss, ]
+        return(failsafe_ss(data, header, idx[curentry], fs[curentry]))
+    }) %>% rbindlist()
+}
+
+
+

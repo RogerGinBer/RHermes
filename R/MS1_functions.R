@@ -12,8 +12,11 @@
 #' Defaults to FALSE
 #'@return An RHermesExp object with the processed PLs.
 #'@examples
+#'\dontrun{
 #'processMS1(myHermes, 'C:/myFolder/myFile.mzML', FALSE) #For regular use
 #'processMS1(myHermes, 'C:/myFolder/myFile.mzML', TRUE) #For labelled data
+#'}
+
 #'@export
 
 setGeneric("processMS1", function(struct, files, labelled = FALSE) {
@@ -48,11 +51,11 @@ function(struct, files, labelled = FALSE) {
     lf = files[i]
     message(paste0("Now processing: ", lf))
     imported <- import_and_filter(lf, 20, noise)
-    ss <- RHermes:::OptScanSearch(DB = IF_DB[[1]],
-                                    raw = imported[[3]], mzList = imported[[2]],
-                                    ppm = ppm, labelled = labelled,
-                                    IsoList = IC,
-                                    BiocParallelParam = struct@metadata@cluster)
+    ss <- OptScanSearch(DB = IF_DB[[1]],
+                        raw = imported[[3]], mzList = imported[[2]],
+                        ppm = ppm, labelled = labelled,
+                        IsoList = IC,
+                        BiocParallelParam = struct@metadata@cluster)
     
     #Construction of S4 Object output
     RHermesPL(peaklist = ss, header = imported[[2]], raw = imported[[1]],
@@ -97,7 +100,7 @@ import_and_filter <- function(lf, minpks = 20, noise = 1000) {
 
 IonicForm <- function(F_DB, Ad_DB, BiocParallelParam = SerialParam()) {
     suppressWarnings({
-        RES <- bplapply(seq_len(nrow(F_DB)), RHermes:::calculate_ionic_forms,
+        RES <- bplapply(seq_len(nrow(F_DB)), calculate_ionic_forms,
                             BPPARAM = BiocParallelParam, F_DB = F_DB,
                             Ad_DB = Ad_DB)
     })
@@ -111,10 +114,10 @@ calculate_ionic_forms <- function(i, F_DB, Ad_DB){
     f <- as.character(F_DB$fms[i])
     j <- apply(Ad_DB, 1, function(x) {
         current_f <- f
-        if (x[3] != 1) current_f <- RHermes:::multform(current_f,
+        if (x[3] != 1) current_f <- multform(current_f,
                                                         as.numeric(x[3]))
-        if (x[6] != "FALSE") current_f <- RHermes:::sumform(current_f, x[6])
-        if (x[7] != "FALSE") current_f <- RHermes:::subform(current_f, x[7])
+        if (x[6] != "FALSE") current_f <- sumform(current_f, x[6])
+        if (x[7] != "FALSE") current_f <- subform(current_f, x[7])
         if (is.na(current_f)) return(NA)
         
         ch <- ifelse(x[5] == "positive", "+", "-")
@@ -148,11 +151,11 @@ calculate_ionic_forms <- function(i, F_DB, Ad_DB){
 
 sumform <- function(f1, f2) {
     f1 <- tryCatch({
-        CHNOSZ:::count.elements(f1)
+        CHNOSZ::count.elements(f1)
     }, error = function(cond){return(NA)})
     if (is.na(f1)) return(NA)
     n1 <- names(f1)
-    f2 <- CHNOSZ:::count.elements(f2)
+    f2 <- CHNOSZ::count.elements(f2)
     n2 <- names(f2)
     interAB <- n1[which(n1 %in% n2)]
     if (length(interAB) != 0) {
@@ -187,11 +190,11 @@ sumform <- function(f1, f2) {
 
 subform <- function(f1, f2) {
     f1 <- tryCatch({
-        CHNOSZ:::count.elements(f1)
+        CHNOSZ::count.elements(f1)
     }, error = function(cond){return(NA)})
     if (is.na(f1)) {return(NA)}
     n1 <- names(f1)
-    f2 <- CHNOSZ:::count.elements(f2)
+    f2 <- CHNOSZ::count.elements(f2)
     n2 <- names(f2)
     interAB <- n1[which(n1 %in% n2)]
     if (length(interAB) < length(n2)) {return(NA)}
@@ -232,7 +235,7 @@ subform <- function(f1, f2) {
 }
 
 multform <- function(f, k) {
-    f <- CHNOSZ:::count.elements(f)
+    f <- CHNOSZ::count.elements(f)
     f <- f * k
     paste0(mapply(function(x, y) {
         if (y == 1) {
@@ -289,7 +292,7 @@ IsoCalc <- function(DB, FWHM, intTHR, kTHR, instr = "Orbitrap", refm = 200,
     
     suppressWarnings({
         testres <- bplapply(testiso,
-                            RHermes:::isocalc_parallel, kTHR, resol_factor,
+                            isocalc_parallel, kTHR, resol_factor,
                             isotopecode, isOrbi, BPPARAM = BiocParallelParam)
     }) #Suppress warnings to avoid the split() "object not multiple of ..."
     
@@ -357,7 +360,7 @@ isocalc_parallel <- function(x, kTHR, resol_factor, isotopecode, isOrbi){
 }
 
 OptScanSearch <- function(DB, raw, mzList, ppm, IsoList, labelled = FALSE,
-                            minhit = 0, BiocParallelParam) {
+                            minhit = 1, BiocParallelParam) {
     message(paste0("This process can take quite a bit of time, depending on ",
                     "the processing power and RAM your computer has"))
     setkeyv(raw, c("mz"))
@@ -395,11 +398,11 @@ PLparallelfun <- function(gr, flist, raw, IsoList, labelled, ppm, minhit){
         mass <- curDB$m[i]
         formula <- as.character(n)
         if (!labelled) {
-            RHermes:::regularProc(curDB, mass, formula, pmz, curiso, ppm,
+            regularProc(curDB, mass, formula, pmz, curiso, ppm,
                                     IsoList, minhit, i, raw)
         } else {
             numC <- curDB$numC[i]
-            RHermes:::labelledProc(curDB, mass, formula, pmz, curiso, ppm,
+            labelledProc(curDB, mass, formula, pmz, curiso, ppm,
                                     IsoList, minhit, i, raw, numC)
         }
     })
@@ -409,7 +412,7 @@ PLparallelfun <- function(gr, flist, raw, IsoList, labelled, ppm, minhit){
 regularProc <- function(curDB, mass, formula, pmz, curiso, ppm, IsoList, minhit,
                         i, raw){
     if (mass < pmz[1, 1] | mass > pmz[nrow(pmz), 1]) {return()}
-    ss <- RHermes:::binarySearch(pmz, mass, ppm)
+    ss <- binarySearch(pmz, mass, ppm)
     if (length(ss) < minhit) {return()}  #Return nothing if no M0 hit
     
     isofactors <- curiso[[i]]  #If hit, let's find the isotopologues
@@ -425,10 +428,10 @@ regularProc <- function(curDB, mass, formula, pmz, curiso, ppm, IsoList, minhit,
         if (m < pmz[1, 1] | m > pmz[nrow(pmz), 1]) {return()}
         #Added small multiplicative factor to ppm. We've seen that
         #isotope peaks may have a bit more error than M0
-        RHermes:::binarySearch(pmz, m, ppm * 1.5)
+        binarySearch(pmz, m, ppm * 1.5)
     })
     isol <- vapply(isoss, length, FUN.VALUE = numeric(1))
-    
+
     isoidx <- which(isol != 0)
     if (length(isoidx) != 0) {
         isoentries <- do.call(rbind,
@@ -452,7 +455,7 @@ labelledProc <- function(curDB, mass, formula, pmz, curiso, ppm,
     if (mass < pmz[1, 1] | mass > pmz[nrow(pmz), 1]) {
         ss <- numeric()
     } else {
-        ss <- RHermes:::binarySearch(pmz, mass, ppm)
+        ss <- binarySearch(pmz, mass, ppm)
     }
     if (length(ss) == 0) {return()}
     
@@ -478,7 +481,7 @@ labelledProc <- function(curDB, mass, formula, pmz, curiso, ppm,
         if (m < pmz[1, 1] | m > pmz[nrow(pmz), 1]) {return()}
         #Added small multiplicative factor to ppm. We've seen that
         #isotope peaks may have a bit more error than M0
-        RHermes:::binarySearch(pmz, m, ppm * 1.5)
+        binarySearch(pmz, m, ppm * 1.5)
     })
     isol <- vapply(isoss, length, FUN.VALUE = numeric(1))
     isoidx <- which(isol != 0)

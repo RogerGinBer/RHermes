@@ -73,7 +73,7 @@ context("Parallel backend selection")
 test_that("setRHermescluster works", {
   cl <- RHermes:::setRHermesCluster()
   expect_true(is(cl, "BiocParallelParam"))
-  if(Sys.info()["sysname"] == "Windows"){
+  if (Sys.info()["sysname"] == "Windows") {
     expect_true(is(cl, "SnowParam"))
   } else {
     expect_true(is(cl, "MulticoreParam"))

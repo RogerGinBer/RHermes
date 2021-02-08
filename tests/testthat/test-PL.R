@@ -18,11 +18,11 @@ test_that("ScanSearch works",{
   myHermes <- RHermesExp()
   myHermes <- setDB(myHermes, db = "hmdb")
   myHermes@metadata@cluster <- BiocParallel::SnowParam(1)
-  myHermes <- FileProc(myHermes, system.file("extdata",
+  myHermes <- processMS1(myHermes, system.file("extdata",
                                              "MS1TestData.mzML",
                                              package = "RHermes"))
   expect_equal(length(myHermes@data@PL), 1)
-  expect_equal(nrow(myHermes@data@PL[[1]]@peaklist), 13536)
+  expect_equal(nrow(myHermes@data@PL[[1]]@peaklist), 12408)
 })
 
 test_that("Labelled proc works",{
@@ -32,12 +32,12 @@ test_that("Labelled proc works",{
   myHermes <- RHermesExp()
   myHermes <- setDB(myHermes, db = "hmdb")
   myHermes@metadata@cluster <- BiocParallel::SnowParam(1)
-  myHermes <- FileProc(myHermes, system.file("extdata",
+  myHermes <- processMS1(myHermes, system.file("extdata",
                                              "MS1TestData.mzML",
                                              package = "RHermes"),
                        labelled = TRUE)
   expect_equal(length(myHermes@data@PL), 1)
-  expect_equal(nrow(myHermes@data@PL[[1]]@peaklist), 33462)
+  expect_equal(nrow(myHermes@data@PL[[1]]@peaklist), 23573)
 })
 
 test_that("PL plot works", {
@@ -50,7 +50,7 @@ test_that("PL plot works", {
   myHermes <- RHermesExp()
   myHermes <- setDB(myHermes, db = "hmdb")
   myHermes@metadata@cluster <- BiocParallel::SnowParam(1)
-  myHermes <- FileProc(myHermes, system.file("extdata",
+  myHermes <- processMS1(myHermes, system.file("extdata",
                                              "MS1TestData.mzML",
                                              package = "RHermes"))
   p <- RHermes::PLPlot(myHermes, 1, "C6H12O6", rtrange = c(0,1500),
@@ -69,7 +69,7 @@ test_that("Coverage plot works", {
   myHermes <- RHermesExp()
   myHermes <- setDB(myHermes, db = "hmdb")
   myHermes@metadata@cluster <- BiocParallel::SnowParam(1)
-  myHermes <- FileProc(myHermes, system.file("extdata",
+  myHermes <- processMS1(myHermes, system.file("extdata",
                                              "MS1TestData.mzML",
                                              package = "RHermes"))
   p <- RHermes:::coveragePlot(myHermes, 1)

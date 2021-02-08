@@ -24,6 +24,7 @@ adductTables <- function(ch_max = 1, mult_max = 1) {
     return(list(negative.ad, positive.ad))
 }
 
+#' @importFrom utils data read.csv read.csv2 write.csv
 database_importer <- function(template = "hmdb", 
                                 filename = "./app/www/norman.xls",
                                 minmass = 70, maxmass = 750, keggpath = "") {

@@ -9,11 +9,12 @@ test_that("Regular IL generation works and can be exported",{
   library(data.table)
   require(tidyverse)
 
-  myHermes <- genIL(myHermes, 1, ILParam())
-  expect_equal(nrow(myHermes@data@MS2Exp[[1]]@IL@IL), 27)
+  myHermes <- generateIL(myHermes, 1, ILParam())
+  expect_equal(nrow(myHermes@data@MS2Exp[[1]]@IL@IL), 16)
 
-  myHermes <- genIL(myHermes, 1, ILParam(filtermz = 0.1, priorization = "full"))
-  expect_equal(nrow(myHermes@data@MS2Exp[[2]]@IL@IL), 113)
+  myHermes <- generateIL(myHermes, 1, ILParam(filtermz = 0.1,
+                                              priorization = "full"))
+  expect_equal(nrow(myHermes@data@MS2Exp[[2]]@IL@IL), 85)
 })
 
 test_that("Prioritized IL generation works",{
@@ -24,10 +25,10 @@ test_that("Prioritized IL generation works",{
   require(magrittr)
   library(data.table)
   require(tidyverse)
-  myHermes <- SOIcleaner(myHermes, 1, 50000, TRUE)
-  myHermes <- genIL(myHermes, 1, ILParam(filtermz = 0.1,
+  myHermes <- cleanSOI(myHermes, 1, 50000, TRUE)
+  myHermes <- generateIL(myHermes, 1, ILParam(filtermz = 0.1,
                                          priorization = "yes", ad = "M+H"))
-  expect_equal(nrow(myHermes@data@MS2Exp[[1]]@IL@IL), 2)
+  expect_equal(nrow(myHermes@data@MS2Exp[[1]]@IL@IL), 24)
 
 })
 
@@ -40,10 +41,11 @@ test_that("IL can be exported", {
   library(data.table)
   require(tidyverse)
 
-  myHermes <- genIL(myHermes, 1, ILParam())
+  myHermes <- generateIL(myHermes, 1, ILParam())
   exportIL(myHermes, id = 1, folder = getwd(), maxOver = 5, sepFiles = FALSE)
   exportIL(myHermes, id = 1, folder = getwd(), maxOver = 5, sepFiles = TRUE)
-  file.remove(c("./ExportedIL.csv", paste0(paste("./Injection", seq(1,5), sep = "_"), ".csv")))
+  file.remove(c("./ExportedIL.csv",
+                paste0(paste("./Injection", seq(1,5), sep = "_"), ".csv")))
   succeed()
 })
 

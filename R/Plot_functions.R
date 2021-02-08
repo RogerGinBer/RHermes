@@ -50,7 +50,8 @@ setMethod("coveragePlot", signature = c("RHermesExp", "numeric"),
 function(struct, entry) {
     pl <- struct@data@PL[[entry]]@peaklist[, c("rt", "rtiv", "mz")]
     distinct_pl <- nrow(distinct(pl))
-    raw <- nrow(struct@data@PL[[entry]]@raw)
+    noise <- struct@metadata@ExpParam@nthr
+    raw <- nrow(filter(struct@data@PL[[entry]]@raw, .data$rtiv > noise))
     pieplot <- data.frame(Class = c("Covered", "Non-covered"),
                             Value = c(distinct_pl, raw - distinct_pl))
     colors <- c("rgb(211,94,96)", "rgb(128,133,133)")
@@ -486,8 +487,9 @@ function(struct, ms2id, ssnumber, patform, mode = "hits") {
 #'@export
 ILplot <- function(struct, ILnumber){
     ggplotly(ggplot(struct@data@MS2Exp[[ILnumber]]@IL@IL) +
-            geom_segment(aes(x=..start.., xend = ..end.., y=..mass..,
-                            yend=..mass.., color = log10(MaxInt))))
+            geom_segment(aes(x = .data[["start"]], xend = .data[["end"]],
+                            y = .data[["mass"]], yend = .data[["mass"]],
+                            color = log10(.data[["MaxInt"]]))))
 }
 
 #'@export
@@ -544,7 +546,7 @@ function(struct, ms2id, entryid, bymz = TRUE) {
         return(list(p_bymz = ggplotly(ggplot()), p_bygroup = ggplotly(ggplot()),
                     net = NA, pks = data.frame()))
     }
-    ss <- RHermes:::generate_ss(entryid, MS2list = ms2data, contaminant = 173.5,
+    ss <- generate_ss(entryid, MS2list = ms2data, contaminant = 173.5,
                         delta = 0.1, fs = character(), idx = numeric(),
                         to_plot = TRUE)
     soi <- ss$soi

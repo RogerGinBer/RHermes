@@ -12,7 +12,6 @@
 #' @export
 exportMSP <- function(struct, ID, fname, idx = NA) {
     sstable <- struct@data@MS2Exp[[ID]]@Ident[[1]]
-    charge <- struct@metadata@ExpParam@ion
     if (is.na(idx)) {
         idx <- seq_len(nrow(sstable))
     }

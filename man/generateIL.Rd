@@ -31,6 +31,3 @@ par <- ILParam(filtermz = 0.5, priorization = "full")
 myHermes <- generateIL(myHermes, 1, par)
 }
 }
-\seealso{
-\link[RHermes]{ILParam} \link[RHermes]{RHermesMS2Exp}
-}

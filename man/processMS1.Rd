@@ -26,6 +26,8 @@ functions. For each file a PL object is generated inside the
 object_data_PL slot.
 }
 \examples{
+\dontrun{
 processMS1(myHermes, 'C:/myFolder/myFile.mzML', FALSE) #For regular use
 processMS1(myHermes, 'C:/myFolder/myFile.mzML', TRUE) #For labelled data
+}
 }

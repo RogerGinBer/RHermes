@@ -36,7 +36,7 @@ ExpParam <- setClass("ExpParam", slots = list(ppm = "numeric",
     res = "numeric", nthr = "numeric", minmz = "numeric", maxmz = "numeric",
     ion = "character", instr = "character", DB = "list", adlist = "data.frame",
     ionF = "list", isoList = "list"), prototype = list(ppm = 5,
-    res = 60000, nthr = 100, minmz = 80, maxmz = 1000, ion = "+",
+    res = 60000, nthr = 1000, minmz = 80, maxmz = 1000, ion = "+",
     instr = "QTOF", DB = list(), adlist = data.frame(), ionF = list(),
     isoList = list()))
 
@@ -45,7 +45,7 @@ ExpParam <- setClass("ExpParam", slots = list(ppm = "numeric",
 SOIParam <- setClass("SOIParam", slots = list(specs = "data.frame",
     maxlen = "numeric", minint = "numeric", blanksub = "logical",
     blankname = "character"), prototype = list(specs = data.frame(),
-    maxlen = 30, minint = 100, blanksub = FALSE, blankname = "None"))
+    maxlen = 30, minint = 1000, blanksub = FALSE, blankname = "None"))
 
 
 #'@export RHermesPL
@@ -82,6 +82,7 @@ RHermesIdent <- setClass("RHermesIdent",
 
 
 #' @import BiocParallel
+#' @export
 setRHermesCluster <- function(){
     if (Sys.info()[1] == "Windows") {
         ram <- system2("wmic", args =  "OS get FreePhysicalMemory /Value",
@@ -137,7 +138,7 @@ RHermesMeta <- setClass("RHermesMeta",
                     paste(Sys.info(), collapse = "/")),
                     paste("RHermes version:",
                     packageVersion("RHermes"))),
-        cluster = RHermes:::setRHermesCluster()
+        cluster = setRHermesCluster()
     )
 )
 

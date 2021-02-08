@@ -3,7 +3,7 @@
 #' @import visNetwork
 #' @import KEGGREST
 #' @import slickR
-#' @import DT
+#' @importFrom DT dataTableOutput renderDataTable
 #' @import shinyFiles
 
 #' @export

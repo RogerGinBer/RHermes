@@ -117,17 +117,17 @@ function(struct, db = "hmdb", adcharge = 1, admult = 1, filename = "./app/www",
     minmz <- struct@metadata@ExpParam@minmz
     maxmz <- struct@metadata@ExpParam@maxmz
     dbdata <- switch(db,
-        hmdb = RHermes:::database_importer("hmdb",
+        hmdb = database_importer("hmdb",
                                             minmass = minmz,
                                             maxmass = maxmz),
-        norman = RHermes:::database_importer("norman",
+        norman = database_importer("norman",
                                             minmass = minmz,
                                             maxmass = maxmz),
-        custom = RHermes:::database_importer("custom",
+        custom = database_importer("custom",
                                             filename = filename,
                                             minmass = minmz,
                                             maxmass = maxmz),
-        kegg_p = RHermes:::database_importer("kegg_p",
+        kegg_p = database_importer("kegg_p",
                                             keggpath = keggpath,
                                             minmass = minmz,
                                             maxmass = maxmz),
@@ -135,7 +135,7 @@ function(struct, db = "hmdb", adcharge = 1, admult = 1, filename = "./app/www",
     )
     struct@metadata@ExpParam@DB <- dbdata
     #Set corresponding adduct table
-    ad <- RHermes:::adductTables(adcharge, admult)
+    ad <- adductTables(adcharge, admult)
     ion <- struct@metadata@ExpParam@ion
     if (ion == "+") {
         struct@metadata@ExpParam@adlist <- ad[[2]]

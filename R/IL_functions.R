@@ -15,7 +15,6 @@
 #'@return An RHermes object with the IL inside a new MS2Exp entry, inside
 #'the data slot
 #'
-#'@seealso \link[RHermes]{ILParam} \link[RHermes]{RHermesMS2Exp}
 #'
 #'@examples
 #'if(FALSE){
@@ -60,7 +59,7 @@ inclusionList <- function(struct, params, id) {
     filterrt <- params@filterrt
     
     if (priorization == "yes") {
-        GL <- RHermes:::GLprior(GL, adduct, rtmargin, ppm)
+        GL <- GLprior(GL, adduct, rtmargin, ppm)
         low <- which(GL$MaxInt < 50000)
         rare <- which(vapply(GL$ad[low], function(x) {
             !any(unlist(x) %in% c("M+H", "M+NH4", "M+Na", "M+K", "M+", "M-H",
@@ -89,12 +88,12 @@ inclusionList <- function(struct, params, id) {
     }
     
     #Group entries by similar characterization attributes
-    GL <- RHermes:::GLgroup(GL, rtmargin, ppm)
+    GL <- GLgroup(GL, rtmargin, ppm)
     
     #Tidy the entries, sort them by relevance and store them into a internal DF
     #Keep the important info for MS2 acquisition (rti, rtf and mass for
     #planning injections)
-    GL <- RHermes:::GLtidy(GL, filterrt, filtermz)
+    GL <- GLtidy(GL, filterrt, filtermz)
     
     GL$entrynames <- vapply(GL$jointentries, function(entry) {
         res <- lapply(entry$metadata, function(subentry) {

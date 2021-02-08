@@ -17,11 +17,11 @@ test_that("SOI generation works",{
   myHermes <- RHermesExp()
   myHermes <- setDB(myHermes, db = "hmdb")
   myHermes@metadata@cluster <- BiocParallel::SnowParam(1)
-  myHermes <- FileProc(myHermes, system.file("extdata",
+  myHermes <- processMS1(myHermes, system.file("extdata",
                                              "MS1TestData.mzML",
                                              package = "RHermes"))
-  myHermes <- SOIfinder(myHermes, getSOIpar(), 1)
-  expect_equal(nrow(myHermes@data@SOI[[1]]@SoiList), 165)
+  myHermes <- findSOI(myHermes, getSOIpar(), 1)
+  expect_equal(nrow(myHermes@data@SOI[[1]]@SoiList), 199)
 })
 
 test_that("Blank substraction is configured and works",{
@@ -46,7 +46,7 @@ test_that("Blank substraction is configured and works",{
   myHermes@data@PL <- c(myHermes@data@PL, myHermes@data@PL)
   myHermes@data@PL[[1]]@peaklist$rtiv <- myHermes@data@PL[[2]]@peaklist$rtiv*
     rnorm(100)^2
-  myHermes <- SOIfinder(myHermes, getSOIpar(), 1, 2)
+  myHermes <- findSOI(myHermes, getSOIpar(), 1, 2)
 
   p <- RHermes::SoiPlot(struct = myHermes, id = 2, formula = "C2H7NO3S",
                               blankid = 2, rtrange = c(0,1500),
@@ -68,8 +68,8 @@ context("SOI cleanup works")
 test_that("SOI are filtered correctly", {
   myHermes <- readRDS(system.file("extdata", "afterSOI.rds" ,
                                   package = "RHermes"))
-  myHermes <- SOIcleaner(myHermes, 1, 50000, TRUE)
-  expect_equal(nrow(myHermes@data@SOI[[1]]@SoiList), 2)
+  myHermes <- cleanSOI(myHermes, 1, 50000, TRUE)
+  expect_equal(nrow(myHermes@data@SOI[[1]]@SoiList), 41)
 })
 
 
