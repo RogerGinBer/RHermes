@@ -75,6 +75,196 @@ exportMGF <- function(struct, ID, fname, idx = NA) {
     sink()
 }
 
+#' @title exportmzML
+#' @param struct RHermesExp object
+#' @param ID Index of the MS2Exp that you want to export
+#' @param fname Name of the output file, without the .mzML termination
+#' @description  Exports the superspectra of a given MS2Exp ID into an
+#' mzML format file. Warning! The retention time information is not 
+#' included in the mzML file.
+#' @return An .mzML file
+#' @examples
+#'   if(FALSE){
+#'        exportmzML(myHermes, 1, "output")
+#'    }
+#' @export
+exportmzML <- function(struct, ID, fname,idx=NA) {
+  Ident <- struct@data@MS2Exp[[ID]]@Ident
+  IL <- struct@data@MS2Exp[[ID]]@IL@IL
+  MS2Data <- struct@data@MS2Exp[[ID]]@MS2Data
+  MS2Features <- Ident$MS2Features
+  if(is.null(MS2Features)){stop("No MS2 spectra found for that MS2Exp ID index")}
+  out_file <- paste0(fname, ".mzML")
+  if(!is.na(idx)){
+    Ident <- Ident[idx]
+    IL <- IL[sidx,]
+    MS2Data <- MS2Data[idx]
+    MS2Features <- MS2Features[idx,]
+    out_file <- paste0(fname,"_",paste(idx[1],idx[length(idx)],sep="_"), ".mzML")
+  }
+  minMZ <- ABres@metadata@ExpParam@minmz
+  maxMZ <- ABres@metadata@ExpParam@maxmz
+  if(ABres@metadata@ExpParam@ion=="+"){
+    polValue <- 1
+  }else{
+    polValue <- 0
+  }
+  pks <- list() #list of matrices columns = mz intensity
+  ## Get the header
+  hdr <- structure(list(seqNum = integer(0), acquisitionNum = integer(0), 
+                        msLevel = integer(0), polarity = integer(0), 
+                        peaksCount = integer(0), totIonCurrent = numeric(0),
+                        retentionTime = numeric(0), basePeakMZ = numeric(0), 
+                        basePeakIntensity = numeric(0), 
+                        collisionEnergy = numeric(0), 
+                        ionisationEnergy = numeric(0), lowMZ = numeric(0), 
+                        highMZ = numeric(0), precursorScanNum = integer(0),
+                        precursorMZ = numeric(0), precursorCharge = integer(0),
+                        precursorIntensity = numeric(0), mergedScan = integer(0),
+                        mergedResultScanNum = integer(0), 
+                        mergedResultStartScanNum = integer(0), 
+                        mergedResultEndScanNum = integer(0), 
+                        injectionTime = numeric(0), filterString = character(0), 
+                        spectrumId = character(0), centroided = logical(0), 
+                        ionMobilityDriftTime = numeric(0), 
+                        isolationWindowTargetMZ = numeric(0), 
+                        isolationWindowLowerOffset = numeric(0), 
+                        isolationWindowUpperOffset = numeric(0), 
+                        scanWindowLowerLimit = numeric(0), 
+                        scanWindowUpperLimit = numeric(0)), 
+                   row.names = integer(0), class = "data.frame")
+  
+  
+  for(i in 1:nrow(MS2Features)){ 
+    precMZ <- MS2Features$precmass[i] 
+    rt <- i*0.5
+    for(l in 1:2){
+      if(l==1){
+        precInt <- 10000
+        ssdata <- matrix(c(precMZ,precInt),nrow = 1,ncol=2)
+        for(r in 10:1){
+          j <- nrow(hdr)+1
+          hdr[j,] <- NA
+          pks <- append(pks,list(ssdata))
+          rt2 <- rt -(0.025*r)
+          hdr$retentionTime[j] <- rt2
+          hdr$msLevel[j] <- l
+          hdr$polarity[j] <- polValue
+          hdr$peaksCount[j] <- nrow(ssdata)
+          hdr$totIonCurrent[j] <- sum(ssdata[,2])
+          imax <- which.max(ssdata[,2])
+          hdr$basePeakMZ[j] <- ssdata[imax,1]
+          hdr$basePeakIntensity[j] <- ssdata[imax,2]
+          hdr$ionisationEnergy[j] <- 0
+          hdr$lowMZ[j] <- min(ssdata[,1])
+          hdr$highMZ[j] <- max(ssdata[,1])
+          hdr$precursorCharge[j] <- 0
+          hdr$injectionTime[j] <- 100
+          hdr$centroided[j] <- T
+          hdr$scanWindowLowerLimit[j] <- minMZ
+          hdr$scanWindowUpperLimit[j] <- maxMZ
+          if(polValue==1){
+            polString <- "FTMS + p ESI Full ms ["
+          }else{
+            polString <- "FTMS - p ESI Full ms ["
+          }
+          hdr$filterString[j] <- paste0(polString, 
+                                        hdr$scanWindowLowerLimit[j],".0000-",
+                                        hdr$scanWindowUpperLimit[j],".0000]")
+        }
+      }else{
+        j <- nrow(hdr)+1
+        hdr[j,] <- NA
+        ssdata <- MS2Features$ssdata[[i]] 
+        ssdata <- ssdata[order(ssdata$mz),]
+        ssdata <- as.matrix(ssdata)
+        colnames(ssdata) <- NULL
+        pks <- append(pks,list(ssdata))
+        rt2 <- rt+0.025
+        hdr$retentionTime[j] <- rt2
+        hdr$precursorMZ[j] <- precMZ
+        hdr$isolationWindowTargetMZ[j] <- precMZ
+        hdr$precursorIntensity[j] <- precInt
+        hdr$msLevel[j] <- l
+        hdr$polarity[j] <- polValue
+        hdr$peaksCount[j] <- nrow(ssdata)
+        hdr$totIonCurrent[j] <- sum(ssdata[,2])
+        imax <- which.max(ssdata[,2])
+        hdr$basePeakMZ[j] <- ssdata[imax,1]
+        hdr$basePeakIntensity[j] <- ssdata[imax,2]
+        hdr$collisionEnergy[j] <- 35
+        hdr$ionisationEnergy[j] <- 0
+        hdr$lowMZ[j] <- min(ssdata[,1])
+        hdr$highMZ[j] <- max(ssdata[,1])
+        hdr$precursorCharge[j] <- 0
+        hdr$injectionTime[j] <- 50
+        hdr$centroided[j] <- T
+        hdr$isolationWindowLowerOffset <- 0.8
+        hdr$isolationWindowUpperOffset <- 0.8
+        minMZfilter <- minMZ
+        maxMZfilter <- max(c(hdr$highMZ[j],hdr$precursorMZ[j]))
+        maxMZfilter <- round(maxMZfilter,0)+20
+        if(polValue==1){
+          polString2 <- "FTMS + p ESI d Full ms2 "
+        }else{
+          polString2 <- "FTMS - p ESI d Full ms2 "
+        }
+        hdr$filterString[j] <- paste0(polString2,
+                                      hdr$precursorMZ[j],"@hcd",
+                                      hdr$collisionEnergy[j],".00 [",
+                                      minMZfilter,".0000-",
+                                      maxMZfilter,".0000]")
+        hdr$scanWindowLowerLimit[j] <- minMZfilter 
+        hdr$scanWindowUpperLimit[j] <- maxMZfilter
+      }
+    }
+    j <- nrow(hdr)+1
+    hdr[j,] <- NA
+    ssdata <- matrix(c(precMZ,precInt*0.5),nrow = 1,ncol=2)
+    pks <- append(pks,list(ssdata))
+    rt2 <- rt+0.1
+    hdr$retentionTime[j] <- rt2
+    hdr$msLevel[j] <- 1
+    hdr$polarity[j] <- polValue
+    hdr$peaksCount[j] <- nrow(ssdata)
+    hdr$totIonCurrent[j] <- sum(ssdata[,2])
+    imax <- which.max(ssdata[,2])
+    hdr$basePeakMZ[j] <- ssdata[imax,1]
+    hdr$basePeakIntensity[j] <- ssdata[imax,2]
+    hdr$ionisationEnergy[j] <- 0
+    hdr$lowMZ[j] <- min(ssdata[,1])
+    hdr$highMZ[j] <- max(ssdata[,1])
+    hdr$precursorCharge[j] <- 0
+    hdr$injectionTime[j] <- 100
+    hdr$centroided[j] <- T
+    hdr$scanWindowLowerLimit[j] <- minMZ
+    hdr$scanWindowUpperLimit[j] <- maxMZ
+    hdr$filterString[j] <- paste0(polString,
+                                  hdr$scanWindowLowerLimit[j],".0000-",
+                                  hdr$scanWindowUpperLimit[j],".0000]")
+  }
+  
+  for(i in 1:nrow(hdr)){
+    if(hdr$msLevel[i]==1){
+      hdr$seqNum[i] <- i
+      hdr$acquisitionNum[i] <- i
+      j <- i
+    }else{
+      hdr$seqNum[i] <- i
+      hdr$acquisitionNum[i] <- i
+      hdr$precursorScanNum[i] <- j
+    }
+    
+  }
+  hdr$spectrumId <- paste0("controllerType=0 controllerNumber=1 scan=",
+                           hdr$seqNum)
+  rownames(hdr) <- NULL
+  file.remove(out_file)
+  mzR::writeMSData(object = pks, file = out_file, header = hdr)
+  of <- mzR::openMSfile(out_file)
+  mzR::close(of)
+}
+
 #'@export
 setGeneric("exportIdent", function(struct, ms2id, file){
     standardGeneric("exportIdent")
