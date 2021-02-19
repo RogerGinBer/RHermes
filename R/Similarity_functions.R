@@ -80,6 +80,22 @@ MSMScosineSim <-
         return(cos)
     }
 
+#' @import philentropy
+#' @export
+calculate_MS2_distance <- function(P, Q, method = "cosine", minint = 0.1, minhits = 1){
+    if(method == "cosine"){
+        MSMScosineSim(P, Q, minint = minint, minhits = minhits)
+    } else if (method %in% c("fidelity", "squared_chord", "topsoe",
+                             "jaccard", "canberra")) {
+        l <- match_spec(P, Q, minint = minint, minhits = minhits)
+        if(length(l) == 0) return(0)
+        p <- rbind(l[[1]]/sum(l[[1]]), l[[2]]/sum(l[[2]]))
+        #small delta added to avoid 0log0 error in topsoe
+        suppressMessages(philentropy::distance(p + 1e-12, method = method))
+    } else {
+        stop("Unvalid method provided")
+    }
+}
 
 
 

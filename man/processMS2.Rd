@@ -11,7 +11,9 @@ processMS2(
   sstype = "regular",
   useDB = FALSE,
   referenceDB = "D:/sp_MassBankEU_20200316_203615.RData",
-  mincos = 0.8
+  mincos = 0.8,
+  minhits = 1,
+  method = "cosine"
 )
 }
 \arguments{

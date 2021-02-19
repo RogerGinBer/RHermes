@@ -31,14 +31,14 @@
 setGeneric("processMS2",
         function(struct, id, MS2files, sstype = "regular", useDB = FALSE,
                     referenceDB = "D:/sp_MassBankEU_20200316_203615.RData",
-                    mincos = 0.8, minhits = 1) {
+                    mincos = 0.8, minhits = 1, method = "cosine") {
     standardGeneric("processMS2")
 })
 setMethod("processMS2",
             c("RHermesExp", "numeric", "character", "character", "ANY", "ANY"),
 function(struct, id, MS2files, sstype = "regular", useDB = FALSE,
             referenceDB = "D:/sp_MassBankEU_20200316_203615.RData",
-            mincos = 0.8, minhits = 1) {
+            mincos = 0.8, minhits = 1, method = "cosine") {
     ## MS2 Data Importation and sorting within IL
     validObject(struct)
     MS2Exp <- struct@data@MS2Exp[[id]]
@@ -150,7 +150,7 @@ function(struct, id, MS2files, sstype = "regular", useDB = FALSE,
     })
     names(retrievedMSMS) <- allf
 
-    message("Calculating Cosine similarities")
+    message(paste("Calculating", method, "similarities"))
 
     corresponding <- lapply(purifiedSpectra$anot, function(x){
         which(allf %in% x)
@@ -161,7 +161,7 @@ function(struct, id, MS2files, sstype = "regular", useDB = FALSE,
         curspec <- unlist(curspec, recursive = FALSE, use.names = FALSE)
         names(curspec) <- n
         cos <- rapply(curspec, function(compound) {
-            MSMScosineSim(entry, t(compound), minhits = minhits)
+            calculate_MS2_distance(entry, t(compound), minhits = minhits, method = method)
         }, classes = "matrix", how = "replace")
         cos[which(lapply(cos, length) != 0)]
     }, purifiedSpectra$ssdata, corresponding)
@@ -667,5 +667,38 @@ wrapper_allscan_ss <- function(curentry, idx, MS2list, fs) {
     }) %>% rbindlist()
 }
 
+
+match_spec <- function(P, Q, mzdiff = 0.1, minint = 0.1, minhits = 1){
+    if (nrow(P) == 0 | nrow(Q) == 0) {
+        stop("Invalid pattern or query")
+    }
+    if (is.null(dim(Q))) {
+        Q <- matrix(Q, ncol = 2, byrow = TRUE)
+    }
+    Q <- Q[Q[, 2] > minint, , drop = FALSE]
+    patint <- c()
+    qint <- c()
+    allmz <- unique(P$mz)
+    allmz <- sort(c(P$mz,Q[, 1]))
+    toignore <- c()
+    for (i in seq_along(allmz)) {
+        if(!i%in%toignore){
+            m <- allmz[i]
+            dist1 <- abs(Q[, 1] - m)
+            dist2 <- abs(P[, 1] - m)
+            if( any(dist1 < mzdiff) | any(dist2 < mzdiff)   ){
+                seqmz <- which(abs(allmz-m)<mzdiff)
+                patint <- c(patint , sum(P[which(dist2 < mzdiff), 2]))
+                qint <- c(qint, sum(Q[which(dist1 < mzdiff) , 2]))
+                toignore <- c(toignore,seqmz)
+            }
+        }
+    }
+    
+    if (length(patint) < minhits | length(qint) < minhits) {
+        return()
+    }
+    return(list(patint, qint))
+}
 
 

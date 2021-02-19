@@ -57,7 +57,6 @@ inclusionList <- function(struct, params, id) {
     adduct <- params@ad
     filtermz <- params@filtermz
     filterrt <- params@filterrt
-    
     if (priorization == "yes") {
         GL <- GLprior(GL, adduct, rtmargin, ppm)
         low <- which(GL$MaxInt < 50000)
@@ -115,7 +114,6 @@ GLprior <- function(GL, ad, rtmargin, ppm) {
                 Please use cleanSOI() before priorization.")
         return(GL)
     }
-    GL$originalrows <- seq_len(nrow(GL))
     for (i in ad) {
         message(paste("Prioritizing", i))
         priorityentries <- GL[unlist(vapply(GL$ad, function(x) {
@@ -127,7 +125,7 @@ GLprior <- function(GL, ad, rtmargin, ppm) {
         connections <- unlist(lapply(priorityentries$adrows, function(ads) {
             ads[[i]]
         }))
-        toremove <- which(GL$originalrows %in% connections)
+        toremove <- which(GL$originalID %in% connections)
         for (j in toremove) {
             st <- GL$start[j]
             end <- GL$end[j]
@@ -141,7 +139,7 @@ GLprior <- function(GL, ad, rtmargin, ppm) {
         if (length(toremove) == 0) {next}
         GL <- GL[-unique(toremove), ]
     }
-    return(GL[, -c("originalrows")])
+    return(GL)
 }
 
 GLgroup <- function(GL, rtmargin, ppm) {
