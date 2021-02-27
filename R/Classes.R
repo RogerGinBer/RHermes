@@ -1,3 +1,6 @@
+#Avoids R CMD CHECK notes on data.table package
+# if(getRversion() >= "2.15.1")  utils::globalVariables(c("."))
+
 #' @title ExpParam
 #' @description ExpParam holds all experimental data as well as database-related
 #'  info generated during the processing steps. Use setExpParams to save it into
@@ -74,11 +77,6 @@ RHermesIL <- setClass("RHermesIL", slots = list(IL = "data.table",
 #' @export RHermesMS2Exp
 RHermesMS2Exp <- setClass("RHermesMS2Exp", slots = list(IL = "RHermesIL",
     MS2Data = "list", Ident = "list"))
-
-
-RHermesIdent <- setClass("RHermesIdent",
-                            slots = list(IdentifiedSOI = "data.table",
-    CompoundList = "list", MSMSMatchings = "list", Metadata = "list"))
 
 
 #' @import BiocParallel
