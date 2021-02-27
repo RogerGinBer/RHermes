@@ -525,7 +525,8 @@ function(struct, ms2id, ssnumber) {
                                     max(query$mz, molecmass) + 20))+
         ggtitle(title, subtitle)
 
-    ggplotly(pl, height = 400)
+    # ggplotly(pl, height = 400)
+    pl
 })
 
 
@@ -588,12 +589,12 @@ function(struct, ms2id, entryid, bymz = TRUE) {
                                                             as.character(i))
     }
 
-    p_bymz <- ggplotly(ggplot(rbind(soi, oldpoints)) +
+    p_bymz <- ggplot(rbind(soi, oldpoints)) +
                 geom_point(aes(x = rt, y = rtiv, color = as.factor(mz)))+
-                xlim(xlim))
-    p_bygroup <- ggplotly(ggplot(rbind(soi, oldpoints)) +
+                xlim(xlim)
+    p_bygroup <- ggplot(rbind(soi, oldpoints)) +
                 geom_point(aes(x = rt, y = rtiv, color = as.factor(member)))+
-                xlim(xlim))
+                xlim(xlim)
 
     net <- networkD3::igraph_to_networkD3(net, group = members)
 
