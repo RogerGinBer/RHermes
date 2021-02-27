@@ -129,4 +129,13 @@ setMethod("Ident", c("RHermesExp", "numeric"), function(struct, id) {
     struct@data@MS2Exp[[id]]@Ident[[1]]
 })
 
+#'@export
+setGeneric("Cluster", function(struct) {
+    standardGeneric("Cluster")
+})
+setMethod("Cluster", c("RHermesExp"), function(struct) {
+    validObject(struct)
+    struct@metadata@cluster
+})
+
 

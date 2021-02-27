@@ -142,6 +142,7 @@ function(struct, db = "hmdb", adcharge = 1, admult = 1, filename = "./app/www",
     } else {
         struct@metadata@ExpParam@adlist <- ad[[1]]
     }
+    row.names(struct@metadata@ExpParam@adlist) <- NULL
     struct <- setTime(struct, paste("Added the", db,
                                     "formula database and an adduct list",
                                     "with charge", adcharge, "and multiplicity",
@@ -190,8 +191,6 @@ function(struct, name, deltam, ch = 1, mult = 1, toadd = "FALSE",
                             Formula_add = toadd, Formula_ded = tosub)
     struct@metadata@ExpParam@adlist <- rbind(struct@metadata@ExpParam@adlist,
                                                 newentry)
-    message("This is the new adduct list: ")
-    show(struct@metadata@ExpParam@adlist)
     struct <- setTime(struct, paste("Added the adduct", name,
                                     "with mass", deltam))
     return(struct)

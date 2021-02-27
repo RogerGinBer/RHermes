@@ -83,7 +83,11 @@ RHermesIdent <- setClass("RHermesIdent",
 
 #' @import BiocParallel
 #' @export
-setRHermesCluster <- function(){
+setCluster <- function(struct = NULL, cl = NULL){
+    if(!is.null(struct) & !is.null(cl)){
+        struct@metadata@cluster <- cl
+        return(struct)
+    }
     if (Sys.info()[1] == "Windows") {
         ram <- system2("wmic", args =  "OS get FreePhysicalMemory /Value",
                         stdout = TRUE)
@@ -138,7 +142,7 @@ RHermesMeta <- setClass("RHermesMeta",
                     paste(Sys.info(), collapse = "/")),
                     paste("RHermes version:",
                     packageVersion("RHermes"))),
-        cluster = setRHermesCluster()
+        cluster = setCluster()
     )
 )
 
