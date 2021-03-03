@@ -7,45 +7,40 @@ test_that("cosineSim works", {
 })
 
 test_that("Compounds are identified", {
-    #Depends on copyrighted databases and local MS2 files, so we skip it
-    skip_on_bioc() 
-    skip_if(length(list.files("D:/ABrunner Plasma/MS2data", 
+    #Depends on a large MS2 local files, so we skip it
+    skip_on_bioc()
+    skip_on_cran()
+    skip_if(length(list.files("E:/ABrunner Plasma/MS2data",
                             pattern = ".*pos.*.mzML", full.names = TRUE)) == 0)
-    myHermes <- readRDS(system.file("extdata", "testIL.rds",
+
+    myHermes <- readRDS(system.file("extdata",
+                                    "exampleObject.rds",
                                     package = "RHermes"))
-
-    MS2files <- list.files("D:/ABrunner Plasma/MS2data",
-                           pattern = ".*pos.*.mzML", full.names = TRUE)[1:5]
+    MS2files <- list.files("E:/ABrunner Plasma/MS2data",
+                           pattern = ".*pos.*.mzML", full.names = TRUE)[1:9]
     myHermes <- processMS2(myHermes, 1, MS2files, sstype = "regular",
-                        referenceDB = "D:/MS2ID_B2R_20201113_083214.rds",
-                        useDB = TRUE)
-
-    expect_equal(nrow(myHermes@data@MS2Exp[[1]]@Ident[[1]]),  15)
+                           useDB = FALSE)
+    expect_equal(nrow(myHermes@data@MS2Exp[[1]]@Ident[[1]]),  7)
 })
 
 test_that("Superspectra can be exported", {
-    myHermes <- readRDS(system.file("extdata", "withIdent.rds",
+    myHermes <- readRDS(system.file("extdata",
+                                    "exampleObject.rds",
                                     package = "RHermes"))
     exportMGF(myHermes, 1, "test")
     exportMSP(myHermes, 1, "test")
-    file.remove(c("./test.mgf", "./test.msp"))
+    exportmzML(myHermes, 1, "test")
+    exportSIRIUS(myHermes, 1, "test")
+    file.remove(c("./test.mgf", "./test.msp", "./test.mzML", "./test.ms"))
     succeed()
 })
 
-test_that("Mirror plot works", {
-    myHermes <- readRDS(system.file("extdata", "withIdent.rds",
-                                    package = "RHermes"))
-    p <- RHermes::MirrorPlot(myHermes, 1, 2, patform = 1, mode = "versus")
-    expect_true(is(p, "plotly"))
-})
 
 test_that("Raw MS2 plot works", {
-    myHermes <- readRDS(system.file("extdata", "withIdent.rds",
+    myHermes <- readRDS(system.file("extdata",
+                                    "exampleObject.rds",
                                     package = "RHermes"))
 
-    p <- RHermes::RawMS2Plot(myHermes, ms2id = 1, entryid = 22,
-                                   bymz = TRUE)
-    p2 <- RHermes::RawMS2Plot(myHermes, 1, 4, bymz = FALSE)
-    expect_true(is(p[[1]], "plotly") & is(p[[3]], "visNetwork"))
-    expect_true(is(p2[[1]], "plotly") & is(p2[[3]], "visNetwork"))
+    p <- RHermes::plotRawMS2(myHermes, ms2id = 1, entryid = 2)
+    succeed()
 })

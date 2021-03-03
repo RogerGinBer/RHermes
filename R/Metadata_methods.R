@@ -1,4 +1,6 @@
 #'@export
+#'@rdname ExpParam-class
+#' @param object An ExpParam object
 setMethod("show", "ExpParam", function(object){
     message("Experimental parameters info:")
     message(paste0("\tppm error: ", object@ppm))
@@ -23,10 +25,10 @@ setMethod("show", "ExpParam", function(object){
 #'  RHermesExp object. The user can either provide an ExpParam object
 #' (partially or fully customized) or provide a template tag to use a pre-made
 #'  parameter set.
-#' @slot struct The RHermesExp object to modify.
-#' @slot params Optional if using template. An ExpParam object detailing a
+#' @param struct The RHermesExp object to modify.
+#' @param params Optional if using template. An ExpParam object detailing a
 #'  custom set of parameters.
-#' @slot template Ignored if using params. A character describing the ID of
+#' @param template Ignored if using params. A character describing the ID of
 #'  the pre-made parameter set to use. Currently you can use: 'orbi-pos',
 #' 'orbi-neg', 'qtof-pos' and 'qtof-neg'. The parameters can be found,
 #'  modified or even expanded in the csv at app/www/InstrumentTemplates.csv
@@ -48,6 +50,7 @@ setGeneric("setExpParam", function(struct, params = ExpParam(),
                                     template = character(0)) {
     standardGeneric("setExpParam")
 })
+#' @rdname setExpParam
 setMethod("setExpParam", signature = c("RHermesExp", "ANY", "ANY"),
 function(struct, params = ExpParam(), template = character(0)) {
     validObject(struct)
@@ -85,16 +88,18 @@ function(struct, params = ExpParam(), template = character(0)) {
 #'   list used is based on the
 #'  \href{http://pubs.acs.org/doi/abs/10.1021/acs.analchem.5b00941}{EnviPat}
 #' package
-#' @slot struct The RHermesExp object to update
-#' @slot db A character defining which database to use. Currently we only
-#' support 'hmdb' \href{https://hmdb.ca/}{HMDB} and 'norman'
-#'  \href{https://www.norman-network.com/nds/susdat/}{NORMAN},
-#'  but  new database support and customizability will come in future releases.
-#' @slot adcharge The maximum charge (in absolute value, so polarity
+#' @param struct The RHermesExp object to update
+#' @param db A character defining which database to use. You can test a sample
+#' of HMDB or Norman using "hmdb" and "norman", respectively. Set it to "custom"
+#' to use your own database. You can also specify some kegg pathways with
+#' "kegg_p" and then a list of pathway IDs in the keggpath parameter.
+#' @param adcharge The maximum charge (in absolute value, so polarity
 #'  does not matter) the adducts in the list can have. Defaults to 1.
-#' @slot admult The maximum multiplicity (M, 2M, 3M and so on) the adducts
+#' @param admult The maximum multiplicity (M, 2M, 3M and so on) the adducts
 #'  can have. Defaults to 1.
-#' @slot folder Folder where the database is located.
+#' @param filename Address to where the database is located. Can be either a csv
+#' or a xls/xlsx.
+#' @param keggpath A list of KEGG pathway IDs
 #' @return An RHermesExp object with the formula and adduct database set.
 #' @examples
 #' if(FALSE){
@@ -108,6 +113,8 @@ setGeneric("setDB", function(struct, db = "hmdb", adcharge = 1,
                             admult = 1, filename = "./app/www", keggpath = "") {
     standardGeneric("setDB")
 })
+
+#' @rdname setDB
 setMethod("setDB", signature = c("RHermesExp", "ANY", "ANY", "ANY", "ANY",
                                     "ANY"),
 function(struct, db = "hmdb", adcharge = 1, admult = 1, filename = "./app/www",
@@ -151,35 +158,43 @@ function(struct, db = "hmdb", adcharge = 1, admult = 1, filename = "./app/www",
 })
 
 #' @title addAd
-#' @description Adds new custom adducts to the RHermesExp adduct list
-#' @details The function adds an entry to the Envipat-style dataframe containing
-#' the adducts used for the experiment. It is important to specify what atoms to
-#' add or substract to the molecular formula. Polarity is inferred directly from
-#' the specified charge.
+#' @description Adds new custom adducts to the RHermesExp adduct
+#'   list
+#' @details The function adds an entry to the Envipat-style
+#'   dataframe containing the adducts used for the experiment. It
+#'   is important to specify what atoms to add or substract to
+#'   the molecular formula. Polarity is inferred directly from
+#'   the specified charge.
 #' @return An updated RHermesExp object with the new adduct list
 #'
 #' @param struct The RHermesExp object
-#' @param name Name of the adduct to add
-#' @param ch Adduct charge. Remember to specify the symbol if negative.
+#' @param name Name of the adduct to add.
+#' @param deltam Delta m/z of the adduct, in Da.
+#' @param ch Adduct charge. Remember to specify the symbol if
+#'   negative.
 #' @param mult Multiplicity (eg, M, 2M, 3M, etc.)
-#' @param toadd Atoms to add to the formula when it ionizes as the adduct.
-#' (ex: M+H -> H1, M+Cl -> Cl1). Note the explicit use of a 1 after the symbol.
-#' @param tosub Atoms to substract to the formula. Same idea as in toadd.
-#' (ex: M-H2O+H -> H2O1)
+#' @param toadd Atoms to add to the formula when it ionizes as
+#'   the adduct. (ex: M+H -> H1, M+Cl -> Cl1). Note the explicit
+#'   use of a 1 after the symbol.
+#' @param tosub Atoms to substract to the formula. Same idea as
+#'   in toadd. (ex: M-H2O+H -> H2O1)
 #'
 #' @examples
 #' if(FALSE){
 #'  addAd(myHermes, 'M+H', 1.0072, ch = 1, mult = 1, toadd = 'H1')
 #' }
 #' @export
-setGeneric("addAd", function(struct, name, deltam, ch = 1, mult = 1,
-                                toadd = "FALSE", tosub = "FALSE") {
+setGeneric("addAd",
+    function(struct, name, deltam, ch = 1, mult = 1,
+            toadd = "FALSE", tosub = "FALSE") {
     standardGeneric("addAd")
 })
-setMethod("addAd", c("RHermesExp", "character", "numeric", "ANY", "ANY", "ANY",
-                        "ANY"),
-function(struct, name, deltam, ch = 1, mult = 1, toadd = "FALSE",
-            tosub = "FALSE") {
+#' @rdname addAd
+setMethod("addAd", c("RHermesExp", "character",
+                    "numeric", "ANY", "ANY", "ANY",
+                    "ANY"),
+function(struct, name, deltam, ch = 1, mult = 1,
+        toadd = "FALSE", tosub = "FALSE") {
     validObject(struct)
     if (ch == 0 | mult == 0) {
         warning("Invalid charge or multiplicity, they can't be zero")
@@ -216,6 +231,7 @@ function(struct, name, deltam, ch = 1, mult = 1, toadd = "FALSE",
 setGeneric("remAd", function(struct, name) {
     standardGeneric("remAd")
 })
+#' @rdname remAd
 setMethod("remAd", c("RHermesExp", "character"), function(struct, name) {
     validObject(struct)
     nad <- nrow(struct@metadata@ExpParam@adlist)

@@ -2,9 +2,12 @@
 % Please edit documentation in R/Metadata_methods.R
 \name{remAd}
 \alias{remAd}
+\alias{remAd,RHermesExp,character-method}
 \title{remAd}
 \usage{
 remAd(struct, name)
+
+\S4method{remAd}{RHermesExp,character}(struct, name)
 }
 \arguments{
 \item{struct}{The RHermesExp object}

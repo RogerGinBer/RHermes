@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# RHermes
+# RHermes <img src = "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Juvenile_Ragdoll.jpg/1200px-Juvenile_Ragdoll.jpg" height = "90" width = "90">
 
 <!-- badges: start -->
 
@@ -16,13 +16,11 @@ works with both Orbitrap and q-TOF instrument data.
 
 ## System requirements
 
-RHermes is quite heavy on the CPU and memory loads of your system, as it
-has been developed to use almost all available cores. For that reason
-you will need:
+The recommended system requirements are:
 
-  - At least a 4 core processor
-  - 16 GB of RAM or more
-  - An internet connection to perform KEGG queries
+-   At least a 4 core processor
+-   16 GB of RAM or more
+-   An internet connection to perform KEGG queries
 
 ## Installation
 
@@ -38,18 +36,18 @@ And the development version from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("RogerGinBer/Proves")
+devtools::install_github("RogerGinBer/RHermes")
 ```
 
 ## Setup
 
-RHermes can perform almost all its routines out of the box, but the SOI
-Blank Substraction step requires a valid Keras and Tensorflow
-installation, which rely on Python.
+RHermes can perform almost all its functions after installation, but the
+SOI Blank Substraction step requires a valid Keras and Tensorflow
+installation (which rely on Python).
 
 ### Option 1: Default installation
 
-In theory both Keras and Tensorflow can be configured with:
+In principle both Keras and Tensorflow can be configured with:
 
 ``` r
 reticulate::install_miniconda()
@@ -64,9 +62,9 @@ tensorflow::tf_config()
 model <- keras::load_model_tf(system.file("extdata", "model", package = "RHermes"))
 ```
 
-If both commands don’t yield any error (the “Your CPU supports …”
-warning is fine) you are set to go. If it fails (which can happen in
-some devices, try Option 2).
+If both commands don’t give any error (the “Your CPU supports …” warning
+is fine) the installation has been successful. If it fails (which can
+happen in some devices, try Option 2).
 
 ### Option 2: Dealing with the Installation yourself
 
@@ -96,17 +94,25 @@ environment.
 
 Also check out Keras and Tensorflow R tutorials.
 
-## Example
-
-This is a basic example which shows you how to solve a common problem:
+## Analyzing LC-MS data with RHermes
 
 ``` r
 library(RHermes)
-#> Warning: replacing previous import 'igraph::groups' by 'plotly::groups' when
-#> loading 'RHermes'
-#> Warning: replacing previous import 'ggplot2::last_plot' by 'plotly::last_plot'
-#> when loading 'RHermes'
-#> Warning: replacing previous import 'data.table::between' by 'dplyr::between'
-#> when loading 'RHermes'
-## basic example code
+#Generate a Exp object
+example <- RHermesExp()
+
+#Set your formula and adduct database
+example <- setDB(example, db = "hmdb")
+
+#Process your MS1 files
+example <- processMS1(example,
+                        system.file("extdata", "MS1TestData.mzML",
+                        package = "RHermes"))
+#Generate SOIs
+example <- findSOI(example, getSOIpar(), 1)
+
+#Generate an IL 
+example <- generateIL(example, 1, ILParam())
 ```
+
+Also check the User Guide for more detailed info.

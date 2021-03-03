@@ -1,15 +1,16 @@
 ---
 title: "RHermes User Guide"
-author: "Roger Giné Bertomeu"
+author: "Roger Gine Bertomeu"
 date: "`r Sys.Date()`"
 output:
-  html_document:
+    html_document:
       theme: flatly
       highlight: tango
       toc: true
       toc_float: true
 vignette: |
-  %\VignetteIndexEntry{RHermes_UserGuide} %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{RHermes_UserGuide}
+  %\VignetteEngine{knitr::knitr}
 ---
 
 ```{r setup, include=FALSE}
@@ -25,8 +26,7 @@ This document will guide you through the package functions and show you what a
 typical RHermes workflow looks like.
 
 ## Installation
-To install RHermes you need an R and RStudio installation. 
-Since RHermes is quite heavy on your CPU and memory it is recommended to have:
+The recommended specs for RHermes are:
 
  - At least a 4 core processor
  - 16 GB of RAM or more
@@ -35,15 +35,18 @@ Since RHermes is quite heavy on your CPU and memory it is recommended to have:
 You can install the released version of RHermes from 
 [Bioconductor](https://bioconductor.org/) with:
 
-``` r
-# install.packages("BiocManager")
+```{r, eval = FALSE}
+if(!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
 BiocManager::install("RHermes")
 ```
 
-And the development version from [GitHub](https://github.com/) with:
+Alternatively, you can download the development version from
+[GitHub](https://github.com/) with:
 
-``` r
-# install.packages("devtools")
+```{r, eval = FALSE}
+if(!requireNamespace("devtools", quietly = TRUE))
+    install.packages("devtools")
 devtools::install_github("RogerGinBer/RHermes")
 ```
 
@@ -203,9 +206,9 @@ myHermes <- findSOI(myHermes, s, c(2,2), c(0,1))
 Now that you generated a SOI list, you can now filter it to remove low
 intensity SOIs, bad isotopic fidelity SOIs and likely in-source fragments (ISF).
 
-For intensity and isotopic fidelity filtering we use cleanSOI():
+For intensity and isotopic fidelity filtering we use filterSOI():
 ```{r}
-myHermes <- cleanSOI(myHermes, soiid = 1, minint = 20000, isofidelity = TRUE)
+myHermes <- filterSOI(myHermes, id = 1, minint = 20000, isofidelity = TRUE)
 ```
 
 

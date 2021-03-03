@@ -1,4 +1,6 @@
 #'@export
+#' @rdname RHermesPL-class
+#' @param object An RHermesPL object
 setMethod("show", "RHermesPL", function(object){
     message("Info about this PeakList:")
     message(paste("\tOriginal filename:", object@filename))

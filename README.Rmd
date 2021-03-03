@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# RHermes
+# RHermes <img src = "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Juvenile_Ragdoll.jpg/1200px-Juvenile_Ragdoll.jpg" height = "90" width = "90">
 
 <!-- badges: start -->
 [![Codecov test coverage](https://codecov.io/gh/RogerGinBer/RHermes/branch/master/graph/badge.svg?token=HL73R4GHFJ)](https://codecov.io/gh/RogerGinBer/RHermes?branch=master)
@@ -27,8 +27,7 @@ both Orbitrap and q-TOF instrument data.
 
 ## System requirements
 
-RHermes is quite heavy on the CPU and memory loads of your system, as it has
-been developed to use almost all available cores. For that reason you will need:
+The recommended system requirements are:
 
 * At least a 4 core processor
 * 16 GB of RAM or more
@@ -36,27 +35,30 @@ been developed to use almost all available cores. For that reason you will need:
 
 ## Installation
 
-You can install the released version of RHermes from [Bioconductor](https://bioconductor.org/) with:
+You can install the released version of RHermes from
+[Bioconductor](https://bioconductor.org/) with:
 
-``` r
-# install.packages("BiocManager")
+```{r, eval = FALSE}
+if(!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
 BiocManager::install("RHermes")
 ```
 
-And the development version from [GitHub](https://github.com/) with:
+Alternatively, you can download the development version from
+[GitHub](https://github.com/) with:
 
-``` r
-# install.packages("devtools")
+```{r, eval = FALSE}
+if(!requireNamespace("devtools", quietly = TRUE))
+    install.packages("devtools")
 devtools::install_github("RogerGinBer/RHermes")
-```
 
 ## Setup
-RHermes can perform almost all its routines out of the box, but the SOI Blank
-Substraction step requires a valid Keras and Tensorflow installation, which rely
-on Python.
+RHermes can perform almost all its functions after installation, but the SOI
+Blank Substraction step requires a valid Keras and Tensorflow installation
+(which rely on Python).
 
 ### Option 1: Default installation
-In theory both Keras and Tensorflow can be configured with:
+In principle both Keras and Tensorflow can be configured with:
 
 ```{r, eval = FALSE}
 reticulate::install_miniconda()
@@ -68,16 +70,18 @@ After which you can check the following:
 tensorflow::tf_config()
 model <- keras::load_model_tf(system.file("extdata", "model", package = "RHermes"))
 ```
-If both commands don't yield any error (the "Your CPU supports ..." warning is fine)
-you are set to go. If it fails (which can happen in some devices, try Option 2).
+If both commands don't give any error (the "Your CPU supports ..." warning is
+fine) the installation has been successful. 
+If it fails (which can happen in some devices, try Option 2).
 
 ### Option 2: Dealing with the Installation yourself
 First install Miniconda:
 ```{r, eval = FALSE}
 reticulate::install_miniconda()
 ```
-Now find the Miniconda Prompt in your computer. Instead of relying on the default
-r-reticulate environment, type the following to create a new environment:
+Now find the Miniconda Prompt in your computer. Instead of relying on the
+default r-reticulate environment, type the following to create a new
+environment:
 
 conda create -n newenv python=3.6 tensorflow keras
 
@@ -95,7 +99,7 @@ Also check out Keras and Tensorflow R tutorials.
 
 ## Analyzing LC-MS data with RHermes
 
-```{r example}
+```{r example, eval = FALSE}
 library(RHermes)
 #Generate a Exp object
 example <- RHermesExp()
@@ -104,14 +108,14 @@ example <- RHermesExp()
 example <- setDB(example, db = "hmdb")
 
 #Process your MS1 files
-example <- FileProc(example,
-                    system.file("extdata", "MS1TestData.mzML",
-                                package = "RHermes"))
+example <- processMS1(example,
+                        system.file("extdata", "MS1TestData.mzML",
+                        package = "RHermes"))
 #Generate SOIs
-example <- SOIfinder(example, getSOIpar(), 1)
+example <- findSOI(example, getSOIpar(), 1)
 
-#Generate an IL and export it
-example <- genIL(example, 1, ILParam())
+#Generate an IL 
+example <- generateIL(example, 1, ILParam())
 ```
 
 Also check the User Guide for more detailed info.

@@ -2,9 +2,12 @@
 % Please edit documentation in R/IL_functions.R
 \name{generateIL}
 \alias{generateIL}
+\alias{generateIL,RHermesExp,numeric-method}
 \title{generateIL}
 \usage{
 generateIL(struct, id, par)
+
+\S4method{generateIL}{RHermesExp,numeric}(struct, id, par = ILParam())
 }
 \arguments{
 \item{struct}{The RHermesExp object in which to save the resulting IL}
@@ -14,16 +17,16 @@ generateIL(struct, id, par)
 \item{par}{An inclusion list parameter object, generated with ILParam()}
 }
 \value{
-An RHermes object with the IL inside a new MS2Exp entry, inside
-the data slot
+An RHermes object with the IL inside a new MS2Exp entry, inside the
+ data slot
 }
 \description{
 Groups the SOIs generated in the previous step and sets them up
-in an inclusion list ready for the MS/MS analysis. It takes into account the
-instrument precursor filter mz range and groups the SOIs accordingly.
-The user can also specify whether they want to use all SOIs or prioritize
-SOIs with a certain annotation (M+H adducts, prioritize SOIs with adequate
-isotopic patterns, etc.).
+ in an inclusion list ready for the MS/MS analysis. It takes into account the
+ instrument precursor filter mz range and groups the SOIs accordingly. The
+ user can also specify whether they want to use all SOIs or prioritize SOIs
+ with a certain annotation (M+H adducts, prioritize SOIs with adequate
+ isotopic patterns, etc.).
 }
 \examples{
 if(FALSE){

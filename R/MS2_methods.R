@@ -1,22 +1,24 @@
 #' @title exportMSP
+#' @family Exports
 #' @param struct RHermesExp object
-#' @param ID Index of the MS2Exp that you want to export
-#' @param fname Name of the output file, without the .msp termination
+#' @param id Index of the MS2Exp that you want to export
+#' @param file Name of the output file, without the .msp termination
+#' @param whichSpec Which entries to export. Defaults to all of them.
 #' @description  Exports the superspectra of a given MS2Exp ID into an
 #' .msp format file
 #' @return An .msp file
 #' @examples
 #'   if(FALSE){
-#'        exportMSP(myHermes, 1, "output")
+#'        exportMSP(struct, 1, "output")
 #'    }
 #' @export
-exportMSP <- function(struct, ID, fname, idx = NA) {
-    sstable <- struct@data@MS2Exp[[ID]]@Ident[[1]]
-    if (is.na(idx)) {
-        idx <- seq_len(nrow(sstable))
+exportMSP <- function(struct, id, file, whichSpec = NA) {
+    sstable <- struct@data@MS2Exp[[id]]@Ident[[1]]
+    if (is.na(whichSpec)) {
+        whichSpec <- seq_len(nrow(sstable))
     }
-    sink(file = paste0(fname, ".msp"))
-    for (i in idx) {
+    sink(file = paste0(file, ".msp"))
+    for (i in whichSpec) {
         curss <- sstable[i, ]
         precmz <- curss$precmass
         ssdata <- curss$ssdata[[1]]
@@ -37,25 +39,25 @@ exportMSP <- function(struct, ID, fname, idx = NA) {
 
 
 #' @title exportMGF
-#' @param struct RHermesExp object
-#' @param ID Index of the MS2Exp that you want to export
-#' @param fname Name of the output file, without the .mgf termination
+#' @family Exports
+#' @inheritParams exportMSP
+#' @param file Name of the output file, without the .mgf termination
 #' @description  Exports the superspectra of a given MS2Exp into an
 #'  .mgf format file
 #' @return An .msf file
 #' @examples
 #'   if(FALSE){
-#'        exportMGF(myHermes, 1, "output")
+#'        exportMGF(struct, 1, "output")
 #'    }
 #' @export
-exportMGF <- function(struct, ID, fname, idx = NA) {
-    sstable <- struct@data@MS2Exp[[ID]]@Ident[[1]]
+exportMGF <- function(struct, id, file, whichSpec = NA) {
+    sstable <- struct@data@MS2Exp[[id]]@Ident[[1]]
     charge <- struct@metadata@ExpParam@ion
-    if (is.na(idx)) {
-        idx <- seq_len(nrow(sstable))
+    if (is.na(whichSpec)) {
+        whichSpec <- seq_len(nrow(sstable))
     }
-    sink(file = paste0(fname, ".mgf"))
-    for (i in idx) {
+    sink(file = paste0(file, ".mgf"))
+    for (i in whichSpec) {
         curss <- sstable[i, ]
         precmz <- curss$precmass
         ssdata <- curss$ssdata[[1]]
@@ -76,8 +78,9 @@ exportMGF <- function(struct, ID, fname, idx = NA) {
 }
 
 #' @title exportmzML
-#' @param struct RHermesExp object
-#' @param ID Index of the MS2Exp that you want to export
+#' @family Exports
+#' @author Jordi Capellades
+#' @inheritParams exportMSP
 #' @param fname Name of the output file, without the .mzML termination
 #' @description  Exports the superspectra of a given MS2Exp ID into an
 #' mzML format file. Warning! The retention time information is not
@@ -85,25 +88,27 @@ exportMGF <- function(struct, ID, fname, idx = NA) {
 #' @return An .mzML file
 #' @examples
 #'   if(FALSE){
-#'        exportmzML(myHermes, 1, "output")
+#'        exportmzML(struct, 1, "output")
 #'    }
 #' @export
-exportmzML <- function(struct, ID, fname,idx=NA) {
-    Ident <- struct@data@MS2Exp[[ID]]@Ident
-    IL <- struct@data@MS2Exp[[ID]]@IL@IL
-    MS2Data <- struct@data@MS2Exp[[ID]]@MS2Data
+exportmzML <- function(struct, id, fname, whichSpec = NA) {
+    Ident <- struct@data@MS2Exp[[id]]@Ident
+    IL <- struct@data@MS2Exp[[id]]@IL@IL
+    MS2Data <- struct@data@MS2Exp[[id]]@MS2Data
     MS2Features <- Ident$MS2Features
     if(is.null(MS2Features)){
         stop("No MS2 spectra found for that MS2Exp ID index")
     }
     out_file <- paste0(fname, ".mzML")
-    if(!is.na(idx)){
-        Ident <- Ident[idx]
-        IL <- IL[idx, ]
-        MS2Data <- MS2Data[idx]
-        MS2Features <- MS2Features[idx, ]
+    if(!is.na(whichSpec)){
+        Ident <- Ident[whichSpec]
+        IL <- IL[whichSpec, ]
+        MS2Data <- MS2Data[whichSpec]
+        MS2Features <- MS2Features[whichSpec]
         out_file <- paste0(fname, "_",
-                            paste(idx[1], idx[length(idx)], sep = "_"), ".mzML")
+                            paste(whichSpec[1],
+                                    whichSpec[length(whichSpec)], sep = "_"),
+                                    ".mzML")
     }
     minMZ <- struct@metadata@ExpParam@minmz
     maxMZ <- struct@metadata@ExpParam@maxmz
@@ -208,7 +213,7 @@ exportmzML <- function(struct, ID, fname,idx=NA) {
                 hdr$highMZ[j] <- max(ssdata[, 1])
                 hdr$precursorCharge[j] <- 0
                 hdr$injectionTime[j] <- 50
-                hdr$centroided[j] <- T
+                hdr$centroided[j] <- TRUE
                 hdr$isolationWindowLowerOffset <- 0.8
                 hdr$isolationWindowUpperOffset <- 0.8
                 minMZfilter <- minMZ
@@ -260,16 +265,16 @@ exportmzML <- function(struct, ID, fname,idx=NA) {
             hdr$acquisitionNum[i] <- i
             j <- i
         } else {
-          hdr$seqNum[i] <- i
-          hdr$acquisitionNum[i] <- i
-          hdr$precursorScanNum[i] <- j
+            hdr$seqNum[i] <- i
+            hdr$acquisitionNum[i] <- i
+            hdr$precursorScanNum[i] <- j
         }
 
     }
     hdr$spectrumId <- paste0("controllerType=0 controllerNumber=1 scan=",
                             hdr$seqNum)
     rownames(hdr) <- NULL
-    
+
     #Remove if there's already a file named like that
     suppressWarnings(file.remove(out_file))
     mzR::writeMSData(object = pks, file = out_file, header = hdr)
@@ -277,13 +282,72 @@ exportmzML <- function(struct, ID, fname,idx=NA) {
     mzR::close(of)
 }
 
+#' @title exportSIRIUS
+#' @family Exports
+#' @description Exports all processed Hermes spectra into a .ms format suitable
+#' for SIRIUS analysis.
+#' @inheritParams exportMSP
+#' @param file Name of the output file, without the .ms termination
+#' @return Returns nothing, but generates an .ms file where specified.
+#' @examples
+#'   if(FALSE){
+#'        exportmzML(struct, 1, "output")
+#'    }
+#' @export
+exportSIRIUS <- function(struct, id, file, whichSpec = NA){
+    Ident <- struct@data@MS2Exp[[id]]@Ident
+    IL <- struct@data@MS2Exp[[id]]@IL@IL
+    MS2Features <- Ident$MS2Features
+    if(is.null(MS2Features)){
+        stop("No MS2 spectra found for that MS2Exp ID index")
+    }
+    if(!is.na(whichSpec)){
+        Ident <- Ident[whichSpec]
+        IL <- IL[whichSpec, ]
+        MS2Features <- MS2Features[whichSpec, ]
+    }
+
+    sink(file = paste0(file, ".ms"))
+    for (i in seq_len(nrow(MS2Features))) {
+        curentry <- MS2Features[i, ]
+        fs <- curentry$anot %>% unlist()
+        msms <- curentry$ssdata[[1]]
+        #Write into the .ms file
+        for (j in fs) {
+            comp <- paste("Spec", i, j, sep = "_")
+            cat(">compound", comp, "\n")
+            cat(">formula", j, "\n")
+            cat(">ms2", "\n")
+            for (j in seq_len(nrow(msms))) {
+                cat(as.numeric(msms[j, ]), "\n")
+            }
+            cat("\n")
+        }
+    }
+    sink()
+}
+
+
+#'@title exportIdent
+#'@description Export all MS2 identifications (hits) into a csv file.
+#'@author Roger Gine
+#'@param struct An RHermesExp object
+#'@param id The id of the RHermesMS2Exp object.
+#'@param file Name assigned to the csv file.
+#'@return Returns nothing, but generates a csv file with the exported
+#'  identifications
+#'@examples
+#'\dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
+#'                              package = "RHermes"))}
+#' exportIdent(struct, 1, "identifications.csv")
 #'@export
-setGeneric("exportIdent", function(struct, ms2id, file){
+setGeneric("exportIdent", function(struct, id, file){
     standardGeneric("exportIdent")
 })
+#' @rdname exportIdent
 setMethod("exportIdent", c("RHermesExp", "numeric", "character"),
-function(struct, ms2id, file) {
-    ms2 <- struct@data@MS2Exp[[ms2id]]@Ident[[1]]
+function(struct, id, file) {
+    ms2 <- struct@data@MS2Exp[[id]]@Ident[[1]]
     ms2 <- ms2[vapply(ms2$results, is.data.frame, logical(1)), ]
 
     #Extracting hits from inner data.frame
@@ -325,17 +389,10 @@ function(struct, ms2id, file) {
     write.csv(ms2, file = file)
 })
 
-#'@export
-setGeneric("whichIdent", function(struct, ms2id){standardGeneric("whichIdent")})
-setMethod("whichIdent", c("RHermesExp", "numeric"),
-function(struct, ms2id){
-    identdf <- struct@data@MS2Exp[[ms2id]]@Ident[[1]]
-    which_ID <- which(vapply(identdf$results, is.data.frame, logical(1)))
-    return(which_ID)
-})
-
 
 #'@export
+#' @rdname RHermesMS2Exp-class
+#' @param object An RHermesMS2Exp object
 setMethod("show", "RHermesMS2Exp", function(object){
     message("Info about this MS2Exp object:")
     show(object@IL)
@@ -353,38 +410,25 @@ setMethod("show", "RHermesMS2Exp", function(object){
     }
 })
 
+#'@title ssNetwork
+#'@description Generates a similarity matrix between different MS2 spectra.
+#'@author Roger Gine
+#'@inheritParams exportIdent
+#'@param ss The MS2 spectra from Ident() to be compared
+#'@return A square symmetrical similarity matrix
+#'@examples
+#'\dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
+#'                              package = "RHermes"))}
+#'ssNetwork(struct, 1, 1:7)
 #'@export
-ssNetwork <- function(struct, ID, ss, costhr = 0.8) {
+ssNetwork <- function(struct, id, ss) {
     validObject(struct)
-    MS2Exp <- struct@data@MS2Exp[[ID]]
-    identdf <- MS2Exp@Ident[[1]]
-
+    MS2Exp <- struct@data@MS2Exp[[id]]
     allspec <- MS2Exp@Ident$MS2Features$ssdata[ss]
     cos <- lapply(allspec, function(pattern) {
         lapply(allspec, function(query) {
             MSMScosineSim(pattern, query, minhits = 1)
         })
     }) %>% unlist() %>% matrix(nrow = length(allspec), byrow = TRUE)
-    
-    # #Graph and output
-    # gr <- igraph::graph_from_adjacency_matrix(ifelse(cos > costhr,
-    #     1, 0))
-    # wc <- igraph::cluster_walktrap(gr)
-    # members <- igraph::membership(wc)
-    # gr <- igraph::simplify(gr, remove.multiple = TRUE, remove.loops = TRUE)
-    # 
-    # gr <- networkD3::igraph_to_networkD3(gr, group = members)
-    # 
-    # 
-    # net <- visNetwork(gr$nodes %>% rename(label = name) %>%
-    #                   mutate(id = seq_len(nrow(gr$nodes)) - 1),
-    #                   gr$links %>% rename(from = source, to = target),
-    #                   width = "1200", height = "1200")
-    # 
-    # net %<>% visNodes(color = list(background = "lightblue")) %>%
-    #     visEdges(smooth = FALSE) %>% visPhysics(solver = "barnesHut",
-    #     stabilization = TRUE)
-    # 
-    # print(net)
     cos
 }

@@ -1,19 +1,54 @@
+#' @title plotPL
+#' @author Roger Gine
+#' @family plots
+#' @description Plots the raw data points anotated with a given formula and
+#'   adducts.
+#' @param struct An RHermesExp object
+#' @param id Number of the file to plot
+#' @param formula Formula annotation to search for (eg. "C6H12O6")
+#' @param ads Adducts to plot. Defaults to NA, which plots all of them by
+#'   default.
+#' @param rtrange The retention time interval to plot, in seconds (eg.
+#'   c(0,1000)). Defaults to a 0-10000s interval, which will cover all points.
+#' @param dynamicaxis Whether to use a fixed y scale for all adducts or to adapt
+#'   the scale according to each adduct intensity
+#' @return An interactive plot_ly object
+#' @examples
+#'\dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
+#'                              package = "RHermes"))}
+#'p <- plotPL(struct, 1, "C5H11NO2", c("M+H", "M+Na", "M+K"), c(80, 120))
 #'@export
-setGeneric("PLPlot", function(struct, id, formula, rtrange, dynamicaxis, ads) {
-    standardGeneric("PLPlot")
+setGeneric("plotPL", function(struct, id, formula, ads = NA, rtrange = c(0,1e4),
+                                dynamicaxis = TRUE) {
+    standardGeneric("plotPL")
 })
-setMethod("PLPlot", c("RHermesExp", "numeric", "character",
-    "numeric", "logical", "character"),
-function(struct, id, formula, rtrange, dynamicaxis, ads) {
+
+#' @rdname plotPL
+setMethod("plotPL", c("RHermesExp", "numeric", "character", "ANY",
+    "ANY", "ANY" ),
+function(struct, id, formula, ads= NA, rtrange = c(0,1e4), dynamicaxis = TRUE) {
+    if(is.na(ads[1])){
+        ads <- struct@metadata@ExpParam@adlist$adduct
+    } else {
+        if(!all(ads %in% struct@metadata@ExpParam@adlist$adduct)){
+            ads <- ads %in% struct@metadata@ExpParam@adlist$adduct
+            if(length(ads) == 0) {
+                stop(paste0("No valid adducts selected, please check your",
+                            "selection or leave ads=NA to select them all"))
+            }
+            warning("Some of the adducts are invalid and will not be included")
+        }
+    }
+
     datafile <- struct@data@PL[[id]]@peaklist
     FA_to_ion <- struct@metadata@ExpParam@ionF[[2]]
     setkey(FA_to_ion, "f")
 
     fs <- FA_to_ion[f == formula, ]
     ions <- fs$ion
-    datafile <- filter(datafile, formv %in% ions)
+    datafile <- filter(datafile, .data$formv %in% ions)
     if (nrow(datafile) == 0) {return()}
-    datafile <- filter(datafile, between(rt, rtrange[1], rtrange[2]))
+    datafile <- filter(datafile, between(.data$rt, rtrange[1], rtrange[2]))
     if (nrow(datafile) == 0) {return()}
 
     # toKeep <- vapply(unique(datafile$formv), function(f){
@@ -32,64 +67,68 @@ function(struct, id, formula, rtrange, dynamicaxis, ads) {
 
     pl <- ggplot() +
         geom_point(data = datafile,
-                    mapping = aes(x = rt, y = rtiv, color = isov),
+                    mapping = aes(x = .data$rt, y = .data$rtiv,
+                                    color = .data$isov),
                     size = 0.5, alpha = 0.6) +
         facet_grid(rows = vars(ad)) +
         theme_minimal() + ggtitle(formula)
 
     return(ggplotly(pl, dynamicTicks = dynamicaxis))
-
 })
 
 
+
+#'@title plotSOI
+#'@author Roger Gine
+#'@family plots
+#'@description Plots the SOI data points, the non-SOI points with the same
+#'  annotation and, if blank subtraction was performed, it also plots the blank
+#'  data points.
+#'@param struct An RHermesExp object
+#'@param id Number of the SOI list to plot
+#'@param formula Formula annotation to search for (eg. "C6H12O6")
+#'@param ads Adducts to plot. Defaults to NA, which plots all of them by
+#'  default.
+#'@param rtrange The retention time interval to plot, in seconds (eg.
+#'  c(0,1000)). Defaults to a 0-10000s interval, which will cover all points.
+#'@param dynamicaxis Whether to use a fixed y scale for all adducts or to adapt
+#'  the scale according to each adduct intensity
+#'@param interactive Whether to return a plotly object or a ggplot. Defaults to
+#'  TRUE (plotly).
+#'@return An interactive plot_ly object or a static ggplot, depending on the
+#'  value of interactive
+#'@examples
+#'\dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
+#'                              package = "RHermes"))}
+#'p <- plotSOI(struct, 1, "C5H11NO2", c("M+H", "M+Na", "M+K"), c(80, 120))
 #'@export
-setGeneric("coveragePlot", function(struct, entry){
-    standardGeneric("coveragePlot")
-})
-setMethod("coveragePlot", signature = c("RHermesExp", "numeric"),
-function(struct, entry) {
-    pl <- struct@data@PL[[entry]]@peaklist[, c("rt", "rtiv", "mz")]
-    distinct_pl <- nrow(distinct(pl))
-    noise <- struct@metadata@ExpParam@nthr
-    raw <- nrow(filter(struct@data@PL[[entry]]@raw, .data$rtiv > noise))
-    pieplot <- data.frame(Class = c("Covered", "Non-covered"),
-                            Value = c(distinct_pl, raw - distinct_pl))
-    colors <- c("rgb(211,94,96)", "rgb(128,133,133)")
-
-    p1 <- plot_ly(data = pieplot, labels = ~Class, values = ~Value,
-                    type = "pie",
-                    insidetextfont = list(color = "#FFFFFF", size = 18),
-                    marker = list(colors = colors,
-                                line = list(color = "#FFFFFF", width = 1)))
-    p1 <- p1 %>% layout(title = "Raw data points covered as PL entries")
-
-    barplot <- data.frame(Class = c("Total entries", "Distinct entries"),
-                            Value = c(nrow(pl), distinct_pl))
-    p2 <- plot_ly(data = barplot, x = ~Class, y = ~Value, type = "bar",
-                    insidetextfont = list(color = "#FFFFFF", size = 18),
-                    marker = list(color = colors,
-                                line = list(color = "#FFFFFF", width = 1)))
-    p2 <- p2 %>% layout(title = "Distinct PL entries vs Total Number")
-
-    return(list(p1, p2))
-})
-
-
-#'@export
-setGeneric("SoiPlot", function(struct, id, formula, rtrange,
-                                dynamicaxis = TRUE, ads = NA, blankid = NA,
+setGeneric("plotSOI", function(struct, id, formula, rtrange = c(0,1e4),
+                                dynamicaxis = TRUE, ads = NA,
                                 interactive = TRUE) {
-    standardGeneric("SoiPlot")
+    standardGeneric("plotSOI")
 })
-setMethod("SoiPlot", c("RHermesExp", "numeric", "character",
-    "numeric", "ANY", "ANY", "ANY", "ANY"),
-function(struct, id, formula, rtrange, dynamicaxis = TRUE, ads = NA,
-            blankid = NA, interactive = TRUE) {
 
+#' @rdname plotSOI
+setMethod("plotSOI", c("RHermesExp", "numeric", "character",
+    "ANY", "ANY", "ANY", "ANY"),
+function(struct, id, formula, rtrange= c(0, 1e4), dynamicaxis = TRUE,
+        ads = NA, interactive = TRUE) {
+
+    #Adduct selection
     if(is.na(ads[1])){
         ads <- struct@metadata@ExpParam@adlist$adduct
+    } else {
+        if(!all(ads %in% struct@metadata@ExpParam@adlist$adduct)){
+            ads <- ads %in% struct@metadata@ExpParam@adlist$adduct
+            if(length(ads) == 0) {
+                stop(paste0("No valid adducts selected, please check your",
+                            "selection or leave ads=NA to select them all"))
+            }
+            warning("Some of the adducts are invalid and will not be included")
+        }
     }
 
+    #Importing SOI list data
     plist <- struct@data@SOI[[id]]@PlotDF
     filen <- struct@data@SOI[[id]]@filename
     plid <- which(vapply(struct@data@PL, function(x) {
@@ -97,36 +136,37 @@ function(struct, id, formula, rtrange, dynamicaxis = TRUE, ads = NA,
     }, logical(1)))[1]
 
     datafile <- struct@data@PL[[plid]]@peaklist
-    datafile <- datafile[isov == "M0", ]
+    datafile <- datafile[.data$isov == "M0", ]
+    Class <- NULL #To appease R CMD Check "no visible binding"
     datafile[, Class := "Sample"]
 
-    if(!is.na(blankid)){
+    #Importing blank data if blank subtraction was performed on the SOI list
+    if(struct@data@SOI[[id]]@SOIParam@blanksub){
+        blankid <- which(struct@metadata@filenames ==
+                            struct@data@SOI[[id]]@SOIParam@blankname)
+        if(length(blankid) > 1) blankid <- blankid[1]
         blankfile <- struct@data@PL[[blankid]]@peaklist
-        blankfile <- blankfile[isov == "M0", ]
+        blankfile <- blankfile[.data$isov == "M0", ]
         blankfile[, Class := "Blank"]
-        datafile <- rbindlist(list(datafile, blankfile))
-    }
+        datafile <- rbind(datafile, blankfile)
+    } else {blankid <- NA}
 
+    #Filter by selected adducts and RT interval
     FA_to_ion <- struct@metadata@ExpParam@ionF[[2]]
-    setkey(FA_to_ion, "f")
+    setkeyv(FA_to_ion, c("f"))
     fs <- FA_to_ion[f == formula, ]
     ions <- fs$ion
-    datafile <- filter(datafile, formv %in% ions)
-    datafile <- filter(datafile, between(rt, rtrange[1], rtrange[2]))
-    soiinfo <- filter(plist, form %in% ions)
-    soiinfo <- filter(soiinfo, between(rt, rtrange[1], rtrange[2]))
+    datafile <- filter(datafile, .data$formv %in% ions)
+    datafile <- filter(datafile, between(.data$rt, rtrange[1], rtrange[2]))
+    soiinfo <- filter(plist, .data$form %in% ions)
+    soiinfo <- filter(soiinfo, between(.data$rt, rtrange[1], rtrange[2]))
+
+    #No SOI data in the RT interval
     if (nrow(soiinfo) == 0) {return()}
+
     names(soiinfo)[names(soiinfo) == "form"] <- "formv"
     names(soiinfo)[names(soiinfo) == "rtiv"] <- "Intensity"
     names(datafile)[names(datafile) == "rtiv"] <- "Intensity"
-
-
-    # toKeep <- vapply(unique(datafile$formv), function(f){
-    #   ifelse(length(which(datafile$formv == f)) > 30, T, F)
-    # }, logical(1))
-    # datafile <- datafile[datafile$formv %in% unique(datafile$formv)[toKeep], ]
-
-    if (nrow(soiinfo) == 0) {return()}
 
     datafile$ad <- ""
     for (f in unique(datafile$formv)) {
@@ -140,21 +180,24 @@ function(struct, id, formula, rtrange, dynamicaxis = TRUE, ads = NA,
         soiinfo$ad[soiinfo$formv == f] <- ad
     }
 
-    datafile <- filter(datafile, ad %in% ads)
-    soiinfo <- filter(soiinfo, ad %in% ads)
+    datafile <- filter(datafile, .data$ad %in% ads)
+    soiinfo <- filter(soiinfo, .data$ad %in% ads)
 
     if (nrow(soiinfo) == 0) {return()}
     soiinfo$Class <- "Sample-SOI"
     if(!is.na(blankid)){
         plot <- ggplot() +
                 geom_point(data = datafile[datafile$Class == "Sample", ],
-                        mapping = aes(x = rt, y = Intensity, color = Class),
+                        mapping = aes(x = .data$rt, y = .data$Intensity,
+                                        color = .data$Class),
                         alpha = 0.4) +
                 geom_point(data = datafile[datafile$Class == "Blank", ],
-                        mapping = aes(x = rt, y = Intensity, color = Class),
+                        mapping = aes(x = .data$rt, y = .data$Intensity,
+                                        color = .data$Class),
                         alpha = 0.5)+
                 geom_point(data = soiinfo,
-                        mapping = aes(x = rt, y = Intensity, color = Class),
+                        mapping = aes(x = .data$rt, y = .data$Intensity,
+                                        color = .data$Class),
                         alpha = 0.8) +
                 scale_color_manual(breaks = c("Blank", "Sample", "Sample-SOI"),
                                 values = c("#6D9503", "#8E032B", "#370B6B"))+
@@ -163,10 +206,12 @@ function(struct, id, formula, rtrange, dynamicaxis = TRUE, ads = NA,
     } else {
         plot <- ggplot() +
                 geom_point(data = datafile[datafile$Class == "Sample", ],
-                        mapping = aes(x = rt, y = Intensity, color = Class),
+                        mapping = aes(x = .data$rt, y = .data$Intensity,
+                                        color = .data$Class),
                         alpha = 0.3)+
                 geom_point(data = soiinfo,
-                        mapping = aes(x = rt, y = Intensity, color = Class),
+                        mapping = aes(x = .data$rt, y = .data$Intensity,
+                                        color = .data$Class),
                         alpha = 0.8) +
                 scale_color_manual(breaks = c("Sample", "Sample-SOI"),
                                 values = c("#8E032B", "#370B6B"))+
@@ -180,27 +225,49 @@ function(struct, id, formula, rtrange, dynamicaxis = TRUE, ads = NA,
     }
 })
 
+
+#'@title plotFidelity
+#'@author Roger Gine
+#'@family plots
+#'@description Plots the selected SOI isotopic profile and a
+#'  comparison with its theoretical abundances calculated from
+#'  the molecular formula.
+#'@param struct An RHermesExp object.
+#'@param id Number of the SOI to plot.
+#'@param entry The SOI entry to check.
+#'@param plot Default to TRUE. The parameter is used for
+#'  consistency with the function internal use in filterSOI(). If
+#'  set to FALSE, returns some statistics about the isotopic
+#'  fidelity.
+#'@return An interactive plot_ly object. If plot set to FALSE,
+#'  returns a list of isotopic fidelity metrics.
+#'@examples
+#'\dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
+#'                              package = "RHermes"))}
+#'p <- plotFidelity(struct, 1, 9)
 #'@export
-setGeneric("IsoFidelity", function(struct, soilist, entry,
-                                    plot = TRUE) {
-    standardGeneric("IsoFidelity")
+setGeneric("plotFidelity", function(struct, id, entry, plot = TRUE) {
+    standardGeneric("plotFidelity")
 })
-setMethod("IsoFidelity", c("RHermesExp", "numeric", "numeric", "ANY"),
-function(struct, soilist, entry, plot = TRUE) {
+
+#' @rdname plotFidelity
+setMethod("plotFidelity", c("RHermesExp", "numeric", "numeric", "ANY"),
+function(struct, id, entry, plot = TRUE) {
     #Extract SOI and PL information from the selected SOI list
-    SOI <- struct@data@SOI[[soilist]]
+    SOI <- struct@data@SOI[[id]]
     fname <- SOI@filename
     correspondingPL <- which(struct@metadata@filenames == fname)
     PL <- struct@data@PL[[correspondingPL]]@peaklist
 
     #Filter the PL to the selected SOI region
-    curSOI <- SOI@SoiList[entry, ]
-    PL <- filter(PL, formv == curSOI$formula)
-    PL <- filter(PL, data.table::between(rt, curSOI$start, curSOI$end))
+    curSOI <- SOI@SOIList[entry, ]
+    PL <- filter(PL, .data$formv == curSOI$formula)
+    PL <- filter(PL, data.table::between(.data$rt, curSOI$start, curSOI$end))
 
     if (plot) {
         p <- ggplotly(ggplot(PL) +
-                        geom_point(aes(x = rt, y = rtiv, color = isov)) +
+                        geom_point(aes(x = .data$rt, y = .data$rtiv,
+                                        color = .data$isov)) +
                         theme_minimal() +
                         xlab("RT(s)"))
     }
@@ -250,7 +317,8 @@ function(struct, soilist, entry, plot = TRUE) {
             "[92Zr]", "[94Zr]", "[96Zr]"),
         stringsAsFactors = FALSE)
 
-    data("isotopes", package = "enviPat")
+    isotopes <- NULL #To appease R CMD Check "no visible binding"
+    data("isotopes", package = "enviPat", envir = environment())
 
     pat <- enviPat::isopattern(isotopes = isotopes, chemforms = f,
                             threshold = 0.1, verbose = F)[[1]]
@@ -305,7 +373,8 @@ function(struct, soilist, entry, plot = TRUE) {
 
     if (plot) {
     p2 <- ggplot(df)+
-            geom_col(aes(x = code, y = abundance, fill = class),
+            geom_col(aes(x = .data$code, y = .data$abundance,
+                            fill = .data$class),
                         position = "dodge") +
             ylab("Expected intensities") + theme_minimal() +
             theme(axis.text.x = element_text(angle = 90),
@@ -355,148 +424,53 @@ function(struct, soilist, entry, plot = TRUE) {
     }
 })
 
+
+#'@title plotIL
+#'@author Roger Gine
+#'@description Draws a mz-rt representation of the inclusion list entries,
+#'coloured by their intensity value.
+#'@param struct An RHermesExp object
+#'@param id Number of the inclusion list to plot
+#'@return An interactive plot_ly object
+#'@family Plots
+#'@examples
+#'\dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
+#'                              package = "RHermes"))}
+#'plotIL(struct, 1)
 #'@export
-setGeneric("MirrorPlot", function(struct, ms2id, ssnumber, patform,
-                                    mode = "hits") {
-    standardGeneric("MirrorPlot")
+setGeneric("plotIL", function(struct, id) {
+    standardGeneric("plotIL")
 })
-setMethod("MirrorPlot", c("RHermesExp", "numeric", "numeric"),
-function(struct, ms2id, ssnumber, patform, mode = "hits") {
-    entry <- struct@data@MS2Exp[[ms2id]]@Ident$MS2Features[ssnumber,]
-    query <- entry$ssdata[[1]]
-    maxint <- max(query$int)
-    query$int <- query$int/max(query$int) * 100
-    bestdf <- query[query$int > 10, ]
-    bestdf$mz <- round(bestdf$mz, 4)
-    molecmass <- entry$precmass
-    baseline <- 1000
-    subtitle <- ""
-    title <- ""
-    baseline <- baseline/maxint * 100
-
-    f <- list(
-        family = "Open Sans",
-        size = 16,
-        color = "black"
-    )
-
-
-    if(mode == "hits"){
-        ref <- struct@data@MS2Exp[[ms2id]]@Ident$MS2_correspondance[[ssnumber]]
-        pattern <- struct@data@MS2Exp[[ms2id]]@Ident$DatabaseSpectra[ref]
-        pattern <- unname(pattern) #Avoids "name.subname" when unlisting
-        pattern <- unlist(pattern, recursive = FALSE, use.names = TRUE)
-    }
-
-    mirrplot <- lapply(patform, function(x){
-        pl <- ggplot()
-        if(mode == "hits"){
-            index <- entry$results[[1]]$id[entry$results[[1]]$formula == x]
-            if(length(index) == 0){
-                refspec <- NULL
-            } else {
-                refspec <- pattern[[x]][[index]]
-                spec_energy <- names(pattern[[x]])[index]
-                name <- strsplit(patform, split = "#")[[patform == x]][[3]]
-                a <- list(
-                    text = paste(name, spec_energy),
-                    font = f,
-                    xref = "paper",
-                    yref = "paper",
-                    yanchor = "bottom",
-                    xanchor = "center",
-                    align = "center",
-                    x = 0.5,
-                    y = 1,
-                    showarrow = FALSE
-                )
-            }
-            if(is.null(refspec)){return(ggplotly(pl))}
-            refspec <- as.data.frame(t(refspec))
-            pl <- pl + scale_x_continuous(limits = c(min(c(refspec$mz,
-                                                    query$mz, molecmass)) - 20,
-                                                    max(c(refspec$mz, query$mz,
-                                                        molecmass)) + 20))
-        }
-        if(mode == "versus"){
-            refmass<-struct@data@MS2Exp[[ms2id]]@Ident$MS2Features$precmass[[x]]
-            refspec <- struct@data@MS2Exp[[ms2id]]@Ident$MS2Features$ssdata[[x]]
-            if(is.null(refspec)){return(ggplotly(pl))}
-
-            a <- list(
-                text = paste("SS comparison between", ssnumber, "and", x),
-                font = f,
-                xref = "paper",
-                yref = "paper",
-                yanchor = "bottom",
-                xanchor = "center",
-                align = "center",
-                x = 0.5,
-                y = 1,
-                showarrow = FALSE
-            )
-
-            refdf <- data.frame(mz = refmass)
-            pl <- pl +
-                geom_point(data = refdf, aes(x = mz, y = 0), shape = 25,
-                            size = 4, color = "red", fill = "red") +
-                scale_x_continuous(limits = c(min(c(refspec$mz, query$mz,
-                                                    molecmass, refmass)) - 20,
-                                    max(c(refspec$mz, query$mz, molecmass,
-                                            refmass)) + 20))
-        }
-            colnames(refspec) <- c("mz", "int")
-            refspec$int <- refspec$int/max(refspec$int) * 100
-
-            moldf <- data.frame(mz = molecmass)
-            bldf <- data.frame(xmin = min(c(refspec$mz, query$mz,
-                                        molecmass)) - 5,
-                            xmax = max(c(refspec$mz,query$mz,
-                                        molecmass) + 5), y = baseline)
-
-            pl <- pl + geom_segment(data = query, aes(x = mz,
-                        xend = mz, y = 0, yend = int), color = "black") +
-                    geom_segment(data = refspec, aes(x = mz, xend = mz,
-                        y = 0, yend = -int), color = "red") +
-                    geom_segment(data = bldf, aes(x = xmin, xend = xmax,
-                        y = y, yend = y), linetype = "dashed", color = "black",
-                        alpha = 0.3) +
-                    geom_segment(data = bldf, aes(x = xmin, xend = xmax,
-                        y = -y, yend = -y), linetype = "dashed", color = "red",
-                        alpha = 0.3) +
-                    geom_point(data = moldf, aes(x = mz, y = 0), shape = 17,
-                        size = 2) +
-                    theme_minimal() + ylab("% Intensity") +
-                    theme(plot.margin = unit(c(1, 0.7, 1, 0.8), "cm"),
-                            text = element_text(size = 11,
-                                                family = "Segoe UI Light"),
-                            plot.title = element_text(hjust = 0.5)) +
-                    geom_text(data = bestdf, aes(x = mz, y = int + 5,
-                                                    label = mz),
-                            family = "Segoe UI Light", check_overlap = TRUE)
-
-            base_height <- ifelse(length(patform)<5, 850/length(patform), 200)
-            ggplotly(pl, height = base_height * length(patform)) %>%
-                layout(annotations = a)
-        })
-
-    return(subplot(mirrplot, nrows = length(mirrplot), shareX = TRUE,
-                    which_layout = 1))
+#' @rdname plotIL
+setMethod("plotIL", c("RHermesExp", "numeric"),
+    function(struct, id){
+        ggplotly(ggplot(struct@data@MS2Exp[[id]]@IL@IL) +
+                geom_segment(aes(x = .data[["start"]], xend = .data[["end"]],
+                                y = .data[["mass"]], yend = .data[["mass"]],
+                                color = log10(.data[["MaxInt"]]))))
 })
 
-#'@export
-ILplot <- function(struct, ILnumber){
-    ggplotly(ggplot(struct@data@MS2Exp[[ILnumber]]@IL@IL) +
-            geom_segment(aes(x = .data[["start"]], xend = .data[["end"]],
-                            y = .data[["mass"]], yend = .data[["mass"]],
-                            color = log10(.data[["MaxInt"]]))))
-}
 
+
+#'@title plotSS
+#'@author Roger Gine
+#'@description Plots an Hermes-cleaned MS2 spectum (mz/int).
+#'@param struct An RHermesExp object
+#'@param ms2id Number of the MS2Exp object where the spectrum is
+#'@param ssnumber Number of the spectrum to plot
+#'@return A ggplot object
+#'@family plots
+#'@examples
+#'\dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
+#'                              package = "RHermes"))}
+#'plotSS(struct, 1, 1)
 #'@export
-setGeneric("SSPlot", function(struct, ms2id, ssnumber) {
-    standardGeneric("SSPlot")
+setGeneric("plotSS", function(struct, ms2id, ssnumber) {
+    standardGeneric("plotSS")
 })
-setMethod("SSPlot", c("RHermesExp", "numeric", "numeric"),
+
+#' @rdname plotSS
+setMethod("plotSS", c("RHermesExp", "numeric", "numeric"),
 function(struct, ms2id, ssnumber) {
     entry <- struct@data@MS2Exp[[ms2id]]@Ident$MS2Features[ssnumber,]
     if(!is.data.frame(entry)){return(ggplotly(ggplot()))}
@@ -512,14 +486,17 @@ function(struct, ms2id, ssnumber) {
     title <- ""
 
     pl <- ggplot() +
-        geom_segment(data = query, aes(x = mz, xend = mz, y = 0, yend = int),
+        geom_segment(data = query, aes(x = .data$mz, xend = .data$mz,
+                                        y = 0, yend = .data$int),
                         color = "black") +
-        geom_point(data = moldf, aes(x = mz, y = 0), shape = 17, size = 2) +
+        geom_point(data = moldf, aes(x = .data$mz, y = 0), shape = 17,
+                    size = 2) +
         theme_minimal() + ylab("Intensity (Counts)") +
         theme(plot.margin = unit(c(1, 0.7, 1, 0.8), "cm"),
             text = element_text(size = 11, family = "Segoe UI Light"),
             plot.title = element_text(hjust = 0.5)) +
-        geom_text(data = bestdf, aes(x = mz, y = int + 5, label = mz),
+        geom_text(data = bestdf, aes(x = .data$mz, y = .data$int + 5,
+                                        label = .data$mz),
                 family = "Segoe UI Light", check_overlap = TRUE) +
         scale_x_continuous(limits = c(min(query$mz, molecmass) - 20,
                                     max(query$mz, molecmass) + 20))+
@@ -529,14 +506,30 @@ function(struct, ms2id, ssnumber) {
     pl
 })
 
-
+#'@title plotRawMS2
+#'@author Roger Gine
+#'@description Plots an all MS2 fragments distribution along the rt of a given
+#'  inclusion list entry.
+#'@param struct An RHermesExp object
+#'@param ms2id Number of the MS2Exp object where the spectrum is
+#'@param entryid Number of the inclusion list entry to plot
+#'@return A list of four objects: a plot of the fragments grouped by their mz, a
+#'  plot of the fragments grouped by their shape similarity, the similarity
+#'  network and a summary table of peaks found and the group they belong to.
+#'@family plots
 #'@export
 #'@import networkD3
-setGeneric("RawMS2Plot", function(struct, ms2id, entryid, bymz) {
-    standardGeneric("RawMS2Plot")
+#'@examples
+#'\dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
+#'                              package = "RHermes"))}
+#'plotRawMS2(struct, 1, 2)
+setGeneric("plotRawMS2", function(struct, ms2id, entryid) {
+    standardGeneric("plotRawMS2")
 })
-setMethod("RawMS2Plot", c("RHermesExp", "ANY", "ANY", "ANY"),
-function(struct, ms2id, entryid, bymz = TRUE) {
+
+#' @rdname plotRawMS2
+setMethod("plotRawMS2", c("RHermesExp", "numeric", "ANY"),
+function(struct, ms2id, entryid) {
     if (is.na(entryid)) {
         return(list(p_bymz = ggplotly(ggplot()), p_bygroup = ggplotly(ggplot()),
                     net = NA, pks = data.frame()))
@@ -568,8 +561,8 @@ function(struct, ms2id, entryid, bymz = TRUE) {
 
     pks <- pks[pks$members %in% members, ]
 
-    oldpoints <- soi
-    oldpoints$member <- "Original points"
+    # oldpoints <- soi
+    # oldpoints$member <- "Original points"
     xlim <- c(min(soi$rt)-8, max(soi$rt)+8)
 
     res <- reassign_and_check(pks, soi)
@@ -589,18 +582,20 @@ function(struct, ms2id, entryid, bymz = TRUE) {
                                                             as.character(i))
     }
 
-    p_bymz <- ggplot(rbind(soi, oldpoints)) +
-                geom_point(aes(x = rt, y = rtiv, color = as.factor(mz)))+
+    p_bymz <- ggplot(soi) +
+                geom_point(aes(x = .data$rt, y = .data$rtiv,
+                                color = as.factor(.data$mz)))+
                 xlim(xlim)
-    p_bygroup <- ggplot(rbind(soi, oldpoints)) +
-                geom_point(aes(x = rt, y = rtiv, color = as.factor(member)))+
+    p_bygroup <- ggplot(soi) +
+                geom_point(aes(x = .data$rt, y = .data$rtiv,
+                                color = as.factor(.data$member)))+
                 xlim(xlim)
 
     net <- networkD3::igraph_to_networkD3(net, group = members)
 
-    net <- visNetwork(net$nodes %>% rename(label = name) %>%
+    net <- visNetwork(net$nodes %>% rename(label = .data$name) %>%
         mutate(id = seq_len(nrow(net$nodes)) - 1), net$links %>%
-        rename(from = source, to = target))
+        rename(from = .data$source, to = .data$target))
 
     net %<>% visNodes(color = list(background = "lightblue")) %>%
         visEdges(smooth = FALSE) %>%

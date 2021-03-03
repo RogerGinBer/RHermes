@@ -4,14 +4,16 @@
 \alias{exportmzML}
 \title{exportmzML}
 \usage{
-exportmzML(struct, ID, fname, idx = NA)
+exportmzML(struct, id, fname, whichSpec = NA)
 }
 \arguments{
 \item{struct}{RHermesExp object}
 
-\item{ID}{Index of the MS2Exp that you want to export}
+\item{id}{Index of the MS2Exp that you want to export}
 
 \item{fname}{Name of the output file, without the .mzML termination}
+
+\item{whichSpec}{Which entries to export. Defaults to all of them.}
 }
 \value{
 An .mzML file
@@ -23,6 +25,16 @@ included in the mzML file.
 }
 \examples{
   if(FALSE){
-       exportmzML(myHermes, 1, "output")
+       exportmzML(struct, 1, "output")
    }
 }
+\seealso{
+Other Exports: 
+\code{\link{exportMGF}()},
+\code{\link{exportMSP}()},
+\code{\link{exportSIRIUS}()}
+}
+\author{
+Jordi Capellades
+}
+\concept{Exports}

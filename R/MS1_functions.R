@@ -5,46 +5,51 @@
 #' object_data_PL slot.
 #'
 #'@param struct RHermesExp S4 object to update with the processed data.
-#' Important: The objects needs to have the experimental parameters already 
+#' Important: The objects needs to have the experimental parameters already
 #' set before calling this function.
 #'@param files Character vector of all the paths to the files to be processed.
 #'@param labelled Logical, whether to check for all 13C isotopic signals.
 #' Defaults to FALSE
 #'@return An RHermesExp object with the processed PLs.
 #'@examples
-#'\dontrun{
-#'processMS1(myHermes, 'C:/myFolder/myFile.mzML', FALSE) #For regular use
-#'processMS1(myHermes, 'C:/myFolder/myFile.mzML', TRUE) #For labelled data
-#'}
+#'\dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
+#'                              package = "RHermes"))
+#'          MS1file <- system.file("extdata", "MS1TestData.mzML",
+#'                              package = "RHermes")
+#'          }
+#'processMS1(struct, MS1file, FALSE) #For regular use
+#'processMS1(struct, MS1file, TRUE) #For labelled data
+#'
 
 #'@export
 
 setGeneric("processMS1", function(struct, files, labelled = FALSE) {
     standardGeneric("processMS1")
 })
+#' @rdname processMS1
 setMethod("processMS1", c("RHermesExp", "character", "ANY"),
 function(struct, files, labelled = FALSE) {
     ppm <- struct@metadata@ExpParam@ppm
     noise <- struct@metadata@ExpParam@nthr
-    
+
     message(paste0("Preprocessing steps, calculating possible ionic formulas ",
                     "and isotopic distributions"))
-    
+
     F_DB <- struct@metadata@ExpParam@DB[,c("MolecularFormula", "EnviPatMass")]
     #Could break if colname isn't exactly "MolecularFormula"
     F_DB <- dplyr::distinct_at(F_DB, "MolecularFormula",
-                                .keep_all = T)  
+                                .keep_all = T)
     colnames(F_DB) <- c("fms", "m")
-    
+
     IF_DB <- IonicForm(F_DB, struct@metadata@ExpParam@adlist,
                         BiocParallelParam = struct@metadata@cluster)
-    
+
     IC <- IsoCalc(
         IF_DB[[1]], FWHM = struct@metadata@ExpParam@res,
         intTHR = 0.02, kTHR = 1, instr = struct@metadata@ExpParam@instr,
         refm = 200, BiocParallelParam = struct@metadata@cluster
     )
-    
+
     message("Starting file processing...")
     struct <- setTime(struct, "Started file processing into PL")
     toAdd <- lapply(seq_along(files), function(i) {
@@ -56,7 +61,7 @@ function(struct, files, labelled = FALSE) {
                         ppm = ppm, labelled = labelled,
                         IsoList = IC,
                         BiocParallelParam = struct@metadata@cluster)
-    
+
     #Construction of S4 Object output
     RHermesPL(peaklist = ss, header = imported[[2]], raw = imported[[1]],
                 labelled = labelled, filename = lf)
@@ -65,7 +70,7 @@ function(struct, files, labelled = FALSE) {
     struct@metadata@ExpParam@ionF <- IF_DB
     struct@metadata@ExpParam@isoList <- IC
     struct@metadata@filenames <- c(struct@metadata@filenames, files)
-    
+
     struct <- setTime(struct,
                     paste("Ended file processing. The following files were",
                         "successfully processed:",
@@ -77,14 +82,14 @@ function(struct, files, labelled = FALSE) {
 
 import_and_filter <- function(lf, minpks = 20, noise = 1000) {
     #Opening the connection to a single mzML file
-    fileml <- mzR::openMSfile(lf)  
+    fileml <- mzR::openMSfile(lf)
     plist <- mzR::peaks(fileml)
     h <- mzR::header(fileml)
     #Filtering header
     h <- h[, -which(vapply(h, function(x) all(x == 0), FUN.VALUE = logical(1)))]
     if (any(h$peaksCount < minpks)) {
         #Removing scans with very very few peaks detected
-        plist <- plist[-which(h$peaksCount < minpks)]  
+        plist <- plist[-which(h$peaksCount < minpks)]
         h <- h[-which(h$peaksCount < minpks), ]
     }
     raw <- lapply(seq_along(plist), function(x) {
@@ -119,7 +124,7 @@ calculate_ionic_forms <- function(i, F_DB, Ad_DB){
         if (x[6] != "FALSE") current_f <- sumform(current_f, x[6])
         if (x[7] != "FALSE") current_f <- subform(current_f, x[7])
         if (is.na(current_f)) return(NA)
-        
+
         ch <- ifelse(x[5] == "positive", "+", "-")
         current_f <- paste0("[", current_f, "]",
                             ifelse(abs(as.numeric(x[2])) == 1,
@@ -136,12 +141,12 @@ calculate_ionic_forms <- function(i, F_DB, Ad_DB){
         vapply(function(x) {x[[2]]}, FUN.VALUE = character(1)) %>%
         strsplit(j, split = "]", fixed = TRUE) %>%
         vapply(function(x) {x[[1]]}, FUN.VALUE = character(1))
-    
-    
+
+
     charge <- abs(as.numeric(Ad_DB[good, 2]))
     multiplicity <- as.numeric(Ad_DB[good,3])
     adduct_delta <- as.numeric(Ad_DB[good,4])
-    
+
     mass <- ((F_DB$m[i] * multiplicity) + (adduct_delta / charge)) %>%
                 round(., digits = 5)
     db <- data.table(f = j, m = mass, ch = charge, envi = envi)
@@ -153,7 +158,7 @@ sumform <- function(f1, f2) {
     f1 <- tryCatch({
         CHNOSZ::count.elements(f1)
     }, error = function(cond){return(NA)})
-    if (is.na(f1)) return(NA)
+    if (any(is.na(f1))) return(NA)
     n1 <- names(f1)
     f2 <- CHNOSZ::count.elements(f2)
     n2 <- names(f2)
@@ -177,14 +182,14 @@ sumform <- function(f1, f2) {
     if ("H" %in% unique(c(n1, n2))) {ord <- c(ord, "H")}
     ord <- c(ord, sort(alln))
     s1 <- s1[ord]
-    
+
     output <- paste0(mapply(function(x, y) {
         if (y == 1) {
             return(x)
         }
         return(paste0(x, y))
     }, names(s1), s1), collapse = "")
-    
+
     return(output)
 }
 
@@ -192,7 +197,7 @@ subform <- function(f1, f2) {
     f1 <- tryCatch({
         CHNOSZ::count.elements(f1)
     }, error = function(cond){return(NA)})
-    if (is.na(f1)) {return(NA)}
+    if (any(is.na(f1))) {return(NA)}
     n1 <- names(f1)
     f2 <- CHNOSZ::count.elements(f2)
     n2 <- names(f2)
@@ -223,14 +228,14 @@ subform <- function(f1, f2) {
     if ("H" %in% unique(c(n1, n2))) {ord <- c(ord, "H")}
     ord <- c(ord, sort(alln))
     s1 <- s1[ord]
-    
+
     output <- paste0(mapply(function(x, y) {
         if (y == 1) {
             return(x)
         }
         return(paste0(x, y))
     }, names(s1), s1), collapse = "")
-    
+
     return(output)
 }
 
@@ -245,12 +250,10 @@ multform <- function(f, k) {
     }, names(f), f), collapse = "")
 }
 
-#'@import doSNOW
-#'@import foreach
-#'@import parallel
 IsoCalc <- function(DB, FWHM, intTHR, kTHR, instr = "Orbitrap", refm = 200,
                     BiocParallelParam = BiocParallel::SerialParam()) {
-    data(isotopes, package = "enviPat")
+    isotopes <- NULL #To appease R CMD Check "no visible binding"
+    data(isotopes, package = "enviPat", envir = environment())
     isotopecode <- data.frame(
         name = c("13C", "17O", "18O", "2H",
             "15N", "33S", "34S", "36S", "37Cl", "81Br", "41K", "6Li",
@@ -271,17 +274,17 @@ IsoCalc <- function(DB, FWHM, intTHR, kTHR, instr = "Orbitrap", refm = 200,
             "[92Zr]", "[94Zr]", "[96Zr]"),
         stringsAsFactors = FALSE
     )
-    
+
     message("Starting Envipat isotope distribution calculation: ")
     DB <- as.data.frame(DB)
-    
+
     isOrbi <- ifelse(instr == "Orbitrap", TRUE, FALSE)
     if (isOrbi) {
         resol_factor <- FWHM/sqrt(refm)
     } else {
         resol_factor <- FWHM
     }
-    
+
     testiso <- enviPat::isopattern(isotopes = isotopes, threshold = intTHR,
                                 chemforms = DB[, "envi"], charge = DB[, "ch"],
                                 verbose = TRUE)
@@ -289,18 +292,18 @@ IsoCalc <- function(DB, FWHM, intTHR, kTHR, instr = "Orbitrap", refm = 200,
     rm(DB) #Free up space for Windows SOCK users
     message("")
     message("Calculating isotopes given the instrumental resolution: ")
-    
+
     suppressWarnings({
         testres <- bplapply(testiso,
                             isocalc_parallel, kTHR, resol_factor,
                             isotopecode, isOrbi, BPPARAM = BiocParallelParam)
     }) #Suppress warnings to avoid the split() "object not multiple of ..."
-    
+
     #All different isopologues detected in the ionic formula set and their
     #deltaM with respect to M0
     factordf <- do.call(rbind, testres)
     factordf <- factordf[!duplicated(factordf[, 1]), ]
-    
+
     #To save space in the list we  save the number that is
     #represented by the level in the factor object
     facts <- factor(unlist(factordf[, 1]), levels = unlist(factordf[, 1]),
@@ -308,7 +311,7 @@ IsoCalc <- function(DB, FWHM, intTHR, kTHR, instr = "Orbitrap", refm = 200,
     d4 <- lapply(testres, function(x) {
         return(as.numeric(factor(unlist(x$ID), levels = levels(facts))))
     })
-    
+
     #Removing entries with NA to avoid errors downstream
     bad <- which(vapply(d4, function(x) {any(is.na(unlist(x)))}, logical(1)))
     if (length(bad) != 0) {
@@ -328,7 +331,7 @@ isocalc_parallel <- function(x, kTHR, resol_factor, isotopecode, isOrbi){
     clust <- lapply(seq_len(nrow(breaks)), function(i){
         x[seq(breaks$st[i], breaks$end[i]), , drop = FALSE]
     })
-    
+
     #Split the cluster into subclusters and take the most intense peaks
     x <- do.call(rbind, lapply(clust, function(x){
         farenough <- diff(x[, 1]) > limitfactor
@@ -343,7 +346,7 @@ isocalc_parallel <- function(x, kTHR, resol_factor, isotopecode, isOrbi){
         })
         do.call(rbind, clust)
     }))
-    
+
     curiso <- isotopecode[which(isotopecode[, 1] %in% colnames(x)),]
     x <- as.data.frame(x)
     x$ID <- ""
@@ -373,17 +376,17 @@ OptScanSearch <- function(DB, raw, mzList, ppm, IsoList, labelled = FALSE,
             else{return(0)}
         }))
     }
-    
+
     ncores <- ifelse(is.numeric(BiocParallelParam$workers[[1]]),
                     yes = BiocParallelParam$workers, no = 1)
-    
+
     #Splitting the formulas into a list (with l = number of workers) to reduce
     #time loss associated with variable loading (in SOCK only)
     flist <- split(DB, f = seq_len(ncores))
     PLresults <- bplapply(seq_along(flist), PLparallelfun, flist, raw, IsoList,
                         labelled, ppm, minhit, BPPARAM = BiocParallelParam)
     PLresults <- do.call(rbind, PLresults)
-    
+
     #Output coherence with PLProcesser input
     return(PLresults[, c(3, 2, 4, 5, 1)])
 }
@@ -414,15 +417,15 @@ regularProc <- function(curDB, mass, formula, pmz, curiso, ppm, IsoList, minhit,
     if (mass < pmz[1, 1] | mass > pmz[nrow(pmz), 1]) {return()}
     ss <- binarySearch(pmz, mass, ppm)
     if (length(ss) < minhit) {return()}  #Return nothing if no M0 hit
-    
+
     isofactors <- curiso[[i]]  #If hit, let's find the isotopologues
     isodf <- IsoList[[2]][isofactors, ]
     ch <- curDB[i, 3]  #Charge to normalize isotope deltam's
-    
+
     scanid <- raw[ss]
     scanid$formv <- formula
     scanid$isov <- "M0"
-    
+
     isom <- mass + (isodf$deltam/abs(ch[[1]]))
     isoss <- lapply(isom, function(m) {
         if (m < pmz[1, 1] | m > pmz[nrow(pmz), 1]) {return()}
@@ -458,7 +461,7 @@ labelledProc <- function(curDB, mass, formula, pmz, curiso, ppm,
         ss <- binarySearch(pmz, mass, ppm)
     }
     if (length(ss) == 0) {return()}
-    
+
     ##Note that we don't need any M0 hit to find the other signals
     isofactors <- curiso[[i]]
     isodf <- IsoList[[2]][isofactors, ]
@@ -468,14 +471,14 @@ labelledProc <- function(curDB, mass, formula, pmz, curiso, ppm,
         isodf <- dplyr::distinct(isodf)
     }
     ch <- curDB[i, 3]  #Charge to normalize isotope deltam's
-    
-    
+
+
     scanid <- raw[ss, ]
     if (nrow(scanid) != 0) {
         scanid$formv <- formula
         scanid$isov <- "M0"
     }
-    
+
     isom <- mass + (isodf$deltam/abs(ch[[1]]))
     isoss <- lapply(isom, function(m) {
         if (m < pmz[1, 1] | m > pmz[nrow(pmz), 1]) {return()}

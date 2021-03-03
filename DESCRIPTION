@@ -1,17 +1,22 @@
 Package: RHermes
-Title: Targetting the metabolome, the broad-scoped way
-Version: 0.99.9009
-Authors@R: person("Roger", "Gine", email = "alrgibe9@gmail.com", role = c("aut", "cre"))
+Title: Targeting the metabolome, the broad-scoped way
+Version: 0.99.0
+Authors@R: c(person("Roger", "Gine", email = "alrgibe9@gmail.com", role = c("aut", "cre")),
+            person("Jordi", "Capellades", role = "ctb"),
+            person("Jordi", "Rofes", role = "ctb"))
 Description: RHermes is a broad-scoped targeted metabolomics package to identify
   compounds from biological and environmental samples using a context-specific
-  database of formulas and adducts.
-Depends: R (>= 3.6)
-License: GPL (>= 3)
+  database of formulas and adducts. RHermes offers a comprehensive and 
+  sample-specific MS1 and MS2 compound identification strategy. Additionally,
+  the package offers an easy-to-use GUI to help with the processing and to
+  visualize the results.
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
 VignetteBuilder: knitr
-biocViews: MassSpectrometry, Metabolomics, NeuralNetwork
+biocViews: MassSpectrometry, Metabolomics, GUI
+BugReports: https://github.com/RogerGinBer/RHermes/issues
 Imports:
 	BiocParallel,
 	tidyverse,
@@ -19,7 +24,6 @@ Imports:
 	enviPat,
 	mzR,
 	xcms,
-	doSNOW,
 	reticulate,
 	keras,
 	tensorflow,
@@ -27,23 +31,24 @@ Imports:
 	plotly,
 	methods,
 	data.table,
-	foreach,
 	magrittr,
-	parallel,
 	CHNOSZ,
-	shiny (>= 1.5.0),
-	shinyFiles,
-	shinyWidgets,
-	shinydashboard,
 	igraph,
 	networkD3,
 	visNetwork,
 	KEGGREST,
-	slickR,
 	philentropy,
-	DT
+	grDevices,
+	stats,
+	utils
 Suggests:
     readxl,
     knitr,
     testthat,
-    covr
+    covr,
+	shiny (>= 1.5.0),
+	shinyFiles,
+	shinyWidgets,
+	shinydashboard,
+	slickR,
+	DT

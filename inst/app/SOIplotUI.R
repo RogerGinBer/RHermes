@@ -129,17 +129,17 @@ SOIPlotServer <- function(id, struct){
           f <- input$SOIformselect[1]
         }
         blankNames <- lapply(struct$dataset@data@SOI, function(x){
-          if(x@SoiParam@blanksub){
-              parsed <- strsplit(x@SoiParam@blankname, "/")[[1]]
+          if(x@SOIParam@blanksub){
+              parsed <- strsplit(x@SOIParam@blankname, "/")[[1]]
               return(parsed[length(parsed)])
           } else {
               return("No blank substraction")
           }
         })
         blankID <- lapply(struct$dataset@data@SOI, function(x){
-          if(x@SoiParam@blanksub){
+          if(x@SOIParam@blanksub){
             id <- which(struct$dataset@metadata@filenames ==
-                          x@SoiParam@blankname)
+                          x@SOIParam@blankname)
             return(id)
           } else {
             return(NA)
@@ -182,7 +182,7 @@ SOIPlotServer <- function(id, struct){
         equivalences <- equivalences[equivalences$an %in% input$ads]
         ions <- equivalences$ion
 
-        SOIlist <- struct$dataset@data@SOI[[as.numeric(input$soifiles)]]@SoiList
+        SOIlist <- struct$dataset@data@SOI[[as.numeric(input$soifiles)]]@SOIList
         ids <- which(SOIlist$formula %in% ions)
         fa_names <- vapply(SOIlist$formula[ids], function(x){
           paste(unlist(equivalences[equivalences$ion == x, c("f", "an")]), collapse = "~")
@@ -227,7 +227,7 @@ SOIPlotServer <- function(id, struct){
         if(!is.null(input$choicescos) & input$choicescos != ""){
             selected <- strsplit(input$choicescos, " ")[[1]][[1]] %>% as.numeric(.)
             tryCatch({
-                sois <- struct$dataset@data@SOI[[as.numeric(input$soifiles)]]@SoiList
+                sois <- struct$dataset@data@SOI[[as.numeric(input$soifiles)]]@SOIList
                 cos <- sapply(sois$peaks, function(x){cosineSim(sois$peaks[[selected]],
                                                                 query = x, nscans = 5)})
                 m <- sois$mass[[selected]]

@@ -2,36 +2,38 @@
 % Please edit documentation in R/SOI_functions.R
 \name{findSOI}
 \alias{findSOI}
+\alias{findSOI,RHermesExp-method}
 \title{findSOI}
 \usage{
-findSOI(struct, params, fileID, against = numeric(0))
+findSOI(struct, params, fileID, blankID = numeric(0))
+
+\S4method{findSOI}{RHermesExp}(struct, params, fileID, blankID = numeric(0))
 }
 \arguments{
 \item{struct}{The RHermesExp object to which the SOI list will be saved.}
 
 \item{params}{A SOIParam object or a list of SOIParam, contains all the
-parameters necessary to generate the SOI.
-See \link[RHermes]{getSOIpar} for more info on how to set it. If params is a
-list, findSOI will use each object for each SOI list it generates
-until it has used them all. When that happens, the function will keep using
-the same SOIparam object for the rest of SOIs.}
+parameters necessary to generate the SOI. See \link[RHermes]{getSOIpar} for
+more info on how to set it. If params is a list, findSOI will use each
+object for each SOI list it generates until it has used them all. When that
+happens, the function will keep using the same SOIparam object for the rest
+of SOIs.}
 
 \item{fileID}{Numeric vector of the indexes of the peaklists you want to
 process into a SOI.}
 
-\item{against}{Optional. Numeric vector of the indexes of peaklists to use
-as a 'blank' against the correspoding fileID PL.
-If you enter 0 (or don't input anything at all), no blank substraction will
-be performed. In case you want to process multiple SOIs and only some of
-them have blank substraction, you must space the 0s so that the indexes
-match. (See examples)}
+\item{blankID}{Optional. Numeric vector of the indexes of peaklists to use as
+a 'blank' against the correspoding fileID PL. If you enter 0 (or don't input
+anything at all), no blank substraction will be performed. In case you want
+to process multiple SOIs and only some of them have blank substraction, you
+must space the 0s so that the indexes match. (See examples)}
 }
 \value{
 An updated RHermesExp object with the resulting SOI lists appended.
 }
 \description{
 Generates a list of SOI (Scans of Interest) given a peaklist and
-appends it to the RHermesExp object.
+ appends it to the RHermesExp object.
 }
 \examples{
 if(FALSE){

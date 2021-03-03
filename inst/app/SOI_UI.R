@@ -244,7 +244,7 @@ SOIServer <- function(id, struct){
       observeEvent(input$soiClean,{
 
 
-        cleanSOI(struct$dataset, as.numeric(input$soiChoices),
+        filterSOI(struct$dataset, as.numeric(input$soiChoices),
                    as.numeric(input$minfilter), input$isofiltering)
         sendSweetAlert(session = session, title = "Finished",
                        text = paste("The SOI list", input$soiChoices,

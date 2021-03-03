@@ -5,74 +5,55 @@ test_that("Raw data can be loaded",{
                                                           "MS1TestData.mzML",
                                                           package = "RHermes"))
   expect_length(ms1data, 3)
-  expect_equal(nrow(ms1data[[1]]), 142619)
+  expect_equal(nrow(ms1data[[1]]), 40040)
 })
 
 test_that("ScanSearch works",{
-  library(BiocParallel)
-  require(CHNOSZ)
-  require(magrittr)
-  library(data.table)
-  require(tidyverse)
-
-  myHermes <- RHermesExp()
-  myHermes <- setDB(myHermes, db = "hmdb")
-  myHermes@metadata@cluster <- BiocParallel::SnowParam(1)
-  myHermes <- processMS1(myHermes, system.file("extdata",
-                                             "MS1TestData.mzML",
-                                             package = "RHermes"))
-  expect_equal(length(myHermes@data@PL), 1)
-  expect_equal(nrow(myHermes@data@PL[[1]]@peaklist), 12408)
+    myHermes <- readRDS(system.file("extdata",
+                                    "exampleObject.rds",
+                                    package = "RHermes"))
+    myHermes <- processMS1(myHermes, system.file("extdata",
+                                                "MS1TestData.mzML",
+                                                package = "RHermes"))
+    #Same result as precalculated version
+    expect_equal(nrow(myHermes@data@PL[[2]]@peaklist),
+                 nrow(myHermes@data@PL[[1]]@peaklist))
 })
 
 test_that("Labelled proc works",{
-  library(BiocParallel)
-  require(CHNOSZ)
-  require(magrittr)
-  myHermes <- RHermesExp()
-  myHermes <- setDB(myHermes, db = "hmdb")
-  myHermes@metadata@cluster <- BiocParallel::SnowParam(1)
-  myHermes <- processMS1(myHermes, system.file("extdata",
-                                             "MS1TestData.mzML",
-                                             package = "RHermes"),
-                       labelled = TRUE)
-  expect_equal(length(myHermes@data@PL), 1)
-  expect_equal(nrow(myHermes@data@PL[[1]]@peaklist), 23573)
+    myHermes <- readRDS(system.file("extdata",
+                                    "exampleObject.rds",
+                                    package = "RHermes"))
+    myHermes <- processMS1(myHermes,
+                            system.file("extdata",
+                                        "MS1TestData.mzML",
+                                        package = "RHermes"),
+                            labelled = TRUE)
+
+    expect_equal(nrow(myHermes@data@PL[[2]]@peaklist), 1534)
 })
 
 test_that("PL plot works", {
-  library(BiocParallel)
-  require(CHNOSZ)
-  require(magrittr)
-  library(data.table)
-  require(tidyverse)
+    myHermes <- readRDS(system.file("extdata",
+                                    "exampleObject.rds",
+                                    package = "RHermes"))
 
-  myHermes <- RHermesExp()
-  myHermes <- setDB(myHermes, db = "hmdb")
-  myHermes@metadata@cluster <- BiocParallel::SnowParam(1)
-  myHermes <- processMS1(myHermes, system.file("extdata",
-                                             "MS1TestData.mzML",
-                                             package = "RHermes"))
-  p <- RHermes::PLPlot(myHermes, 1, "C6H12O6", rtrange = c(0,1500),
-                              dynamicaxis = TRUE, ads = c("M+Na"))
-  expect_true(is(p, "plotly"))
+    p <- RHermes::plotPL(myHermes, 1, "C3H7NO2", rtrange = c(0,1500),
+                              dynamicaxis = TRUE, ads = NA)
+    expect_true(is(p, "plotly"))
 })
 
 
 test_that("Coverage plot works", {
-  library(BiocParallel)
-  require(CHNOSZ)
-  require(magrittr)
-  library(data.table)
-  require(tidyverse)
-
-  myHermes <- RHermesExp()
-  myHermes <- setDB(myHermes, db = "hmdb")
-  myHermes@metadata@cluster <- BiocParallel::SnowParam(1)
-  myHermes <- processMS1(myHermes, system.file("extdata",
-                                             "MS1TestData.mzML",
-                                             package = "RHermes"))
-  p <- RHermes:::coveragePlot(myHermes, 1)
-  expect_true(is(p[[1]], "plotly") & is(p[[2]], "plotly"))
+    myHermes <- readRDS(system.file("extdata",
+                                    "exampleObject.rds",
+                                    package = "RHermes"))
+    myHermes <- processMS1(myHermes,
+                            system.file("extdata",
+                                        "MS1TestData.mzML",
+                                        package = "RHermes"),
+                            labelled = TRUE)
+    p <- RHermes:::plotCoverage(myHermes, 2)
+    expect_true(is(p[[1]], "plotly") & is(p[[2]], "plotly"))
 })
 

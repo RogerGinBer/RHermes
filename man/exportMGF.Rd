@@ -4,14 +4,16 @@
 \alias{exportMGF}
 \title{exportMGF}
 \usage{
-exportMGF(struct, ID, fname, idx = NA)
+exportMGF(struct, id, file, whichSpec = NA)
 }
 \arguments{
 \item{struct}{RHermesExp object}
 
-\item{ID}{Index of the MS2Exp that you want to export}
+\item{id}{Index of the MS2Exp that you want to export}
 
-\item{fname}{Name of the output file, without the .mgf termination}
+\item{file}{Name of the output file, without the .mgf termination}
+
+\item{whichSpec}{Which entries to export. Defaults to all of them.}
 }
 \value{
 An .msf file
@@ -22,6 +24,13 @@ Exports the superspectra of a given MS2Exp into an
 }
 \examples{
   if(FALSE){
-       exportMGF(myHermes, 1, "output")
+       exportMGF(struct, 1, "output")
    }
 }
+\seealso{
+Other Exports: 
+\code{\link{exportMSP}()},
+\code{\link{exportSIRIUS}()},
+\code{\link{exportmzML}()}
+}
+\concept{Exports}

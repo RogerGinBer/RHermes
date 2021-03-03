@@ -1,4 +1,3 @@
-#'@export
 cosineSim <- function(pattern, query, nscans = 5) {
     #Only scans found on both pattern and query are selected
     sametime <- which(query$rt %in% pattern$rt)
@@ -17,7 +16,6 @@ cosineSim <- function(pattern, query, nscans = 5) {
 }
 
 
-#'@export
 pearsonSim <- function(pattern, query, nscans = 5) {
     #Only scans found on both pattern and query are selected
     sametime <- which(query$rt %in% pattern$rt)
@@ -38,7 +36,6 @@ pearsonSim <- function(pattern, query, nscans = 5) {
     return(num/denom)
 }
 
-#' @export
 MSMScosineSim <-
     function (pattern, query, minhits = 0, mzdiff = 0.02, minint = 0.1,
                 do.sqrt=FALSE) {
@@ -81,12 +78,12 @@ MSMScosineSim <-
     }
 
 #' @import philentropy
-#' @export
-calculate_MS2_distance <- function(P, Q, method = "cosine", minint = 0.1, minhits = 1){
+calculate_MS2_distance <- function(P, Q, method = "cosine", minint = 0.1,
+                                    minhits = 1){
     if(method == "cosine"){
         MSMScosineSim(P, Q, minint = minint, minhits = minhits)
     } else if (method %in% c("fidelity", "squared_chord", "topsoe",
-                             "jaccard", "canberra")) {
+                                "jaccard", "canberra")) {
         l <- match_spec(P, Q, minint = minint, minhits = minhits)
         if(length(l) == 0) return(0)
         p <- rbind(l[[1]]/sum(l[[1]]), l[[2]]/sum(l[[2]]))

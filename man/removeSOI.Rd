@@ -2,9 +2,17 @@
 % Please edit documentation in R/SOI_methods.R
 \name{removeSOI}
 \alias{removeSOI}
+\alias{removeSOI,RHermesExp,numeric-method}
 \title{removeSOI}
 \usage{
-removeSOI(struct, idx)
+removeSOI(struct, id)
+
+\S4method{removeSOI}{RHermesExp,numeric}(struct, id)
+}
+\arguments{
+\item{struct}{The RHermesExp object}
+
+\item{id}{The SOI lists to remove (indexes)}
 }
 \value{
 An RHermesExp object without the SOI lists indicated by idx.
@@ -12,16 +20,11 @@ An RHermesExp object without the SOI lists indicated by idx.
 \description{
 Removes SOI lists from an RHermesExp object
 }
-\section{Slots}{
-
-\describe{
-\item{\code{struct}}{The RHermesExp object}
-
-\item{\code{idx}}{The SOI lists to remove (indexes)}
-}}
-
 \examples{
 if(FALSE){
 myHermes <- removeSOI(myHermes, 2) #Remove the 2nd SOI list in the object
 }
+}
+\author{
+Roger Gine
 }

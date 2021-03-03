@@ -2,9 +2,12 @@
 % Please edit documentation in R/SOI_methods.R
 \name{getSOIpar}
 \alias{getSOIpar}
+\alias{getSOIpar,ANY-method}
 \title{getSOIpar}
 \usage{
 getSOIpar(tag = "double")
+
+\S4method{getSOIpar}{ANY}(tag = "double")
 }
 \arguments{
 \item{tag}{A character string that tells which premade SOI parameter

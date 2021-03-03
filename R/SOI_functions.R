@@ -2,22 +2,21 @@
 
 #'@title findSOI
 #'@description Generates a list of SOI (Scans of Interest) given a peaklist and
-#' appends it to the RHermesExp object.
+#'  appends it to the RHermesExp object.
 #'@param struct The RHermesExp object to which the SOI list will be saved.
 #'@param params A SOIParam object or a list of SOIParam, contains all the
-#' parameters necessary to generate the SOI.
-#'See \link[RHermes]{getSOIpar} for more info on how to set it. If params is a
-#'list, findSOI will use each object for each SOI list it generates
-#'until it has used them all. When that happens, the function will keep using
-#'the same SOIparam object for the rest of SOIs.
+#'  parameters necessary to generate the SOI. See \link[RHermes]{getSOIpar} for
+#'  more info on how to set it. If params is a list, findSOI will use each
+#'  object for each SOI list it generates until it has used them all. When that
+#'  happens, the function will keep using the same SOIparam object for the rest
+#'  of SOIs.
 #'@param fileID Numeric vector of the indexes of the peaklists you want to
-#'process into a SOI.
-#'@param against Optional. Numeric vector of the indexes of peaklists to use
-#'as a 'blank' against the correspoding fileID PL.
-#'If you enter 0 (or don't input anything at all), no blank substraction will
-#'be performed. In case you want to process multiple SOIs and only some of
-#'them have blank substraction, you must space the 0s so that the indexes
-#'match. (See examples)
+#'  process into a SOI.
+#'@param blankID Optional. Numeric vector of the indexes of peaklists to use as
+#'  a 'blank' against the correspoding fileID PL. If you enter 0 (or don't input
+#'  anything at all), no blank substraction will be performed. In case you want
+#'  to process multiple SOIs and only some of them have blank substraction, you
+#'  must space the 0s so that the indexes match. (See examples)
 #'
 #'@examples
 #'if(FALSE){
@@ -35,7 +34,7 @@
 #'myHermes <- findSOI(myHermes, c(p,p2), c(1, 2, 3), c(0, 1, 1))
 #'}
 #'
-#' @return An updated RHermesExp object with the resulting SOI lists appended.
+#'@return An updated RHermesExp object with the resulting SOI lists appended.
 #'
 #'@export
 #'
@@ -44,18 +43,18 @@
 #'@import magrittr
 #'@import tensorflow
 #'@import reticulate
-#'
-
-setGeneric("findSOI", function(struct, params, fileID, against = numeric(0)) {
+setGeneric("findSOI", function(struct, params, fileID, blankID = numeric(0)) {
     standardGeneric("findSOI")
 })
+
+#' @rdname findSOI
 setMethod("findSOI", c("RHermesExp", "ANY", "ANY", "ANY"),
-function(struct, params, fileID, against = numeric(0)) {
-    if (length(against) == 0) {
-        against <- rep(0, length(fileID))
+function(struct, params, fileID, blankID = numeric(0)) {
+    if (length(blankID) == 0) {
+        blankID <- rep(0, length(fileID))
     }
     maxn <- length(struct@data@PL)
-    if (any(c(fileID, against) > maxn)) {
+    if (any(c(fileID, blankID) > maxn)) {
         stop("Some indexes are above the number of current PL")
     }
     if (is.list(params)) {
@@ -68,26 +67,26 @@ function(struct, params, fileID, against = numeric(0)) {
     }
     for (i in seq_along(fileID)) {
         idx <- fileID[i]
-        if (idx == against[i]) {
+        if (idx == blankID[i]) {
             stop(paste("You've tried to substract the blank from",
                         "the same file. That's not allowed."))
         }
         if (multParams) {
             cur <- params[[specID[i]]]
-            ifelse(against[i] != 0, cur@blanksub <- TRUE,
+            ifelse(blankID[i] != 0, cur@blanksub <- TRUE,
                 cur@blanksub <- FALSE)
         } else {
             cur <- params
-            ifelse(against[i] != 0, params@blanksub <- TRUE,
+            ifelse(blankID[i] != 0, params@blanksub <- TRUE,
                 params@blanksub <- FALSE)
         }
-        if (against[i] != 0) {
+        if (blankID[i] != 0) {
             reticulate::py_available(initialize = TRUE)
             reticulate::py_module_available("keras")
             reticulate::py_module_available("tensorflow")
             cur@blanksub <- TRUE
-            cur@blankname <- struct@data@PL[[against[i]]]@filename
-            blankPL <- struct@data@PL[[against[i]]]@peaklist
+            cur@blankname <- struct@data@PL[[blankID[i]]]@filename
+            blankPL <- struct@data@PL[[blankID[i]]]@peaklist
         } else {
             cur@blanksub <- FALSE
             cur@blankname <- "None"
@@ -100,7 +99,7 @@ function(struct, params, fileID, against = numeric(0)) {
                             struct@metadata@ExpParam, cur, blankPL,
                             struct@metadata@filenames[idx],
                             struct@metadata@cluster))
-        if (against[i] == 0) {
+        if (blankID[i] == 0) {
             struct <- setTime(struct,
                             paste("Generated SOI list from",
                             struct@metadata@filenames[idx]))
@@ -108,7 +107,7 @@ function(struct, params, fileID, against = numeric(0)) {
             struct <- setTime(struct,
                             paste("Generated SOI list from",
                             struct@metadata@filenames[idx], "using",
-                            struct@metadata@filenames[against[i]],
+                            struct@metadata@filenames[blankID[i]],
                             "as blank"))
         }
     }
@@ -163,7 +162,7 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename,
     message("")
     message("Starting group characterization:")
     message("Mass calculation:")
-    setkey(Groups, formula)
+    setkeyv(Groups, "formula")
     Groups$mass <- formulaDB[.(Groups$formula),2]
     if (any(Groups$length > maxlen)) {
         Groups <- groupShort(Groups, maxlen, BiocParallelParam)
@@ -221,13 +220,13 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename,
     plist$isov <- rep("M0", nrow(plist))
 
     # Constructing S4 output object
-    output <- RHermesSOI(SoiList = Groups, PlotDF = as.data.table(plist),
-                        SoiParam = SOIParam, filename = filename)
+    output <- RHermesSOI(SOIList = Groups, PlotDF = as.data.table(plist),
+                        SOIParam = SOIParam, filename = filename)
 
         return(output)
     }
 
-    densityProc <- function(x, DataPL, h, BiocParallelParam){
+densityProc <- function(x, DataPL, h, BiocParallelParam){
     rtbin <- x[1]
     scanspercent <- x[2]
     shift <- x[3]
@@ -253,7 +252,7 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename,
     #Changing from index to corresponding RT
     RES[, 1] <- (RES[, 1] * rtbin) - rtbin + floor(min(h$retentionTime)) + shift
     RES[, 2] <- (RES[, 2] * rtbin) - rtbin + floor(min(h$retentionTime)) + shift
-    RES %<>% dplyr::mutate(., length = end - start)
+    RES %<>% dplyr::mutate(., length = .data$end - .data$start)
     RES <- RES[, c(1, 2, 4, 3)]
     return(as.data.table(RES))
     }
@@ -285,6 +284,8 @@ groupGrouper <- function(GR, i, Groups, BiocParallelParam){
     res <- bplapply(unique(matched$yid), resolveGroup, Groups,
                 matched, first_df, BPPARAM = BiocParallelParam)
     res <- do.call(rbind, res)
+
+    end <- NULL; start <- NULL #To appease R CMD Check "no visible binding"
     res[, `:=`(length, end - start)]
     res <- distinct(res)
 
@@ -334,7 +335,8 @@ retrievePeaks <- function(i, Groups, PL){
     rtmin <- x[1, 1]
     rtmax <- x[1, 2]
     f <- x[1, 4]
-    pks <- PL[.(f)] %>% filter(., rt > rtmin[[1]] & rt < rtmax[[1]])
+    pks <- PL[.(f)] %>% filter(., .data$rt > rtmin[[1]] &
+                                .data$rt < rtmax[[1]])
     return(pks[, c(1, 2)])
 }
 
@@ -353,10 +355,13 @@ parallelGroupShort <- function(i, LG, maxlen){
     ms1data <- LG$peaks[[i]]
     curGR <- LG[i,]
     tryCatch({
-        pks <- xcms::peaksWithCentWave(int = ms1data$rtiv, rt = ms1data$rt,
-                                    peakwidth = c(8,60), prefilter = c(0,100),
-                                    snthresh = 0, noise = 0, fitgauss = FALSE,
-                                    firstBaselineCheck = FALSE)
+        #Suppress the "No peaks found" warning
+        suppressWarnings(
+            pks <- xcms::peaksWithCentWave(int = ms1data$rtiv, rt = ms1data$rt,
+                            peakwidth = c(8,60), prefilter = c(0,100),
+                            snthresh = 0, noise = 0, fitgauss = FALSE,
+                            firstBaselineCheck = FALSE)
+        )
     }, error = function(cond){})
 
     if (nrow(pks) != 0) {
@@ -472,8 +477,9 @@ firstCleaning <- function(i, Groups, blankPL){
     f <- cur$formula
     deltat <- 10
     peaks <- cur$peaks[[1]]
-    blankpks <- blankPL[.(f)] %>% filter(., rt >= st - deltat &
-                                            rt <= end + deltat & isov == "M0")
+    blankpks <- blankPL[.(f)] %>% filter(., .data$rt >= st - deltat &
+                                            .data$rt <= end + deltat &
+                                            .data$isov == "M0")
     blankpks <- distinct(blankpks[, c(1, 2)])
     if (nrow(blankpks) < 5) {return(TRUE)} #No blank signals
 
@@ -505,8 +511,9 @@ prepareNetInput <- function(i, Groups, blankPL){
                                                         length.out = Npoints),
                                     rule = 1)) #Interpolate to N points
     smooth_pks[is.na(smooth_pks[, "y"]), "y"] <- 0
-    blankpks <- blankPL[.(f)] %>% filter(., rt >= st - deltat &
-                                        rt <= end + deltat & isov == "M0")
+    blankpks <- blankPL[.(f)] %>% filter(., .data$rt >= st - deltat &
+                                            .data$rt <= end + deltat &
+                                            .data$isov == "M0")
     blankpks <- distinct(blankpks[, c(1, 2)])
     if (length(unique(blankpks$rt)) < 2) {
         blankpks <- data.frame(rt = c(st, end), rtiv = c(0, 0))
@@ -546,7 +553,7 @@ preparePlottingDF <- function(i, Groups){
 
 parallelFilter <- function(j, ScanResults, bins, timebin){
     lapply(j, function(i) {
-        data <- as.vector(ScanResults[.(i), rt])
+        data <- as.vector(ScanResults[.(i), "rt"])
         mint <- min(data)
         maxt <- max(data)
         res <- rep(0, length(bins))
@@ -561,7 +568,7 @@ parallelFilter <- function(j, ScanResults, bins, timebin){
         return(res)
     }
     st <- which(bins == goodbins[1])
-    res[st:(st + length(goodbins) - 2)] <- l
+    res[seq(st, (st + length(goodbins) - 2))] <- l
     return(res)
     })
 }
@@ -575,8 +582,9 @@ densityFilter <- function(ScanResults, h, timebin, iso = "M0", tshift = 0,
 
     #Getting how many scans were taken on each bin
     scans <- lapply(bins, function(curbin) {
-        return(h %>% filter(., retentionTime > curbin & retentionTime <=
-                        curbin + timebin) %>% dim(.) %>% .[1])
+        return(h %>% filter(., .data$retentionTime > curbin &
+                            .data$retentionTime <= curbin + timebin) %>%
+                    dim(.) %>% .[1])
         })
 
     #Counting how many scan entries are on each bin
@@ -622,19 +630,35 @@ densityInterpreter <- function(list, cutoff) {
 }
 
 
-#### cleanSOI-related ####
+#### filterSOI-related ####
+
+#' @title filterSOI
+#' @author Roger Gine
+#' @description Performs a series of filters and quality checks to a given SOI
+#'   list, removing unwanted SOIs in the process.
+#' @inheritParams findSOI
+#' @param id ID of the SOI list to be filtered/checked.
+#' @param minint Minimun SOI intensity. All SOIs below this value will be
+#'   removed from the SOI list
+#' @param isofidelity Boolean. Whether to perform an isotopic fidelity check.
+#' @return A filtered SOI list.
+#' @examples
+#'\dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
+#'                              package = "RHermes"))}
+#' struct <- filterSOI(struct, id = 1, minint = 10000, isofidelity = TRUE)
 #' @export
-setGeneric("cleanSOI", function(struct, soiid, minint, isofidelity) {
-    standardGeneric("cleanSOI")
+setGeneric("filterSOI", function(struct, id, minint = 1e4, isofidelity) {
+    standardGeneric("filterSOI")
 })
-setMethod("cleanSOI", signature = c("RHermesExp", "numeric", "ANY", "ANY"),
-    function(struct, soiid, minint, isofidelity) {
-        soiobject <- struct@data@SOI[[soiid]]
+#' @rdname filterSOI
+setMethod("filterSOI", signature = c("RHermesExp", "numeric", "ANY", "ANY"),
+    function(struct, id, minint = 1e4, isofidelity) {
+        soiobject <- struct@data@SOI[[id]]
         fname <- soiobject@filename
         PLid <- which(struct@metadata@filenames == fname)
         PL <- struct@data@PL[[PLid]]
         ppm <- struct@metadata@ExpParam@ppm
-        soilist <- soiobject@SoiList
+        soilist <- soiobject@SOIList
         BiocParallelParam <- struct@metadata@cluster
 
         ##Filter by maximum intensity
@@ -652,8 +676,8 @@ setMethod("cleanSOI", signature = c("RHermesExp", "numeric", "ANY", "ANY"),
 
             # Isotopic pattern similarity
             message("Calculating isotopic fidelity metrics:")
-            isodata <- bplapply(with_isos, IsoFidelity, struct = struct,
-                                soilist = soiid, plot = FALSE,
+            isodata <- bplapply(with_isos, plotFidelity, struct = struct,
+                                id = id, plot = FALSE,
                                 BPPARAM = SerialParam(progressbar = TRUE))
 
             cos <- vapply(isodata, function(x){x[[3]]}, numeric(1))
@@ -701,8 +725,8 @@ setMethod("cleanSOI", signature = c("RHermesExp", "numeric", "ANY", "ANY"),
         soilist <- adCos(soilist, adthr = 0.8,
                                 FATable = struct@metadata@ExpParam@ionF[[2]],
                                 BiocParallelParam = BiocParallelParam)
-        struct@data@SOI[[soiid]]@SoiList <- soilist
-        struct@data@SOI[[soiid]]@PlotDF <- as.data.table(plist)
+        struct@data@SOI[[id]]@SOIList <- soilist
+        struct@data@SOI[[id]]@PlotDF <- as.data.table(plist)
         return(struct)
     })
 
@@ -763,7 +787,7 @@ parallelIsoCos <- function(i, soilist, PL, isothr){
     rtend <- SOI$end[[1]]
     cur <- PL[.(SOI$formula[[1]])]
     cur <- cur[cur$rt >= rti & cur$rt <= rtend, ]
-    setkey(cur, isov, rt)
+    setkeyv(cur, c("isov", "rt"))
     count <- 0
     hitdf <- data.frame(iso = character(), mass = numeric(),
                     stringsAsFactors = FALSE)
@@ -937,7 +961,21 @@ anotateParallelISF <- function(i, SL, DB, polarity){
 #' @import igraph
 #' @import visNetwork
 #' @importFrom grDevices colorRamp rgb
-plotISF <- function(SOIlist){
+#' @title plotISF
+#' @family Plots
+#' @author Roger Gine
+#' @description Plots all annotated ISF relations between SOIs. NOTE: you have
+#' to first run removeISF with the parameter justAnnotate set to TRUE, otherwise
+#' the ISF SOIs are removed from the SOI list.
+#' @inheritParams plotSOI
+#' @examples
+#' if(FALSE){
+#'     plotISF(struct, 1)
+#' }
+#' @return A visNetwork plot
+#' @export
+plotISF <- function(struct, id){
+    SOIlist <- SOI(struct, id)@SOIList
     net <- graph_from_adj_list(SOIlist$ISF)
     net <- set.vertex.attribute(net,
         "value",
@@ -1011,18 +1049,31 @@ cleanupISF <- function(SL){
 #' @title removeISF
 #' @description Detect and remove ISF signals from a SOI list using low
 #' collision energy MS2 data
+#' @inheritParams filterSOI
+#' @param DBpath Path to a MS2 spectral database with a specific format
+#' @param justAnnotate Whether to actually remove the ISF or just keep them
+#' annotated. Defaults to FALSE (removes the ISF). If set to TRUE, you can then
+#' plot the ISF network with plotISF()
 #' @return An updated RHermesExp object where the selected SOI has had its ISF
-#' removed.
+#' removed. If using justAnnotate = TRUE, the ISF aren't removed.
+#' @seealso plotISF
 #' @export
 #' @importFrom BiocParallel bplapply
-removeISF <- function(struct, id, DBpath = "D:/MS2ID_B2R_20201113_083214.rds"){
+#' @examples
+#' if(FALSE){
+#'     #You need a MS2 Database with the proper format
+#'     #(we are working on releasing one to the public soon enough)
+#'     struct <- removeISF(struct, id = 1, DBpath = "MS2Database.rds")
+#' }
+removeISF <- function(struct, id, DBpath = "D:/MS2ID_B2R_20201113_083214.rds",
+                        justAnnotate = FALSE){
     DB <- readRDS(DBpath)
     BiocParallelParam <- struct@metadata@cluster
     polarity <- ifelse(struct@metadata@ExpParam@ion == "+", 1, 0)
 
     #Anotate and remove ISF
     SoiObj <- struct@data@SOI[[id]]
-    SL <- SoiObj@SoiList
+    SL <- SoiObj@SOIList
     message("Anotating ISF:")
     SL <- anotateISF(SL, DB, polarity, BiocParallelParam)
     message("Creating ISF network and cleaning:")
@@ -1037,7 +1088,7 @@ removeISF <- function(struct, id, DBpath = "D:/MS2ID_B2R_20201113_083214.rds"){
     plist$isov <- rep("M0", nrow(plist))
 
     #Update object and return
-    SoiObj@SoiList <- SL
+    SoiObj@SOIList <- SL
     SoiObj@PlotDF <- as.data.table(plist)
     struct@data@SOI[[id]] <- SoiObj
     struct <- setTime(struct, paste("Removed ISF from SOI list", id,

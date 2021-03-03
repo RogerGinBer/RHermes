@@ -1,31 +1,26 @@
 #'@title generateIL
-#'
 #'@description Groups the SOIs generated in the previous step and sets them up
-#'in an inclusion list ready for the MS/MS analysis. It takes into account the
-#'instrument precursor filter mz range and groups the SOIs accordingly.
-#'The user can also specify whether they want to use all SOIs or prioritize
-#'SOIs with a certain annotation (M+H adducts, prioritize SOIs with adequate
-#'isotopic patterns, etc.).
-#'
-#'
+#'  in an inclusion list ready for the MS/MS analysis. It takes into account the
+#'  instrument precursor filter mz range and groups the SOIs accordingly. The
+#'  user can also specify whether they want to use all SOIs or prioritize SOIs
+#'  with a certain annotation (M+H adducts, prioritize SOIs with adequate
+#'  isotopic patterns, etc.).
 #'@param struct The RHermesExp object in which to save the resulting IL
 #'@param id The SOI list ID from which to generate the IL
 #'@param par An inclusion list parameter object, generated with ILParam()
-#'
-#'@return An RHermes object with the IL inside a new MS2Exp entry, inside
-#'the data slot
-#'
-#'
+#'@return An RHermes object with the IL inside a new MS2Exp entry, inside the
+#'  data slot
 #'@examples
 #'if(FALSE){
 #' par <- ILParam(filtermz = 0.5, priorization = "full")
 #' myHermes <- generateIL(myHermes, 1, par)
 #'}
-#' @importFrom dplyr between
+#'@importFrom dplyr between
 #'@export
 setGeneric("generateIL", function(struct, id, par) {
     standardGeneric("generateIL")
 })
+#' @rdname generateIL
 setMethod("generateIL", c("RHermesExp", "numeric", "ANY"),
     function(struct, id, par = ILParam()) {
         validObject(struct)
@@ -46,12 +41,11 @@ setMethod("generateIL", c("RHermesExp", "numeric", "ANY"),
         message("Done!")
         return(struct)
 })
-    
-#'@export
+
 inclusionList <- function(struct, params, id) {
     SoiList <- struct@data@SOI[[id]]
     ppm <- struct@metadata@ExpParam@ppm
-    GL <- SoiList@SoiList
+    GL <- SoiList@SOIList
     rtmargin <- params@rtmargin
     priorization <- params@priorization
     adduct <- params@ad
@@ -68,7 +62,7 @@ inclusionList <- function(struct, params, id) {
     }
     GL <- GL[, c("start", "end", "formula", "mass", "MaxInt", "anot")]
     GL$originalSOI <- seq_len(nrow(GL))
-    
+
     GL <- lapply(seq_len(nrow(GL)), function(x) {
         cur <- GL[x, ]
         df <- as.data.frame(matrix(unlist(strsplit(cur$anot[[1]], "_")),
@@ -79,21 +73,21 @@ inclusionList <- function(struct, params, id) {
     colnames(GL)[c(8, 9)] <- c("f", "ad")
     GL$f <- as.character(GL$f)
     GL$ad <- as.character(GL$ad)
-    
+
     ##Adduct Priorization
     if (priorization == "only") {
         message(paste("Selecting only", adduct))
         GL <- GL[which(GL$ad %in% unlist(adduct)), ]
     }
-    
+
     #Group entries by similar characterization attributes
     GL <- GLgroup(GL, rtmargin, ppm)
-    
+
     #Tidy the entries, sort them by relevance and store them into a internal DF
     #Keep the important info for MS2 acquisition (rti, rtf and mass for
     #planning injections)
     GL <- GLtidy(GL, filterrt, filtermz)
-    
+
     GL$entrynames <- vapply(GL$jointentries, function(entry) {
         res <- lapply(entry$metadata, function(subentry) {
             return(paste(unique(paste(subentry$f, subentry$ad, sep = "$"),
@@ -111,7 +105,7 @@ GLprior <- function(GL, ad, rtmargin, ppm) {
     if (!"adrows" %in% colnames(GL)) {
         warning("No adduct similarity annotation has been found on this SOI list
                 Adduct priorization failed.
-                Please use cleanSOI() before priorization.")
+                Please use filterSOI() before priorization.")
         return(GL)
     }
     for (i in ad) {
@@ -150,7 +144,7 @@ GLgroup <- function(GL, rtmargin, ppm) {
         st <- cur$start
         end <- cur$end
         m <- cur$mass
-        idx <- which(between(GL$start, st - rtmargin, end + rtmargin) & 
+        idx <- which(between(GL$start, st - rtmargin, end + rtmargin) &
                     between(GL$end, st - rtmargin, end + rtmargin) &
                     between(GL$mass, m - m * ppm/1e+06, m + m * ppm/1e+06))
         out <- c(out, list(GL[idx, ]))
@@ -180,7 +174,7 @@ GLtidy <- function(GL, filterrt, filtermz) {
         st <- cur$start
         end <- cur$end
         m <- cur$mass
-        idx <- which((between(GL$start, st - filterrt, end + filterrt) | 
+        idx <- which((between(GL$start, st - filterrt, end + filterrt) |
                         between(GL$end, st - filterrt, end + filterrt)) &
                         between(GL$mass, m - filtermz, m + filtermz))
         uniondf <- data.frame(start = min(GL[idx, "start"]),

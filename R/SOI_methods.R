@@ -1,18 +1,19 @@
 #'@title removeSOI
+#'@author Roger Gine
 #'@description Removes SOI lists from an RHermesExp object
-#'@slot struct The RHermesExp object
-#'@slot idx The SOI lists to remove (indexes)
+#'@param struct The RHermesExp object
+#'@param id The SOI lists to remove (indexes)
 #'@return An RHermesExp object without the SOI lists indicated by idx.
 #'@examples
 #'if(FALSE){
 #' myHermes <- removeSOI(myHermes, 2) #Remove the 2nd SOI list in the object
 #'}
-
 #'@export
-setGeneric("removeSOI", function(struct, idx) {
+setGeneric("removeSOI", function(struct, id) {
     standardGeneric("removeSOI")
 })
-setMethod("removeSOI", c("RHermesExp", "numeric"), function(struct, idx) {
+#' @rdname removeSOI
+setMethod("removeSOI", c("RHermesExp", "numeric"), function(struct, id) {
     validObject(struct)
     nSOI <- length(struct@data@SOI)
     if (nSOI == 0) {
@@ -20,7 +21,7 @@ setMethod("removeSOI", c("RHermesExp", "numeric"), function(struct, idx) {
         return(struct)
     }
     tosub <- c()
-    for (i in idx) {
+    for (i in id) {
         if (i > nSOI) {
             warning(paste("The index", i,
                             "is larger than the number of SOI lists"))
@@ -61,10 +62,11 @@ setMethod("removeSOI", c("RHermesExp", "numeric"), function(struct, idx) {
 setGeneric("getSOIpar", function(tag = "double") {
     standardGeneric("getSOIpar")
 })
+#' @rdname getSOIpar
 setMethod("getSOIpar", c("ANY"), function(tag = "double") {
     temp <- read.csv2(system.file("extdata", "SOITemplates.csv",
                                     package = "RHermes"))
-    specdf <- filter(temp, name == tag)[, seq(2, 6)]
+    specdf <- filter(temp, .data$name == tag)[, seq(2, 6)]
     if (nrow(specdf) == 0) {
         stop("No templated was found with that ID", call. = FALSE, )
     }
@@ -73,12 +75,29 @@ setMethod("getSOIpar", c("ANY"), function(tag = "double") {
 })
 
 
-
+#'@title SOIsim
+#'@author Roger Gine
+#'@description Calculates the elution profile similarity between SOIs.
+#'@param struct The RHermesExp object.
+#'@param id The SOI list to be used.
+#'@param subset A subset of SOI list entries that you want to compare the
+#'  profile similarities with. Defaults to NA, which means all the entries.
+#'@param mode Whether to compare the similarity with "all" other SOIs or only
+#'  with those determined by subset. Defaults to "all", any other value
+#'  restricts the comparison to the subset.
+#'@return A similarity matrix.
+#'@examples
+#'if(FALSE){
+#' myHermes <- SOIsim(myHermes, 2) #Remove the 2nd SOI list in the object
+#'}
 #'@export
-setGeneric("SOIcos", function(struct, id) {
-    standardGeneric("SOIcos")
+setGeneric("SOIsim", function(struct, id, subset = NA, mode = "all") {
+    standardGeneric("SOIsim")
 })
-setMethod("SOIcos", c("RHermesExp", "numeric"), function(struct, id) {
+
+#' @rdname SOIsim
+setMethod("SOIsim", c("RHermesExp", "numeric", "ANY", "ANY"),
+        function(struct, id, subset = NA, mode = "all") {
     validObject(struct)
     if (length(struct@data@SOI) == 0) {
         stop("This object doesn't have any SOI lists")
@@ -86,13 +105,20 @@ setMethod("SOIcos", c("RHermesExp", "numeric"), function(struct, id) {
     if (!between(length(struct@data@SOI), 1, id)) {
         stop("Please enter a valid SOI list number")
     }
-    SOI <- struct@data@SOI[[id]]@SoiList
+    if(is.na(subset)) subset <- seq_len(nrow(SOI))
+
+    SOI <- struct@data@SOI[[id]]@SOIList
+    if(mode != "all"){
+        against <- subset
+        SOI <- SOI[subset,]
+    }
     SOI <- SOI[order(SOI$start), ]
     m <- matrix(0, nrow = nrow(SOI), ncol = nrow(SOI))
-    for (i in seq_len(nrow(SOI))) {
+    for (i in subset) {
         st <- SOI$start[i]
-        end <- SOI$end[i]
-        for (j in seq_len(i)) {
+        end <- SOI$end
+        if(mode == "all") against <- seq_len(i)
+        for (j in against) {
             if (i == j) {
                 m[i, j] <- 1
                 next
@@ -112,7 +138,9 @@ setMethod("SOIcos", c("RHermesExp", "numeric"), function(struct, id) {
 })
 
 
-#'@export
+#' @export
+#' @rdname SOIParam-class
+#' @param object A SOIParam object
 setMethod("show", "SOIParam", function(object) {
     message("SOI parameters info:")
     message("\tBins used:")
@@ -123,10 +151,12 @@ setMethod("show", "SOIParam", function(object) {
     message(paste("\tBlank filename: ", object@blankname))
 })
 
-#'@export
+#' @export
+#' @rdname RHermesSOI-class
+#' @param object A RHermesSOI object
 setMethod("show", "RHermesSOI", function(object) {
     message("Info about this SOI list:")
     message(paste("\tOriginal file name:", object@filename))
-    message(paste("\tNumber of SOIs:", nrow(object@SoiList)))
-    show(object@SoiParam)
+    message(paste("\tNumber of SOIs:", nrow(object@SOIList)))
+    show(object@SOIParam)
 })

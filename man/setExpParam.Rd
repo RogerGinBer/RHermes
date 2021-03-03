@@ -2,9 +2,23 @@
 % Please edit documentation in R/Metadata_methods.R
 \name{setExpParam}
 \alias{setExpParam}
+\alias{setExpParam,RHermesExp-method}
 \title{setExpParam}
 \usage{
 setExpParam(struct, params = ExpParam(), template = character(0))
+
+\S4method{setExpParam}{RHermesExp}(struct, params = ExpParam(), template = character(0))
+}
+\arguments{
+\item{struct}{The RHermesExp object to modify.}
+
+\item{params}{Optional if using template. An ExpParam object detailing a
+custom set of parameters.}
+
+\item{template}{Ignored if using params. A character describing the ID of
+ the pre-made parameter set to use. Currently you can use: 'orbi-pos',
+'orbi-neg', 'qtof-pos' and 'qtof-neg'. The parameters can be found,
+ modified or even expanded in the csv at app/www/InstrumentTemplates.csv}
 }
 \value{
 An RHermesExp object with the desired experimental parameters set.
@@ -15,20 +29,6 @@ Main interface to set the experimental parameters into a
 (partially or fully customized) or provide a template tag to use a pre-made
  parameter set.
 }
-\section{Slots}{
-
-\describe{
-\item{\code{struct}}{The RHermesExp object to modify.}
-
-\item{\code{params}}{Optional if using template. An ExpParam object detailing a
-custom set of parameters.}
-
-\item{\code{template}}{Ignored if using params. A character describing the ID of
- the pre-made parameter set to use. Currently you can use: 'orbi-pos',
-'orbi-neg', 'qtof-pos' and 'qtof-neg'. The parameters can be found,
- modified or even expanded in the csv at app/www/InstrumentTemplates.csv}
-}}
-
 \examples{
 if(FALSE){
 myHermes <- RHermesExp()

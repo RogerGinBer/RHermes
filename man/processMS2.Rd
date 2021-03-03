@@ -2,9 +2,22 @@
 % Please edit documentation in R/MS2_functions.R
 \name{processMS2}
 \alias{processMS2}
+\alias{processMS2,RHermesExp,numeric,character,character-method}
 \title{processMS2}
 \usage{
 processMS2(
+  struct,
+  id,
+  MS2files,
+  sstype = "regular",
+  useDB = FALSE,
+  referenceDB = "D:/sp_MassBankEU_20200316_203615.RData",
+  mincos = 0.8,
+  minhits = 1,
+  method = "cosine"
+)
+
+\S4method{processMS2}{RHermesExp,numeric,character,character}(
   struct,
   id,
   MS2files,
@@ -23,21 +36,35 @@ processMS2(
 
 \item{MS2files}{Character vector of the MS2 files address.}
 
+\item{sstype}{How to "process" the MS2 scans. Defaults to assuming you have
+acquired in continuous MS2 mode (sstype = "regular"). You can also take the
+most intense scan (sstype = "onescan") or even all acquired scans (sstype =
+"all"). Beware that "all" takes substantially longer.}
+
+\item{useDB}{Whether to use an MS2 DB to match the spectra.}
+
 \item{referenceDB}{Character, where to find the MSMS database to query
 against.}
 
-\item{mincos}{Numeric, between 0 and 1, the minimum spectral cosine
-between query and reference spectrum for a match to be reported
-(see the paper for more detail on this).}
+\item{mincos}{Numeric, between 0 and 1, the minimum spectral cosine between
+query and reference spectrum for a match to be reported (see the paper for
+more detail on this).}
+
+\item{minhits}{Numeric, minimum number of matching fragments to calculate the
+similarity score. If there are fewer, the match is not considered.}
+
+\item{method}{Character, the similarity algorithm to use. Defaults to
+"cosine", but it can be changed to other metrics included in the package
+Philentropy.}
 }
 \value{
-An RHermesExp object with the identifications set in the used
-MS2Exp slot.
+An RHermesExp object with the identifications set in the used MS2Exp
+ slot.
 }
 \description{
-processMS2 processes the MSMS files generated for a given
-IL and performs compound identification using an MSMS reference spectra
-database. Only the struct id and MS2files parameters are mandatory.
+processMS2 processes the MSMS files generated for a given IL and
+ performs compound identification using an MSMS reference spectra database.
+ Only the struct id and MS2files parameters are mandatory.
 }
 \examples{
 if(FALSE){

@@ -2,36 +2,45 @@
 % Please edit documentation in R/Metadata_methods.R
 \name{addAd}
 \alias{addAd}
+\alias{addAd,RHermesExp,character,numeric-method}
 \title{addAd}
 \usage{
 addAd(struct, name, deltam, ch = 1, mult = 1, toadd = "FALSE", tosub = "FALSE")
+
+\S4method{addAd}{RHermesExp,character,numeric}(struct, name, deltam, ch = 1, mult = 1, toadd = "FALSE", tosub = "FALSE")
 }
 \arguments{
 \item{struct}{The RHermesExp object}
 
-\item{name}{Name of the adduct to add}
+\item{name}{Name of the adduct to add.}
 
-\item{ch}{Adduct charge. Remember to specify the symbol if negative.}
+\item{deltam}{Delta m/z of the adduct, in Da.}
+
+\item{ch}{Adduct charge. Remember to specify the symbol if
+negative.}
 
 \item{mult}{Multiplicity (eg, M, 2M, 3M, etc.)}
 
-\item{toadd}{Atoms to add to the formula when it ionizes as the adduct.
-(ex: M+H -> H1, M+Cl -> Cl1). Note the explicit use of a 1 after the symbol.}
+\item{toadd}{Atoms to add to the formula when it ionizes as
+the adduct. (ex: M+H -> H1, M+Cl -> Cl1). Note the explicit
+use of a 1 after the symbol.}
 
-\item{tosub}{Atoms to substract to the formula. Same idea as in toadd.
-(ex: M-H2O+H -> H2O1)}
+\item{tosub}{Atoms to substract to the formula. Same idea as
+in toadd. (ex: M-H2O+H -> H2O1)}
 }
 \value{
 An updated RHermesExp object with the new adduct list
 }
 \description{
-Adds new custom adducts to the RHermesExp adduct list
+Adds new custom adducts to the RHermesExp adduct
+  list
 }
 \details{
-The function adds an entry to the Envipat-style dataframe containing
-the adducts used for the experiment. It is important to specify what atoms to
-add or substract to the molecular formula. Polarity is inferred directly from
-the specified charge.
+The function adds an entry to the Envipat-style
+  dataframe containing the adducts used for the experiment. It
+  is important to specify what atoms to add or substract to
+  the molecular formula. Polarity is inferred directly from
+  the specified charge.
 }
 \examples{
 if(FALSE){

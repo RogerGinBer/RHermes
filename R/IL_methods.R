@@ -50,6 +50,7 @@ injectionPlanner <- function(IL, injections, maxover, byMaxInt = TRUE,
 setGeneric("filterIL", function(struct, id, rts, minint = Inf) {
     standardGeneric("filterIL")
 })
+#' @rdname filterIL
 setMethod("filterIL", c("RHermesExp", "numeric", "numeric", "ANY"),
 function(struct, id, rts, minint = Inf) {
     if (length(rts) != 2) {
@@ -73,24 +74,27 @@ function(struct, id, rts, minint = Inf) {
 
 #'@title exportIL
 #'@md
-#'@description Organizes the IL entries into multiple injections taking into
-#' account the user-specified parameters. Outputs a single or multiple csv
-#'  files that serve as input for the MS to performed MSMS analysis.
+#'@description Organizes the IL entries into multiple injections
+#'  taking into account the user-specified parameters. Outputs a
+#'  single or multiple csv files that serve as input for the MS
+#'  to performed MSMS analysis.
 #'
 #'@param struct The RHermesExp object.
-#'@param id The IL ID in the RHermesExp object. The IDs are assigned by the
-#' order in which the IL are generated.
-#'@param folder A string containing the folder to save the IL csv/s into. By
-#' default will be your working directory
-#'@param maxOver Numeric, very important. It's the number of mz-rt segments
-#' that can be monitored at the same time by the MS instrument. Higher numbers
-#' lead to less injections but the number of scans for each IL entry will
-#' be reduced and gives problems when deconvoluting the MS2 spectras.
-#'@param sepFiles Logical, whether to generate a single csv file or multiple
-#' csvs, each corresponding to each injection/chromatographic run. From our
-#' experience with an Orbitrap Fusion, separate csvs will simplify the task.
-#'@return Nothing. As a side effect, it generates one/multiple .csv files
-#'with the inclusion list data
+#'@param id The IL ID in the RHermesExp object. The IDs are
+#'  assigned by the order in which the IL are generated.
+#'@param folder A string containing the folder to save the IL
+#'  csv/s into. By default will be your working directory
+#'@param maxOver Numeric, very important. It's the number of
+#'  mz-rt segments that can be monitored at the same time by the
+#'  MS instrument. Higher numbers lead to less injections but the
+#'  number of scans for each IL entry will be reduced and gives
+#'  problems when deconvoluting the MS2 spectras.
+#'@param sepFiles Logical, whether to generate a single csv file
+#'  or multiple csvs, each corresponding to each
+#'  injection/chromatographic run. From our experience with an
+#'  Orbitrap Fusion, separate csvs will simplify the task.
+#'@return Nothing. As a side effect, it generates one/multiple
+#'  .csv files with the inclusion list data
 #'@examples
 #'if(FALSE){
 #'    exportIL(myHermes, 1, 'C:/SomeFolder', maxOver = 5, sepFiles = FALSE)
@@ -100,6 +104,8 @@ setGeneric("exportIL", function(struct, id, folder = getwd(),
                                 maxOver = 5, sepFiles = FALSE) {
     standardGeneric("exportIL")
 })
+
+#'@rdname exportIL
 setMethod("exportIL", c("RHermesExp", "numeric", "ANY", "ANY", "ANY"),
 function(struct, id, folder = getwd(), maxOver = 5, sepFiles = FALSE) {
     validObject(struct)
@@ -137,6 +143,8 @@ function(struct, id, folder = getwd(), maxOver = 5, sepFiles = FALSE) {
 
 
 #'@export
+#'@rdname RHermesIL-class
+#' @param object An RHermesIL object
 setMethod("show", "RHermesIL", function(object){
     message("Info about the IL:")
     message(paste("\tIL entries:", nrow(object@IL)))

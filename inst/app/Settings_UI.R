@@ -9,8 +9,7 @@ Settings_UI <- function(id){
                width = 4),
         column(numericInput(inputId = ns("coreN"), label = "Number of cores",
                             value = 1, min = 1,
-                            max = detectCores(all.tests = FALSE,
-                                              logical = TRUE),
+                            max = BiocParallel::bpworkers(),
                             step = 1), width = 4),
         column(uiOutput(ns("warning")), width = 4)
       ),
@@ -38,8 +37,7 @@ SettingsServer <- function(id, struct){
                                                            inputId = "coreN",
                                                            value = 1, max = 1)
           } else {updateNumericInput(session = session, inputId = "coreN",
-                                     max = detectCores(all.tests = FALSE,
-                                                       logical = TRUE))}
+                                     max = BiocParallel::bpworkers())}
         })
 
     toReturn <- reactiveValues(dataset = RHermesExp(), trigger = 0)
@@ -57,11 +55,10 @@ SettingsServer <- function(id, struct){
     },ignoreInit = TRUE, ignoreNULL = TRUE)
 
     observeEvent({input$coreN}, {
-      if((as.numeric(input$coreN)/ detectCores(all.tests = FALSE,
-                                        logical = TRUE)) > 0.75){
+      if((as.numeric(input$coreN)/ BiocParallel::bpworkers()) > 0.75){
         output$warning <- renderUI(
           p(tags$b("Warning:"),
-            "Using more than 75% cores may cause undesired effects",
+            "Using more than 75% cores may cause undesired effects like system unstability",
             style = "background-color: #4d4263; color: #fff;
             padding: 15px 15px 15px 15px; text-align: center")
         )

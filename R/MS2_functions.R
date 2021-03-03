@@ -1,39 +1,50 @@
 #### Main processMS2 routine ####
 
-#' @import tidyverse
-#' @import igraph
-#' @import methods
-#' @rawNamespace import(plotly, except = c(groups, last_plot))
-#' @importFrom dplyr distinct
+#'@import tidyverse
+#'@import igraph
+#'@import methods
+#'@rawNamespace import(plotly, except = c(groups, last_plot))
+#'@importFrom dplyr distinct
 #'
 #'@title processMS2
-#'@description processMS2 processes the MSMS files generated for a given
-#' IL and performs compound identification using an MSMS reference spectra
-#' database. Only the struct id and MS2files parameters are mandatory.
+#'@description processMS2 processes the MSMS files generated for a given IL and
+#'  performs compound identification using an MSMS reference spectra database.
+#'  Only the struct id and MS2files parameters are mandatory.
 #'
 #'@param struct The RHermesExp object to add the processed data.
 #'@param id Numeric, the id of the inclusion list to process.
 #'@param MS2files Character vector of the MS2 files address.
+#'@param sstype How to "process" the MS2 scans. Defaults to assuming you have
+#'  acquired in continuous MS2 mode (sstype = "regular"). You can also take the
+#'  most intense scan (sstype = "onescan") or even all acquired scans (sstype =
+#'  "all"). Beware that "all" takes substantially longer.
+#'@param useDB Whether to use an MS2 DB to match the spectra.
 #'@param referenceDB Character, where to find the MSMS database to query
-#' against.
-#'@param mincos Numeric, between 0 and 1, the minimum spectral cosine
-#' between query and reference spectrum for a match to be reported
-#' (see the paper for more detail on this).
-#'@return An RHermesExp object with the identifications set in the used
-#' MS2Exp slot.
+#'  against.
+#'@param mincos Numeric, between 0 and 1, the minimum spectral cosine between
+#'  query and reference spectrum for a match to be reported (see the paper for
+#'  more detail on this).
+#'@param minhits Numeric, minimum number of matching fragments to calculate the
+#'  similarity score. If there are fewer, the match is not considered.
+#'@param method Character, the similarity algorithm to use. Defaults to
+#'  "cosine", but it can be changed to other metrics included in the package
+#'  Philentropy.
+#'@return An RHermesExp object with the identifications set in the used MS2Exp
+#'  slot.
 #'@examples
 #'if(FALSE){
 #'processMS2(myHermes, 1, c('C:/myFolder/File1.mzML',
 #'                          'C:/myFolder/File2.mzML'))
 #'}
 #'
-#' @export
+#'@export
 setGeneric("processMS2",
         function(struct, id, MS2files, sstype = "regular", useDB = FALSE,
                     referenceDB = "D:/sp_MassBankEU_20200316_203615.RData",
                     mincos = 0.8, minhits = 1, method = "cosine") {
     standardGeneric("processMS2")
 })
+#' @rdname processMS2
 setMethod("processMS2",
             c("RHermesExp", "numeric", "character", "character", "ANY", "ANY"),
 function(struct, id, MS2files, sstype = "regular", useDB = FALSE,
@@ -161,7 +172,8 @@ function(struct, id, MS2files, sstype = "regular", useDB = FALSE,
         curspec <- unlist(curspec, recursive = FALSE, use.names = FALSE)
         names(curspec) <- n
         cos <- rapply(curspec, function(compound) {
-            calculate_MS2_distance(entry, t(compound), minhits = minhits, method = method)
+            calculate_MS2_distance(entry, t(compound), minhits = minhits,
+                                    method = method)
         }, classes = "matrix", how = "replace")
         cos[which(lapply(cos, length) != 0)]
     }, purifiedSpectra$ssdata, corresponding)
@@ -249,7 +261,7 @@ MSMSimporter <- function(IL, filelist) {
         }))
         subpks <- as.data.frame(subpks)
         names(subpks) <- c("mz", "int", "rt", "ID")
-        subpks <- filter(subpks, int > 1)  #Remove zeros
+        subpks <- filter(subpks, .data$int > 1)  #Remove zeros
         if (nrow(subpks) == 0) {
             return(list())
         }
@@ -259,18 +271,14 @@ MSMSimporter <- function(IL, filelist) {
 }
 
 #### MS2 spectra processing functions ####
+# First it parses each IL entry annotation to store the annotated
+# formulas that correspond to each entry. Then, it reads the MSMS info and
+# finds consistent mass traces by sorting all data points by mz and using
+# a Centwave-like algorithm.
+# The derived 'pure' spectra are called superspectra. A single IL entry
+# can yield different superspectra. This function is NOT to be used by
+# itself. It forms part of the MSMS processing workflow.
 
-#' @title CliqueMSMS
-#' @description Purify continuous MSMS spectra detecting consistent mass signals
-#' @details First it parses each IL entry annotation to store the annotated
-#' formulas that correspond to each entry. Then, it reads the MSMS info and
-#' finds consistent mass traces by sorting all data points by mz and using
-#' a Centwave-like algorithm.
-#' The derived 'pure' spectra are called superspectra. A single IL entry
-#' can yield different superspectra. This function is NOT to be used by
-#' itself. It forms part of the MSMS processing workflow.
-#' @return List of formulas and a list of purified MSMS (list of dataframes,
-#' one for each superspectra).
 #' @import ggplot2
 CliqueMSMS <- function(MS2Exp, idx, contaminant = 173.5, delta = 0.1,
                         BPPARAM = BiocParallel::SerialParam(),
@@ -300,7 +308,7 @@ CliqueMSMS <- function(MS2Exp, idx, contaminant = 173.5, delta = 0.1,
         RES <- do.call(rbind, RES)
     } else {
         RES <-  lapply(seq_along(idx), wrapper_allscan_ss, idx = idx,
-                       MS2list = MS2list, fs = fs)
+                        MS2list = MS2list, fs = fs)
         RES <- do.call(rbind, RES)
     }
     RES$start <- as.numeric(RES$start)
@@ -309,7 +317,7 @@ CliqueMSMS <- function(MS2Exp, idx, contaminant = 173.5, delta = 0.1,
     return(RES)
 }
 
-#'@import igraph 
+#'@import igraph
 generate_ss <- function(curentry, MS2list, contaminant, delta, fs, idx,
                         to_plot) {
     header <- MS2list[[curentry]][[1]]
@@ -364,7 +372,7 @@ generate_ss <- function(curentry, MS2list, contaminant, delta, fs, idx,
     # Trying to salvage a spectra from suboptimal data
     if (length(soi) < 3) {
         return(failsafe_ss(data, header, idx[curentry], fs[curentry]))
-    } 
+    }
 
     ## Tidying the regions
     for (i in seq_along(avgmz)) {
@@ -406,8 +414,9 @@ generate_ss <- function(curentry, MS2list, contaminant, delta, fs, idx,
         return(df)
     })
     pks <- do.call(rbind, soipks)
-    if (nrow(pks) == 0) return(failsafe_ss(data, header, idx[curentry], fs[curentry]))
-    
+    if (nrow(pks) == 0) return(failsafe_ss(data, header, idx[curentry],
+                                fs[curentry]))
+
 
     ## Matching data to the peaks found
     soi <- do.call(rbind, soi)
@@ -420,7 +429,8 @@ generate_ss <- function(curentry, MS2list, contaminant, delta, fs, idx,
     results <- centwavePropag(pks, soi)
     pks <- results[[1]]
     soi <- results[[2]]
-    if (nrow(pks) == 0) return(failsafe_ss(data, header, idx[curentry], fs[curentry]))
+    if (nrow(pks) == 0) return(failsafe_ss(data, header, idx[curentry],
+                                fs[curentry]))
 
 
     ## Calculate all similarities
@@ -656,7 +666,7 @@ wrapper_allscan_ss <- function(curentry, idx, MS2list, fs) {
     header <- MS2list[[curentry]][[1]]
     data <- MS2list[[curentry]][[2]]
     names(data)[2] <- "rtiv"
-    
+
     # Select by TIC
     lapply(seq_len(nrow(header)), function(ss){
         rt <- header$retentionTime[ss]
@@ -694,7 +704,7 @@ match_spec <- function(P, Q, mzdiff = 0.1, minint = 0.1, minhits = 1){
             }
         }
     }
-    
+
     if (length(patint) < minhits | length(qint) < minhits) {
         return()
     }

@@ -177,9 +177,6 @@ ILServer <- function(id, struct){
           session = session)
       })
 
-
-
-
       return(toReturn)
     }
   )

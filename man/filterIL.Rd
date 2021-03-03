@@ -2,9 +2,12 @@
 % Please edit documentation in R/IL_methods.R
 \name{filterIL}
 \alias{filterIL}
+\alias{filterIL,RHermesExp,numeric,numeric-method}
 \title{filterIL}
 \usage{
 filterIL(struct, id, rts, minint = Inf)
+
+\S4method{filterIL}{RHermesExp,numeric,numeric}(struct, id, rts, minint = Inf)
 }
 \arguments{
 \item{struct}{The RHermesExp object.}

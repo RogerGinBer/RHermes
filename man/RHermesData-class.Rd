@@ -6,21 +6,26 @@
 \alias{RHermesData}
 \title{RHermesData}
 \description{
-The experimental data storage class. Holds all information of the
-peaklists, SOI lists, inclusion lists, MS2 data and identifications.
+The experimental data storage class. Holds all
+ information of the peaklists, SOI lists, inclusion lists, MS2
+ data and identifications.
 }
 \section{Slots}{
 
 \describe{
 \item{\code{PL}}{A list object that holds all RHermesPL objects
-containing a PL each.
-See [RHermes]{RHermesPL} for more info}
+containing a PL each.}
 
 \item{\code{SOI}}{List that holds RHermesSOI objects with a SOI list
-inside each.
-See [RHermes]{RHermesSOI} for more info.}
+inside each.}
 
 \item{\code{MS2Exp}}{List to hold inclusion lists, MSMS experimental
 data and compound identifications.}
 }}
 
+\seealso{
+RHermesPL RHermesSOI
+}
+\author{
+Roger Gine
+}

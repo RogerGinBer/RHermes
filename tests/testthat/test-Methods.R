@@ -1,6 +1,7 @@
 context("General methods")
 test_that("RHermesExp methods work", {
-    myHermes <- readRDS(system.file("extdata", "withIdent.rds",
+    myHermes <- readRDS(system.file("extdata",
+                                    "exampleObject.rds",
                                     package = "RHermes"))
     show(myHermes)
     expect_message(readTime(myHermes), regexp = ".")
@@ -24,10 +25,9 @@ test_that("RHermesExp methods work", {
 context("MS1 processing methods")
 
 test_that("SOI methods work", {
-    myHermes <- readRDS(system.file("extdata", "afterSOI.rds",
+    myHermes <- readRDS(system.file("extdata",
+                                    "exampleObject.rds",
                                     package = "RHermes"))
-    myHermes <- SOIcleaner(myHermes, 1, 50000, TRUE)
-    cos <- SOIcos(myHermes, 1)
     myHermes <- removeSOI(myHermes, 1)
     succeed()
 })

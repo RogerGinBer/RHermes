@@ -2,9 +2,12 @@
 % Please edit documentation in R/General_methods.R
 \name{readTime}
 \alias{readTime}
+\alias{readTime,RHermesExp-method}
 \title{readTime}
 \usage{
 readTime(struct)
+
+\S4method{readTime}{RHermesExp}(struct)
 }
 \arguments{
 \item{struct}{The RHermesExp object you want to read the timestamps from.}
@@ -18,8 +21,8 @@ keep track of all changes made to the object (added files, generated SOI
  lists, changed parameters, etc.)
 }
 \examples{
-if(FALSE){
-readTime(myHermes)
+readTime(RHermesExp())
 }
-
+\author{
+Roger Gine
 }

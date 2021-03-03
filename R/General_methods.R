@@ -1,4 +1,6 @@
 #'@export
+#' @rdname RHermesExp-class
+#' @param object An RHermesExp object
 setMethod("show", "RHermesExp", function(object) {
     show(object@metadata@ExpParam)
     nfiles <- length(object@metadata@filenames)
@@ -23,10 +25,19 @@ setMethod("show", "RHermesExp", function(object) {
     readTime(object)
 })
 
-
+#' @title setTime
+#' @author Roger Gine
+#' @description Adds a timestamp to the RHermesExp object with a specified
+#' message. Useful for adding info to the object for reproducibility purposes.
+#' @param struct The RHermesExp object you want to add the timestamp to.
+#' @param message A character string to append.
+#' @examples setTime(RHermesExp(), "Important info")
+#' @return A copy of struct with the updated timestamp list.
+#' @export
 setGeneric("setTime", function(struct, message) {
     standardGeneric("setTime")
 })
+#' @rdname setTime
 setMethod("setTime", c("RHermesExp", "character"), function(struct,
     message) {
     validObject(struct)
@@ -38,22 +49,18 @@ setMethod("setTime", c("RHermesExp", "character"), function(struct,
 
 
 #' @title readTime
+#' @author Roger Gine
 #' @description Prints all timestamps of a given RHermesExp object. Useful to
 #' keep track of all changes made to the object (added files, generated SOI
 #'  lists, changed parameters, etc.)
-#'
 #' @param struct The RHermesExp object you want to read the timestamps from.
-#'
-#' @examples
-#' if(FALSE){
-#' readTime(myHermes)
-#' }
-#'
+#' @examples readTime(RHermesExp())
 #' @return None, just prints the timestamps
 #'@export
 setGeneric("readTime", function(struct) {
     standardGeneric("readTime")
 })
+#' @rdname readTime
 setMethod("readTime", "RHermesExp", function(struct) {
     validObject(struct)
     lapply(struct@metadata@timestamps, function(m) {
@@ -63,76 +70,157 @@ setMethod("readTime", "RHermesExp", function(struct) {
 })
 
 ## Object getters ##
+#'@title DB
+#'@author Roger Gine
+#'@family Getters
+#'@param struct An RHermesExp object
+#'@return A data.frame with all molecular formulas in struct.
+#'@examples
+#'\dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
+#'                              package = "RHermes"))}
+#'DB(struct)
 #'@export
 setGeneric("DB", function(struct) {
     standardGeneric("DB")
 })
+#' @rdname DB
 setMethod("DB", c("RHermesExp"), function(struct) {
     validObject(struct)
     struct@metadata@ExpParam@DB
 })
 
+#'@title adlist
+#'@author Roger Gine
+#'@family Getters
+#'@param struct An RHermesExp object
+#'@return The current data.frame of adducts in struct.
+#'@examples
+#'\dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
+#'                              package = "RHermes"))}
+#'adlist(struct)
 #'@export
 setGeneric("adlist", function(struct) {
     standardGeneric("adlist")
 })
+#' @rdname adlist
 setMethod("adlist", c("RHermesExp"), function(struct) {
     validObject(struct)
     struct@metadata@ExpParam@adlist
 })
 
+#'@title PL
+#'@author Roger Gine
+#'@family Getters
+#'@param struct An RHermesExp object
+#'@param id The number corresponding to the PL you want to access
+#'@return The RHermes_PL object at position id.
+#'@examples
+#'\dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
+#'                              package = "RHermes"))}
+#'PL(struct, 1)
 #'@export
 setGeneric("PL", function(struct, id) {
     standardGeneric("PL")
 })
+#' @rdname PL
 setMethod("PL", c("RHermesExp", "numeric"), function(struct, id) {
     validObject(struct)
     struct@data@PL[[id]]
 })
 
-
+#'@title SOI
+#'@author Roger Gine
+#'@family Getters
+#'@param struct An RHermesExp object
+#'@param id The number corresponding to the SOI list you want to access
+#'@return The RHermes_SOI object at position id.
+#'@examples
+#'\dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
+#'                              package = "RHermes"))}
+#'SOI(struct, 1)
 #'@export
 setGeneric("SOI", function(struct, id) {
     standardGeneric("SOI")
 })
+#' @rdname SOI
 setMethod("SOI", c("RHermesExp", "numeric"), function(struct, id) {
     validObject(struct)
     struct@data@SOI[[id]]
 })
 
-
+#'@title IL
+#'@author Roger Gine
+#'@family Getters
+#'@param struct An RHermesExp object
+#'@param id The number corresponding to the inclusion list you want to access
+#'@return The RHermes_IL object at position id.
+#'@examples
+#'\dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
+#'                              package = "RHermes"))}
+#'IL(myHermes, 1)
 #'@export
 setGeneric("IL", function(struct, id) {
     standardGeneric("IL")
 })
+#' @rdname IL
 setMethod("IL", c("RHermesExp", "numeric"), function(struct, id) {
     validObject(struct)
     struct@data@MS2Exp[[id]]@IL
 })
 
-
+#'@title MS2Data
+#'@author Roger Gine
+#'@family Getters
+#'@param struct An RHermesExp object
+#'@param id The number corresponding to the inclusion list you want to access
+#'@return A list of all IL entries of the RHermes_IL object at position id with
+#'their corresponding MS2 scan data
+#'@examples
+#'\dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
+#'                              package = "RHermes"))}
+#'MS2Data(struct, 1)
 #'@export
 setGeneric("MS2Data", function(struct, id) {
     standardGeneric("MS2Data")
 })
+#' @rdname MS2Data
 setMethod("MS2Data", c("RHermesExp", "numeric"), function(struct, id) {
     validObject(struct)
     struct@data@MS2Exp[[id]]@MS2Data
 })
 
+#'@title Ident
+#'@author Roger Gine
+#'@family Getters
+#'@param struct An RHermesExp object
+#'@param id The number corresponding to the inclusion list you want to access
+#'@return The identification data.frame with the RHermes_MS2Exp at position id.
+#'@examples
+#'\dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
+#'                              package = "RHermes"))}
+#'Ident(myHermes, 1)
 #'@export
 setGeneric("Ident", function(struct, id) {
     standardGeneric("Ident")
 })
+#' @rdname Ident
 setMethod("Ident", c("RHermesExp", "numeric"), function(struct, id) {
     validObject(struct)
     struct@data@MS2Exp[[id]]@Ident[[1]]
 })
 
+
+#'@title Cluster
+#'@author Roger Gine
+#'@family Getters
+#'@param struct An RHermesExp object
+#'@return The BiocParallel backend object associated with struct
+#'@examples Cluster(RHermesExp())
 #'@export
 setGeneric("Cluster", function(struct) {
     standardGeneric("Cluster")
 })
+#' @rdname Cluster
 setMethod("Cluster", c("RHermesExp"), function(struct) {
     validObject(struct)
     struct@metadata@cluster

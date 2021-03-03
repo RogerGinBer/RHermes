@@ -36,7 +36,7 @@ IO_UI <- function(id) {
             verbatimTextOutput(ns("loadpath"), placeholder = TRUE),
             width = 13))
 }
-#'@import shinyFiles
+
 IOServer <- function(id, struct) {
     moduleServer(id, function(input, output, session) {
 
