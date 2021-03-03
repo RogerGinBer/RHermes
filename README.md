@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# RHermes <img src = "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Juvenile_Ragdoll.jpg/1200px-Juvenile_Ragdoll.jpg" height = "90" width = "90">
+# RHermes
 
 <!-- badges: start -->
 
@@ -28,26 +28,27 @@ You can install the released version of RHermes from
 [Bioconductor](https://bioconductor.org/) with:
 
 ``` r
-# install.packages("BiocManager")
+if(!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
 BiocManager::install("RHermes")
 ```
 
-And the development version from [GitHub](https://github.com/) with:
+Alternatively, you can download the development version from
+[GitHub](https://github.com/) with:
 
 ``` r
-# install.packages("devtools")
+if(!requireNamespace("devtools", quietly = TRUE))
+    install.packages("devtools")
 devtools::install_github("RogerGinBer/RHermes")
-```
 
 ## Setup
-
-RHermes can perform almost all its functions after installation, but the
-SOI Blank Substraction step requires a valid Keras and Tensorflow
-installation (which rely on Python).
+RHermes can perform almost all its functions after installation, but the SOI
+Blank Substraction step requires a valid Keras and Tensorflow installation
+(which rely on Python).
 
 ### Option 1: Default installation
-
 In principle both Keras and Tensorflow can be configured with:
+```
 
 ``` r
 reticulate::install_miniconda()
