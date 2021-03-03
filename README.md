@@ -40,15 +40,17 @@ Alternatively, you can download the development version from
 if(!requireNamespace("devtools", quietly = TRUE))
     install.packages("devtools")
 devtools::install_github("RogerGinBer/RHermes")
+```
 
 ## Setup
-RHermes can perform almost all its functions after installation, but the SOI
-Blank Substraction step requires a valid Keras and Tensorflow installation
-(which rely on Python).
+
+RHermes can perform almost all its functions after installation, but the
+SOI Blank Substraction step requires a valid Keras and Tensorflow
+installation (which rely on Python).
 
 ### Option 1: Default installation
+
 In principle both Keras and Tensorflow can be configured with:
-```
 
 ``` r
 reticulate::install_miniconda()
@@ -67,7 +69,7 @@ If both commands don’t give any error (the “Your CPU supports …” warning
 is fine) the installation has been successful. If it fails (which can
 happen in some devices, try Option 2).
 
-### Option 2: Dealing with the Installation yourself
+### Option 2: Manual installation
 
 First install Miniconda:
 
