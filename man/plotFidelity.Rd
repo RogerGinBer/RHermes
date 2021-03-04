@@ -37,7 +37,6 @@ p <- plotFidelity(struct, 1, 9)
 }
 \seealso{
 Other plots: 
-\code{\link{plotPL}()},
 \code{\link{plotRawMS2}()},
 \code{\link{plotSOI}()},
 \code{\link{plotSS}()}

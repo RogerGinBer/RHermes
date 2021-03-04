@@ -157,7 +157,7 @@ setMethod("SOI", c("RHermesExp", "numeric"), function(struct, id) {
 #'@examples
 #'\dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
 #'                              package = "RHermes"))}
-#'IL(myHermes, 1)
+#'IL(struct, 1)
 #'@export
 setGeneric("IL", function(struct, id) {
     standardGeneric("IL")
@@ -198,7 +198,7 @@ setMethod("MS2Data", c("RHermesExp", "numeric"), function(struct, id) {
 #'@examples
 #'\dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
 #'                              package = "RHermes"))}
-#'Ident(myHermes, 1)
+#'Ident(struct, 1)
 #'@export
 setGeneric("Ident", function(struct, id) {
     standardGeneric("Ident")

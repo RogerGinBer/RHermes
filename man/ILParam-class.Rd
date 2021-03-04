@@ -16,6 +16,25 @@ The ILParam class contains all details regarding IL generation,
 \details{
 It's a part of the RHermesIL object and is an input for generateIL().
 }
+\section{Slots}{
+
+\describe{
+\item{\code{filtermz}}{Deltamz used to group SOIs with similar RTs. Defaults to
++-0.5Da. It should be matched with the m/z isolation window of your MS2
+method settings.}
+
+\item{\code{filterrt}}{Delta RT used to group SOIs with similar RTs. Defaults to 10s.}
+
+\item{\code{rtmargin}}{Similar to filterrt. Defaults to 5s.}
+
+\item{\code{priorization}}{Whether to prioritze adducts or not. Options are "only" to
+select only a set of adduct annotations, "full" to cover all SOIs
+independently of the adduct annotations or "yes" to specify some adducts to
+be prioritized in order.}
+
+\item{\code{ad}}{The specified adducts. See priorization.}
+}}
+
 \examples{
 ILParam()
 }

@@ -61,7 +61,6 @@ p <- plotSOI(struct, 1, "C5H11NO2", c("M+H", "M+Na", "M+K"), c(80, 120))
 \seealso{
 Other plots: 
 \code{\link{plotFidelity}()},
-\code{\link{plotPL}()},
 \code{\link{plotRawMS2}()},
 \code{\link{plotSS}()}
 }

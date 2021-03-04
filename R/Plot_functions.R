@@ -1,6 +1,6 @@
 #' @title plotPL
 #' @author Roger Gine
-#' @family plots
+#' @family Plots
 #' @description Plots the raw data points anotated with a given formula and
 #'   adducts.
 #' @param struct An RHermesExp object
@@ -76,7 +76,52 @@ function(struct, id, formula, ads= NA, rtrange = c(0,1e4), dynamicaxis = TRUE) {
     return(ggplotly(pl, dynamicTicks = dynamicaxis))
 })
 
+#' @title plotCoverage
+#' @author Roger Gine
+#' @family Plots
+#' @description Plots a representation of the raw data points covered by the
+#' annotations and the redundancy of those annotations (that is, how many times
+#' does the same data point get annotated as two different things).
+#' @param struct An RHermesExp object
+#' @param id Number of the PL to use in the plot
+#' @return A list of two interactive plot_ly objects
+#' @examples
+#'\dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
+#'                              package = "RHermes"))}
+#' if(FALSE){plotCoverage(struct, 1)}
+#'@export
+setGeneric("plotCoverage", function(struct, id){
+    standardGeneric("plotCoverage")
+})
 
+#' @rdname plotCoverage
+setMethod("plotCoverage", signature = c("RHermesExp", "numeric"),
+function(struct, id) {
+    pl <- struct@data@PL[[id]]@peaklist[, c("rt", "rtiv", "mz")]
+    distinct_pl <- nrow(distinct(pl))
+    noise <- struct@metadata@ExpParam@nthr
+    raw <- nrow(filter(struct@data@PL[[id]]@raw, .data$rtiv > noise))
+    pieplot <- data.frame(Class = c("Covered", "Non-covered"),
+                            Value = c(distinct_pl, raw - distinct_pl))
+    colors <- c("rgb(211,94,96)", "rgb(128,133,133)")
+
+    p1 <- plot_ly(data = pieplot, labels = ~Class, values = ~Value,
+                    type = "pie",
+                    insidetextfont = list(color = "#FFFFFF", size = 18),
+                    marker = list(colors = colors,
+                                line = list(color = "#FFFFFF", width = 1)))
+    p1 <- p1 %>% layout(title = "Raw data points covered as PL entries")
+
+    barplot <- data.frame(Class = c("Total entries", "Distinct entries"),
+                            Value = c(nrow(pl), distinct_pl))
+    p2 <- plot_ly(data = barplot, x = ~Class, y = ~Value, type = "bar",
+                    insidetextfont = list(color = "#FFFFFF", size = 18),
+                    marker = list(color = colors,
+                                line = list(color = "#FFFFFF", width = 1)))
+    p2 <- p2 %>% layout(title = "Distinct PL entries vs Total Number")
+
+    return(list(p1, p2))
+})
 
 #'@title plotSOI
 #'@author Roger Gine
@@ -463,7 +508,7 @@ setMethod("plotIL", c("RHermesExp", "numeric"),
 #'@examples
 #'\dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
 #'                              package = "RHermes"))}
-#'plotSS(struct, 1, 1)
+#'if(FALSE){plotSS(struct, 1, 1)}
 #'@export
 setGeneric("plotSS", function(struct, ms2id, ssnumber) {
     standardGeneric("plotSS")

@@ -25,12 +25,11 @@ Plots an Hermes-cleaned MS2 spectum (mz/int).
 \examples{
 \dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
                              package = "RHermes"))}
-plotSS(struct, 1, 1)
+if(FALSE){plotSS(struct, 1, 1)}
 }
 \seealso{
 Other plots: 
 \code{\link{plotFidelity}()},
-\code{\link{plotPL}()},
 \code{\link{plotRawMS2}()},
 \code{\link{plotSOI}()}
 }

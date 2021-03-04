@@ -17,8 +17,21 @@ An RHermesSOI object
 }
 \description{
 The RHermesSOI class contains the SOI list, some precalculated
-information for plotting (in functions such as plotSOI)
+ information for plotting (in functions such as plotSOI)
 }
+\section{Slots}{
+
+\describe{
+\item{\code{SOIList}}{The SOI list itself.}
+
+\item{\code{PlotDF}}{A dataframe contaning all SOI data points with annotations, ready
+to be plotted when needed.}
+
+\item{\code{SOIParam}}{A SOIParam object containing all information about SOI generation}
+
+\item{\code{filename}}{The filename of the mzML used to generate the SOI list.}
+}}
+
 \examples{
 \dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
                              package = "RHermes"))}

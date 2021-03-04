@@ -23,7 +23,7 @@ IL
 \examples{
 \dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
                              package = "RHermes"))}
-IL(myHermes, 1)
+IL(struct, 1)
 }
 \seealso{
 Other Getters: 

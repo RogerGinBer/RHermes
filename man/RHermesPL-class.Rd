@@ -44,7 +44,6 @@ using labelled = TRUE.}
 \examples{
 \dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
                              package = "RHermes"))}
-RHermesPL() #Do NOT generate a PL object directly
 PL(struct, 1) #Access the object using the getter function.
 }
 \seealso{

@@ -339,7 +339,7 @@ exportSIRIUS <- function(struct, id, file, whichSpec = NA){
 #'@examples
 #'\dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
 #'                              package = "RHermes"))}
-#' exportIdent(struct, 1, "identifications.csv")
+#' if(FALSE){exportIdent(struct, 1, "identifications.csv")}
 #'@export
 setGeneric("exportIdent", function(struct, id, file){
     standardGeneric("exportIdent")

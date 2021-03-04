@@ -14,7 +14,7 @@ Calling this function starts the GUI in a new window on your
 default browser.
 }
 \examples{
-RHermesGUI()
+if(FALSE){RHermesGUI()}
 }
 \author{
 Roger Gine

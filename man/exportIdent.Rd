@@ -26,7 +26,7 @@ Export all MS2 identifications (hits) into a csv file.
 \examples{
 \dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
                              package = "RHermes"))}
-exportIdent(struct, 1, "identifications.csv")
+if(FALSE){exportIdent(struct, 1, "identifications.csv")}
 }
 \author{
 Roger Gine

@@ -28,7 +28,9 @@ plotIL(struct, 1)
 }
 \seealso{
 Other Plots: 
-\code{\link{plotISF}()}
+\code{\link{plotCoverage}()},
+\code{\link{plotISF}()},
+\code{\link{plotPL}()}
 }
 \author{
 Roger Gine

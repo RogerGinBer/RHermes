@@ -16,9 +16,9 @@
 An RHermesIL object
 }
 \description{
-The SOIParam class contains all details regarding SOI detection,
- such as the number of RT bins and their width, minimum data point intensity,
- usage of blank substraction, etc.
+The RHermesIL contains an inclusion list (IL) to perform the MS2
+ experiment with it. It also contains information about whether adduct
+ annotations have been prioritized over others, restricted, etc.
 }
 \details{
 Should not be created directly by the user. Instead, use generateIL.

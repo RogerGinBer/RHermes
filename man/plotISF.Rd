@@ -26,7 +26,9 @@ if(FALSE){
 }
 \seealso{
 Other Plots: 
-\code{\link{plotIL}()}
+\code{\link{plotCoverage}()},
+\code{\link{plotIL}()},
+\code{\link{plotPL}()}
 }
 \author{
 Roger Gine

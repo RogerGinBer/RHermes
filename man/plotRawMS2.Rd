@@ -33,7 +33,6 @@ plotRawMS2(struct, 1, 2)
 \seealso{
 Other plots: 
 \code{\link{plotFidelity}()},
-\code{\link{plotPL}()},
 \code{\link{plotSOI}()},
 \code{\link{plotSS}()}
 }

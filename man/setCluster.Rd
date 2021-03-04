@@ -22,7 +22,7 @@ By default selects the most appropiate BiocParallel backend
 }
 \examples{
 struct <- RHermesExp()
-struct <- setCluster(struct, SerialParam())
+struct <- setCluster(struct, BiocParallel::SerialParam())
 }
 \author{
 Roger Gine

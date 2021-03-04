@@ -23,7 +23,7 @@ Ident
 \examples{
 \dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
                              package = "RHermes"))}
-Ident(myHermes, 1)
+Ident(struct, 1)
 }
 \seealso{
 Other Getters: 

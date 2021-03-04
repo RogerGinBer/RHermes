@@ -5,7 +5,7 @@
 #' @import KEGGREST
 #' @return Nothing, just starts the GUI
 #' @examples
-#' RHermesGUI()
+#' if(FALSE){RHermesGUI()}
 #' @export
 RHermesGUI <- function() {
     shiny::runApp(system.file("app", package = "RHermes"),
