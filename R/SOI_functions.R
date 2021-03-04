@@ -437,7 +437,7 @@ blankSubstraction <- function(Groups, blankPL, BiocParallelParam){
     reticulate::py_available(initialize = TRUE)
     if (reticulate::py_module_available("keras") &
         reticulate::py_module_available("tensorflow")) {
-        model <- load_model_tf(system.file("extdata", "model",
+        model <- load_model_hdf5(system.file("extdata", "ImprovedModel.h5",
                                         package = "RHermes"))  #ANN
         setkeyv(blankPL, "formv")
 
