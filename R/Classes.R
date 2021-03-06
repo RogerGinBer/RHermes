@@ -232,8 +232,8 @@ setCluster <- function(struct = NULL, cl = NULL){
 
         #Suppose max 2GB per worker
         nwork <- min(floor(ram/2e6), BiocParallel::snowWorkers())
-        if (nwork == 1) {
-            warning(paste("Maybe you have too little RAM.",
+        if (nwork <= 1) {
+            warning(paste("Maybe you have too little available RAM.",
                             "Proceeding with SerialParam()"))
             return(BiocParallel::SerialParam(progressbar = TRUE))
         }
