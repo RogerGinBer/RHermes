@@ -29,7 +29,10 @@ ExtraInfo_UI <- function(id){
                sidebarPanel(
                  div(radioButtons(inputId = ns("ILfiles"), label = "Select inclusion list:",
                                   choices = "", selected = ""), style = "margin-left: 5%; margin-top: 3%"), width = "AUTO"),
-               sidebarPanel(DT::dataTableOutput(ns("ILtable"), width = "auto"), width = "AUTO")
+               sidebarPanel(
+                   plotlyOutput(outputId = ns("plotIL")),
+                   DT::dataTableOutput(ns("ILtable"), width = "auto"),
+                   width = "AUTO")
       ),
       tabPanel("Acquired MS2 data",
                sidebarPanel(
@@ -89,8 +92,8 @@ ExtraInfoServer <- function(id, struct){
       }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
       observeEvent({input$PLfiles},{
-        covPlots <- RHermes:::coveragePlot(struct$dataset,
-                                           entry = as.numeric(input$PLfiles))
+        covPlots <- RHermes:::plotCoverage(struct$dataset,
+                                           id = as.numeric(input$PLfiles))
         output$coveragePlot1 <- renderPlotly(covPlots[[1]])
         output$coveragePlot2 <- renderPlotly(covPlots[[2]])
 
@@ -130,6 +133,7 @@ ExtraInfoServer <- function(id, struct){
       observeEvent({input$ILfiles},{
         data <- struct$dataset@data@MS2Exp[[as.numeric(input$ILfiles)]]@IL@IL
         output$ILtable <- DT::renderDataTable(data, options = list(scrollX = TRUE, autoWidth = TRUE))
+        output$plotIL <- renderPlotly(plotIL(struct$dataset, as.numeric(input$ILfiles)))
       }, ignoreInit = TRUE, ignoreNULL = TRUE)
 
 

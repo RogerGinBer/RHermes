@@ -178,9 +178,8 @@ MS2PlotServer <- function(id, struct) {
     }, {
       if (input$selectILentry != "" & !is.na(input$selectILentry)) {
         tryCatch({
-          rawplots <- RawMS2Plot(struct$dataset,
-                                 as.numeric(input$id), as.numeric(input$selectILentry),
-                                 bymz = input$bymz)
+          rawplots <- plotRawMS2(struct$dataset,
+                                 as.numeric(input$id), as.numeric(input$selectILentry))
           output$rawMSMS_bymz <- renderPlotly(rawplots[["p_bymz"]])
           output$rawMSMS_bygroup <- renderPlotly(rawplots[["p_bygroup"]])
           output$rawpks <- renderTable(rawplots[["pks"]])
@@ -261,22 +260,7 @@ MS2PlotServer <- function(id, struct) {
   })
 }
 
-#'@title plotMirror
-#'@family Plots
-#'@description Generates a mirror plot of two (or more) MS2 spectra.
-#'@author Roger Gine
-#'@param struct An RHermesExp object
-#'@param id Which MS2Exp to use for plotting.
-#'@param ssnumber The spectra number
-#'@param patform
-#'@param mode
-setGeneric("plotMirror", function(struct, id, ssnumber, patform,
-                                    mode = "hits") {
-    standardGeneric("plotMirror")
-})
-#' @rdname plotMirror
-setMethod("plotMirror", c("RHermesExp", "numeric", "numeric"),
-function(struct, id, ssnumber, patform, mode = "hits") {
+plotMirror <- function(struct, id, ssnumber, patform, mode = "hits") {
     entry <- struct@data@MS2Exp[[id]]@Ident$MS2Features[ssnumber,]
     query <- entry$ssdata[[1]]
     maxint <- max(query$int)
@@ -400,5 +384,5 @@ function(struct, id, ssnumber, patform, mode = "hits") {
 
     return(subplot(mirrplot, nrows = length(mirrplot), shareX = TRUE,
                     which_layout = 1))
-})
+}
 

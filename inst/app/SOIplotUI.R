@@ -148,12 +148,12 @@ SOIPlotServer <- function(id, struct){
         output$blanktext <- renderText(blankNames[[as.numeric(input$soifiles)]])
         other <- with(struct$dataset@metadata@ExpParam@DB, {Name[MolecularFormula == f]})
         output$othercomp <- renderText(paste(other, collapse = "\n"))
-        output$SoiPlot <- renderPlotly(SoiPlot(struct = struct$dataset,
+        output$SoiPlot <- renderPlotly(plotSOI(struct = struct$dataset,
                                                               id = as.numeric(input$soifiles),
                                                               formula = f, rtrange = as.numeric(input$RTinterval),
                                                               dynamicaxis = as.logical(input$dynamicaxis),
                                                               ads = as.character(input$ads),
-                                                              blankid = blankID[[as.numeric(input$soifiles)]]))
+                                                             ))
       }
     }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
@@ -203,7 +203,7 @@ SOIPlotServer <- function(id, struct){
       if(!is.null(input$choicesfidelity) & input$choicesfidelity != ""){
         selected <- strsplit(input$choicesfidelity, " ")[[1]][[1]] %>% as.numeric(.)
         tryCatch({
-          isoresults <- IsoFidelity(struct$dataset, as.numeric(input$soifiles), selected)
+          isoresults <- plotFidelity(struct$dataset, as.numeric(input$soifiles), selected)
           output$fplot <- renderPlotly(isoresults[[1]])
 
           heteroatoms <- isoresults[[5]]

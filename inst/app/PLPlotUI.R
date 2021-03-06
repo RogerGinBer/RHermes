@@ -132,7 +132,7 @@ PLPlotServer <- function(id, struct){
           }
           other <- with(struct$dataset@metadata@ExpParam@DB, {Name[MolecularFormula == f]})
           output$othercomp <- renderText(paste(other, collapse = "\n"))
-          output$PLPlot <- renderPlotly(RHermes::PLPlot(struct = struct$dataset,
+          output$PLPlot <- renderPlotly(RHermes::plotPL(struct = struct$dataset,
                                                                 id = as.numeric(input$PLfiles),
                                                                 formula = f, rtrange = as.numeric(input$RTinterval),
                                                                 dynamicaxis = as.logical(input$dynamicaxis),
