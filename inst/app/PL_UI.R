@@ -10,7 +10,7 @@ PL_UI <- function(id){
                 shinyFilesButton(ns("files"), "Enter the mzML file adresses:",
                                  "Select", TRUE, icon = icon("database"),
                                  style = "margin-bottom: 10px"),
-                verbatimTextOutput(ns("selecteddir"), placeholder = TRUE),
+                tableOutput(ns("selecteddir")),
                 width = 13),
             sidebarPanel(
                 div(
@@ -156,7 +156,7 @@ PLServer <- function(id, struct){
             parseFilePaths(getVolumes(), input$loadselector)$datapath)
         )
         output$loadpath <- renderText(loadpath())
-        output$selecteddir <- renderPrint({parseFilePaths(roots, input$files)})
+        output$selecteddir <- renderTable({parseFilePaths(roots, input$files)})
 
 
         observeEvent(input$files , {

@@ -100,6 +100,9 @@ function(struct, id) {
     pl <- struct@data@PL[[id]]@peaklist[, c("rt", "rtiv", "mz")]
     distinct_pl <- nrow(distinct(pl))
     noise <- struct@metadata@ExpParam@nthr
+    if(nrow(struct@data@PL[[id]]@raw) == 0){
+        return(list(plot_ly(), plot_ly()))
+    }
     raw <- nrow(filter(struct@data@PL[[id]]@raw, .data$rtiv > noise))
     pieplot <- data.frame(Class = c("Covered", "Non-covered"),
                             Value = c(distinct_pl, raw - distinct_pl))

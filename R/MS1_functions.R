@@ -119,8 +119,7 @@ calculate_ionic_forms <- function(i, F_DB, Ad_DB){
     f <- as.character(F_DB$fms[i])
     j <- apply(Ad_DB, 1, function(x) {
         current_f <- f
-        if (x[3] != 1) current_f <- multform(current_f,
-                                                        as.numeric(x[3]))
+        if (x[3] != 1) current_f <- multform(current_f, as.numeric(x[3]))
         if (x[6] != "FALSE") current_f <- sumform(current_f, x[6])
         if (x[7] != "FALSE") current_f <- subform(current_f, x[7])
         if (is.na(current_f)) return(NA)
@@ -286,9 +285,9 @@ IsoCalc <- function(DB, FWHM, intTHR, kTHR, instr = "Orbitrap", refm = 200,
     }
 
     testiso <- enviPat::isopattern(isotopes = isotopes, threshold = intTHR,
-                                chemforms = DB[, "envi"], charge = DB[, "ch"],
+                                chemforms = DB$envi, charge = DB$ch,
                                 verbose = TRUE)
-    names(testiso) <- DB[, "f"]
+    names(testiso) <- DB$f
     rm(DB) #Free up space for Windows SOCK users
     message("")
     message("Calculating isotopes given the instrumental resolution: ")
