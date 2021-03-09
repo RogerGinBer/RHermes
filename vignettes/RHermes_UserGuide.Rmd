@@ -16,6 +16,7 @@ vignette: |
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message = FALSE)
 knitr::opts_chunk$set(collapse = TRUE)
+library(plotly)
 ```
 
 RHermes is an untargeted metabolomics data processing package. Its objective
@@ -273,6 +274,8 @@ in your processing, in case you want to start again from some step
 ## Plotting
 In case you prefer to generate the plots "manually" (as opposed to using the
 GUI), here are some instructions for the different plotting functions:
+
+
 ### plotPL
 ```{r}
 plotPL(myHermes, 1, "C5H11NO2", c("M+H", "M+Na", "M+K"), c(80, 120))
@@ -283,7 +286,18 @@ plotPL(myHermes, 1, "C5H11NO2", c("M+H", "M+Na", "M+K"), c(80, 120))
 plotSOI(myHermes, 1, "C5H11NO2", c("M+H", "M+Na", "M+K"), c(80, 120))
 ```
 ### plotIL
+Bear in mind that this IL is very limited because of the small number of
+formulas and the filtered mzML we used.
+```{r}
+plotIL(myHermes, id = 1)
+```
+
 ### plotRawMS2
+```{r}
+p <- plotRawMS2(myHermes, ms2id = 1, entryid = 2)
+ggplotly(p$p_bymz)
+ggplotly(p$p_bygroup)
+```
 
 ## Using the RHermes Shiny app
 To start the app, simply type:

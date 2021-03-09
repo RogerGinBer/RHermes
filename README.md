@@ -10,16 +10,18 @@ coverage](https://codecov.io/gh/RogerGinBer/RHermes/branch/master/graph/badge.sv
 
 <!-- badges: end -->
 
-The goal of RHermes is to analyse LC-MS and LC-MS/MS data to identify
-compounds in biological or environmental samples. The RHermes workflow
-works with both Orbitrap and q-TOF instrument data.
+RHermes is a broad-scoped targeted metabolomics software used to analyse
+LC-MS and LC-MS/MS data to identify compounds in biological or
+environmental samples.
+
+The RHermes workflow works with both Orbitrap and q-TOF instrument data.
 
 ## System requirements
 
 The recommended system requirements are:
 
 -   At least a 4 core processor
--   16 GB of RAM or more
+-   8-16 GB of RAM or more
 -   An internet connection to perform KEGG queries
 
 ## Installation
@@ -79,7 +81,7 @@ When finished, type in R:
 ``` r
 reticulate::use_condaenv("newenv", required = TRUE)
 tensorflow::tf_config()
-model <- keras::load_model_tf(system.file("extdata", "model", package = "RHermes"))
+model <- keras::load_model_hdf5(system.file("extdata", "ImprovedModel.h5", package = "RHermes"))
 ```
 
 Everything should run smoothly. If not, try manually installing Anaconda
@@ -109,4 +111,4 @@ example <- findSOI(example, getSOIpar(), 1)
 example <- generateIL(example, 1, ILParam())
 ```
 
-Also check the User Guide for more detailed info.
+Please check the User Guide for more detailed info.

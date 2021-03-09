@@ -92,14 +92,15 @@
 <!-- badges: start -->
 
 <!-- badges: end -->
-<p>The goal of RHermes is to analyse LC-MS and LC-MS/MS data to identify compounds in biological or environmental samples. The RHermes workflow works with both Orbitrap and q-TOF instrument data.</p>
+<p>RHermes is a broad-scoped targeted metabolomics software used to analyse LC-MS and LC-MS/MS data to identify compounds in biological or environmental samples.</p>
+<p>The RHermes workflow works with both Orbitrap and q-TOF instrument data.</p>
 <div id="system-requirements" class="section level2">
 <h2 class="hasAnchor">
 <a href="#system-requirements" class="anchor"></a>System requirements</h2>
 <p>The recommended system requirements are:</p>
 <ul>
 <li>At least a 4 core processor</li>
-<li>16 GB of RAM or more</li>
+<li>8-16 GB of RAM or more</li>
 <li>An internet connection to perform KEGG queries</li>
 </ul>
 </div>
@@ -142,7 +143,7 @@
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">reticulate</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/reticulate/man/use_python.html">use_condaenv</a></span><span class="op">(</span><span class="st">"newenv"</span>, required <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="fu">tensorflow</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tensorflow/man/tf_config.html">tf_config</a></span><span class="op">(</span><span class="op">)</span>
-<span class="va">model</span> <span class="op">&lt;-</span> <span class="fu">keras</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/keras/man/save_model_tf.html">load_model_tf</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"model"</span>, package <span class="op">=</span> <span class="st">"RHermes"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<span class="va">model</span> <span class="op">&lt;-</span> <span class="fu">keras</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/keras/man/save_model_hdf5.html">load_model_hdf5</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"ImprovedModel.h5"</span>, package <span class="op">=</span> <span class="st">"RHermes"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p>Everything should run smoothly. If not, try manually installing Anaconda from their website and letting reticulate know where to find the environment.</p>
 <p>Also check out Keras and Tensorflow R tutorials.</p>
 </div>
@@ -167,7 +168,7 @@
 
 <span class="co">#Generate an IL </span>
 <span class="va">example</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/generateIL.html">generateIL</a></span><span class="op">(</span><span class="va">example</span>, <span class="fl">1</span>, <span class="fu"><a href="reference/ILParam-class.html">ILParam</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<p>Also check the User Guide for more detailed info.</p>
+<p>Please check the User Guide for more detailed info.</p>
 </div>
 </div>
   </div>
