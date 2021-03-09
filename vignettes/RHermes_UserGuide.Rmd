@@ -70,6 +70,21 @@ detect in our data with setDB():
 ```{r}
 myHermes <- setDB(myHermes, db = "hmdb") #Loads a small HMDB subset
 ```
+
+However this "hmdb" database is just a small subset of the the real HMDB. To 
+load a *real* (usually >10^3 formulas) database, use db = "custom":
+
+```{r, eval = FALSE}
+#Use either a csv or a xlsx (Excel) file
+myHermes <- setDB(myHermes, db = "custom", filename = "myDatabase.csv") 
+myHermes <- setDB(myHermes, db = "custom", filename = "myDatabase.xlsx")
+```
+
+This database needs at least two columns named **exactly** like this: 
+*Name* and *MolecularFormula*. You may have other columns with metadata related
+to the compounds, RHermes just needs those two.
+
+
 A general list of adducts will be set according to the experimental
 parameters (positive or negative ionizzation). You can choose multicharged 
 and multimer adducts by using the *adcharge* and *admult* parameters in setDB().

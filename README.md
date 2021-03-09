@@ -14,7 +14,12 @@ RHermes is a broad-scoped targeted metabolomics software used to analyse
 LC-MS and LC-MS/MS data to identify compounds in biological or
 environmental samples.
 
-The RHermes workflow works with both Orbitrap and q-TOF instrument data.
+The RHermes workflow works with both Orbitrap and q-TOF instrument data
+and comes with an easy to use GUI that will guide you every step of the
+way.
+
+Check out the documentation
+[here](https://rogerginber.github.io/RHermes/)
 
 ## System requirements
 
@@ -56,6 +61,7 @@ After which you can check the following:
 ``` r
 tensorflow::tf_config()
 model <- keras::load_model_hdf5(system.file("extdata", "ImprovedModel.h5", package = "RHermes"))
+is(model, "python.builtin.object") #Gives TRUE if the loading is successful.
 ```
 
 If both commands don’t give any error (the “Your CPU supports …” warning
@@ -92,6 +98,8 @@ Also check out Keras and Tensorflow R tutorials.
 
 ## Analyzing LC-MS data with RHermes
 
+Once installed, you can use RHermes programmaticaly like this:
+
 ``` r
 library(RHermes)
 #Generate a Exp object
@@ -111,4 +119,11 @@ example <- findSOI(example, getSOIpar(), 1)
 example <- generateIL(example, 1, ILParam())
 ```
 
-Please check the User Guide for more detailed info.
+Or start the interactive GUI typing:
+
+``` r
+RHermesGUI()
+```
+
+Please check the User Guide vignette for more detailed info and real
+examples.
