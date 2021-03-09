@@ -165,3 +165,8 @@ hr {
     0%{opacity:0}
     100%{opacity:1}
 }
+
+.examples{
+	background-color: #D6E0DA;
+    color: darkslategrey;
+}

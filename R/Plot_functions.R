@@ -633,11 +633,11 @@ function(struct, ms2id, entryid) {
     p_bymz <- ggplot(soi) +
                 geom_point(aes(x = .data$rt, y = .data$rtiv,
                                 color = as.factor(.data$mz)))+
-                xlim(xlim)
+                xlim(xlim) + theme_minimal()
     p_bygroup <- ggplot(soi) +
                 geom_point(aes(x = .data$rt, y = .data$rtiv,
                                 color = as.factor(.data$member)))+
-                xlim(xlim)
+                xlim(xlim) + theme_minimal()
 
     net <- networkD3::igraph_to_networkD3(net, group = members)
 

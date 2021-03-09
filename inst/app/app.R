@@ -66,14 +66,25 @@ body <- dashboardBody(
                 <p style = font-size:1.1em> RHermes has shown that <b>up to 90%</b> of a typical data-dependent acquisition (DDA) MS2 experiment is wasted in redundant and non-biological ions, leading to fake positive
                 identifications while missing the true compounds in the sample.</p>"),
               HTML("<blockquote style = text-align:left><p> We believe there's a better way to characterize the metabolites in our samples</p> <p>- RHermes</p> </blockquote>"),
+              HTML("<p style = font-size:1.1em>You can find the molecular formula databases and sample mzML files in the paper in our <a href = 'https://zenodo.org/record/4581662'>Zenodo dataset</a></p>"),
               hr(),
               HTML("<h2><b>The Workflow</b></h2>"),
               br(),
               tags$script(src = 'scroll.js'),
+              HTML("<p style = font-size:1.1em> </p>"),
               img(src = "step1.svg", width = "100%", class = "steps"),
+              HTML("<p style = font-size:1.1em> </p>"),
               img(src = "step2.svg", width = "100%", class = "steps"),
+              HTML("<p style = font-size:1.1em> </p>"),
               img(src = "step3.svg", width = "100%", class = "steps"),
-              h2("Troubleshooting"),
+              hr(),
+              h2("Bug reports"),
+              HTML("<p style = font-size:1.1em>In case you find any abnormal behaviour (eg: app unexpectedly crashes, etc.) feel free to email
+                   the mantainer at <a href = 'mailto:roger.gine@estudiants.urv'>roger.gine@estudiants.urv</a> or open a <a href = 'https://github.com/RogerGinBer/RHermes/issues'>Github issue</a>.
+                   You should provide a detailed description about what happened, screenshots of the error and, <i>desirably</i>, a <a href = 'https://stackoverflow.com/help/minimal-reproducible-example'>minimally reproducible example</a></p>"),
+              h2("Citation"),
+              HTML("<p style = font-size:1.1em>Please cite this software as:</p>"),
+              HTML("<blockquote style = text-align:left><p> Giné, Roger, Capellades, Jordi, Badia, Josep M., Vughs, Dennis, Schwaiger-Haber, Michaela, Vinaixa, Maria. HERMES: a molecular formula-oriented method to target the metabolome </p> </blockquote>"),
               style = "padding : 20px 50px 50px 50px")
     ),
 

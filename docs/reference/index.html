@@ -12,8 +12,8 @@
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous" />
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script>
 
@@ -136,8 +136,8 @@
     <tbody>
       <tr>
         <th colspan="2">
-          <h2 id="section-all-functions" class="hasAnchor"><a href="#section-all-functions" class="anchor"></a>All functions</h2>
-          <p class="section-desc"></p>
+          <h2 id="section-processing-functions" class="hasAnchor"><a href="#section-processing-functions" class="anchor"></a>Processing functions</h2>
+          <p class="section-desc"><p>Needed in the RHermes workflow</p></p>
         </th>
       </tr>
       
@@ -148,10 +148,71 @@
       <tr>
         
         <td>
-          <p><code><a href="addAd.html">addAd()</a></code> </p>
+          <p><code><a href="setExpParam.html">setExpParam()</a></code> </p>
         </td>
-        <td><p>addAd</p></td>
+        <td><p>setExpParam</p></td>
       </tr><tr>
+        
+        <td>
+          <p><code><a href="setDB.html">setDB()</a></code> </p>
+        </td>
+        <td><p>setDB</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="processMS1.html">processMS1()</a></code> </p>
+        </td>
+        <td><p>processMS1</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="findSOI.html">findSOI()</a></code> </p>
+        </td>
+        <td><p>findSOI</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="filterSOI.html">filterSOI()</a></code> </p>
+        </td>
+        <td><p>filterSOI</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="removeISF.html">removeISF()</a></code> </p>
+        </td>
+        <td><p>removeISF</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="generateIL.html">generateIL()</a></code> </p>
+        </td>
+        <td><p>generateIL</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="filterIL.html">filterIL()</a></code> </p>
+        </td>
+        <td><p>filterIL</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="processMS2.html">processMS2()</a></code> </p>
+        </td>
+        <td><p>processMS2</p></td>
+      </tr>
+    </tbody><tbody>
+      <tr>
+        <th colspan="2">
+          <h2 id="section-getters" class="hasAnchor"><a href="#section-getters" class="anchor"></a>Getters</h2>
+          <p class="section-desc"><p>Access to the RHermesExp subobjects</p></p>
+        </th>
+      </tr>
+      
+      
+    </tbody><tbody>
+      
+      
+      <tr>
         
         <td>
           <p><code><a href="adlist.html">adlist()</a></code> </p>
@@ -172,10 +233,47 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="exportIdent.html">exportIdent()</a></code> </p>
+          <p><code><a href="PL.html">PL()</a></code> </p>
         </td>
-        <td><p>exportIdent</p></td>
+        <td><p>PL</p></td>
       </tr><tr>
+        
+        <td>
+          <p><code><a href="SOI.html">SOI()</a></code> </p>
+        </td>
+        <td><p>SOI</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="IL.html">IL()</a></code> </p>
+        </td>
+        <td><p>IL</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="MS2Data.html">MS2Data()</a></code> </p>
+        </td>
+        <td><p>MS2Data</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="Ident.html">Ident()</a></code> </p>
+        </td>
+        <td><p>Ident</p></td>
+      </tr>
+    </tbody><tbody>
+      <tr>
+        <th colspan="2">
+          <h2 id="section-exporting-functions" class="hasAnchor"><a href="#section-exporting-functions" class="anchor"></a>Exporting functions</h2>
+          <p class="section-desc"><p>Export your IL and MS2 spectras</p></p>
+        </th>
+      </tr>
+      
+      
+    </tbody><tbody>
+      
+      
+      <tr>
         
         <td>
           <p><code><a href="exportIL.html">exportIL()</a></code> </p>
@@ -205,108 +303,25 @@
           <p><code><a href="exportSIRIUS.html">exportSIRIUS()</a></code> </p>
         </td>
         <td><p>exportSIRIUS</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="ExpParam-class.html">show(<i>&lt;ExpParam&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>ExpParam</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="filterIL.html">filterIL()</a></code> </p>
-        </td>
-        <td><p>filterIL</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="filterSOI.html">filterSOI()</a></code> </p>
-        </td>
-        <td><p>filterSOI</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="findSOI.html">findSOI()</a></code> </p>
-        </td>
-        <td><p>findSOI</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="generateIL.html">generateIL()</a></code> </p>
-        </td>
-        <td><p>generateIL</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="getSOIpar.html">getSOIpar()</a></code> </p>
-        </td>
-        <td><p>getSOIpar</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="Ident.html">Ident()</a></code> </p>
-        </td>
-        <td><p>Ident</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="IL.html">IL()</a></code> </p>
-        </td>
-        <td><p>IL</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="ILParam-class.html">ILParam-class</a></code> </p>
-        </td>
-        <td><p>ILParam</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="MS2Data.html">MS2Data()</a></code> </p>
-        </td>
-        <td><p>MS2Data</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="PL.html">PL()</a></code> </p>
-        </td>
-        <td><p>PL</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="plotCoverage.html">plotCoverage()</a></code> </p>
-        </td>
-        <td><p>plotCoverage</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="plotFidelity.html">plotFidelity()</a></code> </p>
-        </td>
-        <td><p>plotFidelity</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="plotIL.html">plotIL()</a></code> </p>
-        </td>
-        <td><p>plotIL</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="plotISF.html">plotISF()</a></code> </p>
-        </td>
-        <td><p>plotISF</p></td>
-      </tr><tr>
+      </tr>
+    </tbody><tbody>
+      <tr>
+        <th colspan="2">
+          <h2 id="section-plotting-functions" class="hasAnchor"><a href="#section-plotting-functions" class="anchor"></a>Plotting functions</h2>
+          <p class="section-desc"><p>Bring your data alive</p></p>
+        </th>
+      </tr>
+      
+      
+    </tbody><tbody>
+      
+      
+      <tr>
         
         <td>
           <p><code><a href="plotPL.html">plotPL()</a></code> </p>
         </td>
         <td><p>plotPL</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="plotRawMS2.html">plotRawMS2()</a></code> </p>
-        </td>
-        <td><p>plotRawMS2</p></td>
       </tr><tr>
         
         <td>
@@ -316,27 +331,52 @@
       </tr><tr>
         
         <td>
+          <p><code><a href="plotFidelity.html">plotFidelity()</a></code> </p>
+        </td>
+        <td><p>plotFidelity</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="plotISF.html">plotISF()</a></code> </p>
+        </td>
+        <td><p>plotISF</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="plotIL.html">plotIL()</a></code> </p>
+        </td>
+        <td><p>plotIL</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="plotSS.html">plotSS()</a></code> </p>
         </td>
         <td><p>plotSS</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="processMS1.html">processMS1()</a></code> </p>
+          <p><code><a href="plotRawMS2.html">plotRawMS2()</a></code> </p>
         </td>
-        <td><p>processMS1</p></td>
-      </tr><tr>
+        <td><p>plotRawMS2</p></td>
+      </tr>
+    </tbody><tbody>
+      <tr>
+        <th colspan="2">
+          <h2 id="section-accessory-functions" class="hasAnchor"><a href="#section-accessory-functions" class="anchor"></a>Accessory functions</h2>
+          <p class="section-desc"><p>Getting the job done</p></p>
+        </th>
+      </tr>
+      
+      
+    </tbody><tbody>
+      
+      
+      <tr>
         
         <td>
-          <p><code><a href="processMS2.html">processMS2()</a></code> </p>
+          <p><code><a href="addAd.html">addAd()</a></code> </p>
         </td>
-        <td><p>processMS2</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="readTime.html">readTime()</a></code> </p>
-        </td>
-        <td><p>readTime</p></td>
+        <td><p>addAd</p></td>
       </tr><tr>
         
         <td>
@@ -346,99 +386,15 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="removeISF.html">removeISF()</a></code> </p>
+          <p><code><a href="readTime.html">readTime()</a></code> </p>
         </td>
-        <td><p>removeISF</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="removeSOI.html">removeSOI()</a></code> </p>
-        </td>
-        <td><p>removeSOI</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="RHermesData-class.html">RHermesData-class</a></code> </p>
-        </td>
-        <td><p>RHermesData</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="RHermesExp-class.html">show(<i>&lt;RHermesExp&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>RHermesExp</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="RHermesGUI.html">RHermesGUI()</a></code> </p>
-        </td>
-        <td><p>RHermesGUI</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="RHermesIL-class.html">show(<i>&lt;RHermesIL&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>RHermesIL</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="RHermesMeta-class.html">RHermesMeta-class</a></code> </p>
-        </td>
-        <td><p>RHermesMeta</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="RHermesMS2Exp-class.html">show(<i>&lt;RHermesMS2Exp&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>RHermesMS2Exp</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="RHermesPL-class.html">show(<i>&lt;RHermesPL&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>RHermesPL</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="RHermesSOI-class.html">show(<i>&lt;RHermesSOI&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>RHermesSOI</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="setCluster.html">setCluster()</a></code> </p>
-        </td>
-        <td><p>setCluster</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="setDB.html">setDB()</a></code> </p>
-        </td>
-        <td><p>setDB</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="setExpParam.html">setExpParam()</a></code> </p>
-        </td>
-        <td><p>setExpParam</p></td>
+        <td><p>readTime</p></td>
       </tr><tr>
         
         <td>
           <p><code><a href="setTime.html">setTime()</a></code> </p>
         </td>
         <td><p>setTime</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="SOI.html">SOI()</a></code> </p>
-        </td>
-        <td><p>SOI</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="SOIParam-class.html">show(<i>&lt;SOIParam&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>SOIParam</p></td>
       </tr><tr>
         
         <td>
@@ -451,6 +407,12 @@
           <p><code><a href="ssNetwork.html">ssNetwork()</a></code> </p>
         </td>
         <td><p>ssNetwork</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="setCluster.html">setCluster()</a></code> </p>
+        </td>
+        <td><p>setCluster</p></td>
       </tr>
     </tbody>
     </table>

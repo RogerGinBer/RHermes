@@ -144,7 +144,7 @@ myHermes <- setCluster(myHermes, BiocParallel::SerialParam())
 
 ```{r}
 myHermes <- processMS1(myHermes,
-                        system.file("ExtData/MS1TestData.mzML",
+                        system.file("extdata", "MS1TestData.mzML",
                                     package = "RHermes"))
 ```
 Once done, you can check some stats about the files you've just processed:

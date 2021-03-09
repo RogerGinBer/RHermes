@@ -3,5 +3,8 @@ pkgdown: 1.6.1
 pkgdown_sha: ~
 articles:
   RHermes_UserGuide: RHermes_UserGuide.html
-last_built: 2021-03-09T17:32Z
+last_built: 2021-03-09T23:20Z
+urls:
+  reference: https://rogerginber.github.io/RHermes/reference
+  article: https://rogerginber.github.io/RHermes/articles
 

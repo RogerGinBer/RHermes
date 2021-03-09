@@ -26,6 +26,10 @@ IO_UI <- function(id) {
             h4("(In case the files were processed in another session or using the RHermes functions directly)",
             style = "text-align: center;"),
             hr(),
+            materialSwitch(label ="Load an example RDS",
+                                          status = "info",
+                                          value = FALSE,
+                                          inputId = ns("loadexample")),
             div(
                 span(shinyFilesButton(ns("loadselector"),
                        "Select .RDS", "Select", multiple = FALSE), style = "margin-right: 10%"),
@@ -70,14 +74,24 @@ IOServer <- function(id, struct) {
         loadpath <- reactive(as.character(parseFilePaths(getVolumes(),
             input$loadselector)$datapath))
         observeEvent(input$loadbutton, {
-            if (length(loadpath()) != 0) {
-                toReturn$dataset <- readRDS(loadpath())
-                output$loadpath <- renderText(paste("The file",
-                  loadpath(), "has been loaded successfully"))
-                toReturn$trigger <- toReturn$trigger + 1
-                sendSweetAlert(session = session, title = "Loaded",
-                               text = paste("The file", loadpath(), "has been loaded successfully"),
+            if (length(loadpath()) != 0 | input$loadexample) {
+                if(input$loadexample){
+                    f <- system.file("extdata", "exampleObject.rds", package = "RHermes")
+                } else {
+                    f <- loadpath()
+                }
+                provisional <- readRDS(f)
+                if(is(provisional, "RHermesExp")){
+                    toReturn$dataset <- provisional
+                    toReturn$trigger <- toReturn$trigger + 1
+                    sendSweetAlert(session = session, title = "Loaded",
+                               text = paste("The file", f, "has been loaded successfully"),
                                type = "success")
+                } else {
+                    sendSweetAlert(session = session, title = "Error",
+                               text = "The loaded object is not an RHermesExp",
+                               type = "warning")
+                }
             } else{
                 sendSweetAlert(session = session, title = "Error",
                                text = "Please select a valid path",

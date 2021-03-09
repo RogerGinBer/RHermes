@@ -125,7 +125,10 @@ setGeneric("PL", function(struct, id) {
 #' @rdname PL
 setMethod("PL", c("RHermesExp", "numeric"), function(struct, id) {
     validObject(struct)
-    struct@data@PL[[id]]
+    validIds <- seq_along(struct@data@PL)
+    if(id %in% validIds) return(struct@data@PL[[id]])
+    warning(paste("You have input a wrong PL id, valid ids are:",
+                min(validIds), "-", max(validIds)))
 })
 
 #'@title SOI
@@ -145,7 +148,10 @@ setGeneric("SOI", function(struct, id) {
 #' @rdname SOI
 setMethod("SOI", c("RHermesExp", "numeric"), function(struct, id) {
     validObject(struct)
-    struct@data@SOI[[id]]
+    validIds <- seq_along(struct@data@SOI)
+    if(id %in% validIds) return(struct@data@SOI[[id]])
+    warning(paste("You have input a wrong SOI id, valid ids are:",
+                min(validIds), "-", max(validIds)))
 })
 
 #'@title IL
@@ -165,7 +171,10 @@ setGeneric("IL", function(struct, id) {
 #' @rdname IL
 setMethod("IL", c("RHermesExp", "numeric"), function(struct, id) {
     validObject(struct)
-    struct@data@MS2Exp[[id]]@IL
+    validIds <- seq_along(struct@data@MS2Exp)
+    if(id %in% validIds) return(struct@data@MS2Exp[[id]]@IL)
+    warning(paste("You have input a wrong IL id, valid ids are:",
+                min(validIds), "-", max(validIds)))
 })
 
 #'@title MS2Data
@@ -187,6 +196,14 @@ setGeneric("MS2Data", function(struct, id) {
 setMethod("MS2Data", c("RHermesExp", "numeric"), function(struct, id) {
     validObject(struct)
     struct@data@MS2Exp[[id]]@MS2Data
+    if(length(struct@data@MS2Exp) > 0){
+        validIds <- seq_along(struct@data@MS2Exp)
+        if(id %in% validIds) return(struct@data@MS2Exp[[id]]@MS2Data)
+        warning(paste("You have input a wrong MS2Data id, valid ids are:",
+                min(validIds), "-", max(validIds)))
+    } else {
+        warning("No MS2Exp in the object")
+    }
 })
 
 #'@title Ident

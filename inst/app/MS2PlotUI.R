@@ -221,7 +221,7 @@ MS2PlotServer <- function(id, struct) {
                                   function(x){is.data.frame(x)},
                                   logical(1)))
         if(as.numeric(input$selectident) %in% with_hits){
-          identplots <- MirrorPlot(struct$dataset,
+          identplots <- plotMirror(struct$dataset,
                                    as.numeric(input$id), as.numeric(input$selectident),
                                    input$selecthits, mode = "hits")
           output$mirrorplot <- renderPlotly(identplots)
@@ -239,7 +239,7 @@ MS2PlotServer <- function(id, struct) {
         tryCatch({
           ms2 <- struct$dataset@data@MS2Exp[[as.numeric(input$id)]]
           sslist <- ms2@Ident[["MS2Features"]]
-          identplots <- MirrorPlot(struct$dataset,
+          identplots <- plotMirror(struct$dataset,
                                    as.numeric(input$id), as.numeric(input$selectident2),
                                    as.numeric(input$otherss), mode = "versus")
           output$versusplot <- renderPlotly(identplots)
@@ -252,7 +252,7 @@ MS2PlotServer <- function(id, struct) {
       input$id
     }, {
       if (!is.na(input$selectss) & input$selectss != "") {
-        identplots <- SSPlot(struct$dataset, as.numeric(input$id),
+        identplots <- plotSS(struct$dataset, as.numeric(input$id),
                              as.numeric(input$selectss))
         output$ssplot <- renderPlotly(identplots)
       }

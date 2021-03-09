@@ -5,11 +5,20 @@ PL_UI <- function(id){
         useSweetAlert(),
         verticalLayout(
             sidebarPanel(
-                h2("MS1 File Input", style = "text-align: center;"),
+                HTML("<h2 style = 'text-align: center;'>MS1 File Input</h2>"),
                 hr(),
-                shinyFilesButton(ns("files"), "Enter the mzML file adresses:",
-                                 "Select", TRUE, icon = icon("database"),
-                                 style = "margin-bottom: 10px"),
+                fluidRow(
+                    column(width = 2,
+                           shinyFilesButton(ns("files"), "Enter the mzML file adresses:",
+                                "Select", TRUE, icon = icon("database"),
+                                style = "margin-bottom: 10px"),),
+                    column(width = 2,
+                           materialSwitch(label ="Load an example mzML",
+                                          status = "info",
+                                          value = FALSE,
+                                          inputId = ns("loadexample")),
+                           offset = 7)
+                ),
                 tableOutput(ns("selecteddir")),
                 width = 13),
             sidebarPanel(
@@ -159,8 +168,12 @@ PLServer <- function(id, struct){
         output$selecteddir <- renderTable({parseFilePaths(roots, input$files)})
 
 
-        observeEvent(input$files , {
-          if(nrow(parseFilePaths(roots,input$files)) == 0){
+
+        observeEvent({
+            input$files
+            input$loadexample
+        }, {
+          if(nrow(parseFilePaths(roots, input$files)) == 0 & !input$loadexample){
             output$startPL_box <- renderUI({})
           } else {
             output$startPL_box <- renderUI({
@@ -219,6 +232,8 @@ PLServer <- function(id, struct){
             ads <- struct$dataset@metadata@ExpParam@adlist[sel,]
             struct$dataset@metadata@ExpParam@adlist <- ads
             pth <- parseFilePaths(roots, input$files)$datapath
+            if(input$loadexample){pth <- system.file("extdata", "MS1TestData.mzML",
+                                                              package = "RHermes")}
             struct$dataset <- processMS1(struct$dataset, pth,
                                        labelled = as.logical(input$labelled))
             sendSweetAlert(

@@ -1,0 +1,60 @@
+title: RHermes
+url: https://rogerginber.github.io/RHermes
+template:
+  params:
+    bootswatch: flatly
+reference:
+  - title: Processing functions
+    desc: Needed in the RHermes workflow
+    contents:
+      - '`setExpParam`'
+      - '`setDB`'
+      - '`processMS1`'
+      - '`findSOI`'
+      - '`filterSOI`'
+      - '`removeISF`'
+      - '`generateIL`'
+      - '`filterIL`'
+      - '`processMS2`'
+  - title: Getters
+    desc: Access to the RHermesExp subobjects
+    contents:
+      - '`adlist`'
+      - '`Cluster`'
+      - '`DB`'
+      - '`PL`'
+      - '`SOI`'
+      - '`IL`'
+      - '`MS2Data`'
+      - '`Ident`'
+  - title: Exporting functions
+    desc: Export your IL and MS2 spectras
+    contents:
+      - '`exportIL`'
+      - '`exportMGF`'
+      - '`exportMSP`'
+      - '`exportmzML`'
+      - '`exportSIRIUS`'
+  - title: Plotting functions
+    desc: Bring your data alive
+    contents:
+      - '`plotPL`'
+      - '`plotSOI`'
+      - '`plotFidelity`'
+      - '`plotISF`'
+      - '`plotIL`'
+      - '`plotSS`'
+      - '`plotRawMS2`'
+  - title: Accessory functions
+    desc: Getting the job done
+    contents:
+      - '`addAd`'
+      - '`remAd`'
+      - '`getSOIPar`'
+      - '`readTime`'
+      - '`setTime`'
+      - '`SOIsim`'
+      - '`ssNetwork`'
+      - '`setCluster`'
+navbar:
+  type: default
