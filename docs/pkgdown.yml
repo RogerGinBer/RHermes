@@ -1,0 +1,7 @@
+pandoc: 2.11.4
+pkgdown: 1.6.1
+pkgdown_sha: ~
+articles:
+  RHermes_UserGuide: RHermes_UserGuide.html
+last_built: 2021-03-09T17:32Z
+
