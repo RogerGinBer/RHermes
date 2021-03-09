@@ -24,17 +24,8 @@ The recommended system requirements are:
 
 ## Installation
 
-You can install (**not yet**) the released version of RHermes from
-[Bioconductor](https://bioconductor.org/) with:
-
-``` r
-if(!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-BiocManager::install("RHermes")
-```
-
-Alternatively, you can download the development version from
-[GitHub](https://github.com/) with:
+You can download the development version from
+[GitHub](https://github.com/RogerGinBer/RHermes) with:
 
 ``` r
 if(!requireNamespace("devtools", quietly = TRUE))

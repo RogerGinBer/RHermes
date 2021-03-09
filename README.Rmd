@@ -35,23 +35,15 @@ The recommended system requirements are:
 
 ## Installation
 
-You can install (**not yet**) the released version of RHermes from
-[Bioconductor](https://bioconductor.org/) with:
-
-```{r, eval = FALSE}
-if(!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-BiocManager::install("RHermes")
-```
-
-Alternatively, you can download the development version from
-[GitHub](https://github.com/) with:
+You can download the development version from
+[GitHub](https://github.com/RogerGinBer/RHermes) with:
 
 ```{r, eval = FALSE}
 if(!requireNamespace("devtools", quietly = TRUE))
     install.packages("devtools")
 devtools::install_github("RogerGinBer/RHermes")
 ```
+
 ## Setup
 RHermes can perform almost all its functions after installation, but the SOI
 Blank Substraction step requires a valid Keras and Tensorflow installation

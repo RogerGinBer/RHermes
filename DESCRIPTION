@@ -40,15 +40,15 @@ Imports:
 	philentropy,
 	grDevices,
 	stats,
-	utils
-Suggests:
-    readxl,
-    knitr,
-    testthat,
-    covr,
+	utils,
 	shiny (>= 1.5.0),
 	shinyFiles,
 	shinyWidgets,
 	shinydashboard,
 	slickR,
+Suggests:
+    readxl,
+    knitr,
+    testthat,
+    covr,
 	DT

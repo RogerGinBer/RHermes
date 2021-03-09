@@ -32,17 +32,8 @@ The recommended specs for RHermes are:
  - 16 GB of RAM or more
  - An internet connection to perform KEGG queries
 
-You can install the released version of RHermes (*not yet*) from 
-[Bioconductor](https://bioconductor.org/) with:
-
-```{r, eval = FALSE}
-if(!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-BiocManager::install("RHermes")
-```
-
-Alternatively, you can download the development version from
-[GitHub](https://github.com/) with:
+You can download the development version from
+[GitHub](https://github.com/RogerGinBer/RHermes) with:
 
 ```{r, eval = FALSE}
 if(!requireNamespace("devtools", quietly = TRUE))
@@ -261,8 +252,27 @@ You can extract the processed MS2 spectra with Ident():
 Ident(myHermes, 1)
 ```
 
+## Saving your progress
+
+At any point of the processing (for instance, after generating an
+Inclusion List), you may save your object for later use. To do so, type:
+```{r, eval = FALSE}
+saveRDS(myHermes, "testRHermes.rds")
+```
+
+To load it, type:
+```{r, eval = FALSE}
+myHermes <- readRDS("testRHermes.rds")
+```
+
+This RDS file you've just generated can be loaded into the GUI to continue the
+processing there or to easily view the plots. It also serves a a "save point"
+in your processing, in case you want to start again from some step 
+
 
 ## Plotting
+In case you prefer to generate the plots "manually" (as opposed to using the
+GUI), here are some instructions for the different plotting functions:
 ### plotPL
 ```{r}
 plotPL(myHermes, 1, "C5H11NO2", c("M+H", "M+Na", "M+K"), c(80, 120))
