@@ -9,9 +9,9 @@ plotSOI(
   struct,
   id,
   formula,
+  ads = NA,
   rtrange = c(0, 10000),
   dynamicaxis = TRUE,
-  ads = NA,
   interactive = TRUE
 )
 
@@ -19,9 +19,9 @@ plotSOI(
   struct,
   id,
   formula,
+  ads = NA,
   rtrange = c(0, 10000),
   dynamicaxis = TRUE,
-  ads = NA,
   interactive = TRUE
 )
 }
@@ -32,14 +32,14 @@ plotSOI(
 
 \item{formula}{Formula annotation to search for (eg. "C6H12O6")}
 
+\item{ads}{Adducts to plot. Defaults to NA, which plots all of them by
+default.}
+
 \item{rtrange}{The retention time interval to plot, in seconds (eg.
 c(0,1000)). Defaults to a 0-10000s interval, which will cover all points.}
 
 \item{dynamicaxis}{Whether to use a fixed y scale for all adducts or to adapt
 the scale according to each adduct intensity}
-
-\item{ads}{Adducts to plot. Defaults to NA, which plots all of them by
-default.}
 
 \item{interactive}{Whether to return a plotly object or a ggplot. Defaults to
 TRUE (plotly).}

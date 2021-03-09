@@ -5,18 +5,15 @@
 \alias{exportIL,RHermesExp,numeric-method}
 \title{exportIL}
 \usage{
-exportIL(struct, id, folder = getwd(), maxOver = 5, sepFiles = FALSE)
+exportIL(struct, id, file = "./InclusionList", maxOver = 5, sepFiles = FALSE)
 
-\S4method{exportIL}{RHermesExp,numeric}(struct, id, folder = getwd(), maxOver = 5, sepFiles = FALSE)
+\S4method{exportIL}{RHermesExp,numeric}(struct, id, file = "./InclusionList", maxOver = 5, sepFiles = FALSE)
 }
 \arguments{
 \item{struct}{The RHermesExp object.}
 
 \item{id}{The IL ID in the RHermesExp object. The IDs are
 assigned by the order in which the IL are generated.}
-
-\item{folder}{A string containing the folder to save the IL
-csv/s into. By default will be your working directory}
 
 \item{maxOver}{Numeric, very important. It's the number of
 mz-rt segments that can be monitored at the same time by the
@@ -28,6 +25,9 @@ problems when deconvoluting the MS2 spectras.}
 or multiple csvs, each corresponding to each
 injection/chromatographic run. From our experience with an
 Orbitrap Fusion, separate csvs will simplify the task.}
+
+\item{folder}{A string containing the folder to save the IL
+csv/s into. By default will be your working directory}
 }
 \value{
 Nothing. As a side effect, it generates one/multiple

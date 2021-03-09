@@ -1,6 +1,5 @@
 #### Main processMS2 routine ####
 
-#'@import tidyverse
 #'@import igraph
 #'@import methods
 #'@rawNamespace import(plotly, except = c(groups, last_plot))
