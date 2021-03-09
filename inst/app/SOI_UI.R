@@ -34,7 +34,7 @@ SOI_UI <- function(id){
                      ),
                      column(6,
                             radioButtons(ns("blanksub"),"Blank Substraction",
-                                         c("T", "F"), selected = "T")
+                                         c("T", "F"), selected = "F")
                      )
                    ),
                    selectInput(ns("sampleID"),
@@ -187,18 +187,30 @@ SOIServer <- function(id, struct){
           paramlist[[i]]@maxlen <- currow$maxlen
         }
 
+
         #Process and output
-        toReturn$dataset <- findSOI(struct$dataset, paramlist, fileidx,
-                                      blankidx)
-        toReturn$trigger <- toReturn$trigger + 1
-
-        sendSweetAlert(
-          session = session,
-          title = "All SOI lists have been generated",
-          text = "Now you can visualize the results and/or generate an IL",
-          type = "success"
-        )
-
+        toReturn$dataset <- tryCatch({
+             findSOI(struct$dataset, paramlist, fileidx,
+                                        blankidx)
+        }, error = function(cond){
+            return("Error")
+        })
+        if(is(toReturn$dataset, "character")){
+            sendSweetAlert(
+                session = session,
+                title = "There has been an error!",
+                text = "Please check that the parameters are correct",
+                type = "error"
+            )
+        } else {
+            toReturn$trigger <- toReturn$trigger + 1
+            sendSweetAlert(
+                session = session,
+                title = "All SOI lists have been generated",
+                text = "Now you can visualize the results and/or generate an IL",
+                type = "success"
+            )
+        }
       }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
 

@@ -678,7 +678,7 @@ setMethod("filterSOI", signature = c("RHermesExp", "numeric", "ANY", "ANY"),
             message("Calculating isotopic fidelity metrics:")
             isodata <- bplapply(with_isos, plotFidelity, struct = struct,
                                 id = id, plot = FALSE,
-                                BPPARAM = SerialParam(progressbar = TRUE))
+                                BPPARAM = SerialParam(progressbar = FALSE))
 
             cos <- vapply(isodata, function(x){x[[3]]}, numeric(1))
             soilist <- soilist[cos > 0.5, ]

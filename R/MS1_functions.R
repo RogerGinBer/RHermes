@@ -146,7 +146,7 @@ calculate_ionic_forms <- function(i, F_DB, Ad_DB){
     multiplicity <- as.numeric(Ad_DB[good,3])
     adduct_delta <- as.numeric(Ad_DB[good,4])
 
-    mass <- ((F_DB$m[i] * multiplicity) + (adduct_delta / charge)) %>%
+    mass <- ((F_DB$m[i] * multiplicity + adduct_delta) / charge) %>%
                 round(., digits = 5)
     db <- data.table(f = j, m = mass, ch = charge, envi = envi)
     con <- data.table(f = rep(f, length(j)), ion = j, an = Ad_DB[good, 1])

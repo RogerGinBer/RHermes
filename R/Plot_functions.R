@@ -150,8 +150,8 @@ function(struct, id) {
 #'                              package = "RHermes"))}
 #'p <- plotSOI(struct, 1, "C5H11NO2", c("M+H", "M+Na", "M+K"), c(80, 120))
 #'@export
-setGeneric("plotSOI", function(struct, id, formula, rtrange = c(0,1e4),
-                                dynamicaxis = TRUE, ads = NA,
+setGeneric("plotSOI", function(struct, id, formula, ads = NA,
+                                rtrange = c(0,1e4), dynamicaxis = TRUE,
                                 interactive = TRUE) {
     standardGeneric("plotSOI")
 })
@@ -159,8 +159,8 @@ setGeneric("plotSOI", function(struct, id, formula, rtrange = c(0,1e4),
 #' @rdname plotSOI
 setMethod("plotSOI", c("RHermesExp", "numeric", "character",
     "ANY", "ANY", "ANY", "ANY"),
-function(struct, id, formula, rtrange= c(0, 1e4), dynamicaxis = TRUE,
-        ads = NA, interactive = TRUE) {
+function(struct, id, formula, ads = NA, rtrange= c(0, 1e4), dynamicaxis = TRUE,
+         interactive = TRUE) {
 
     #Adduct selection
     if(is.na(ads[1])){

@@ -29,10 +29,10 @@ test_that("IL can be exported", {
                                     "exampleObject.rds",
                                     package = "RHermes"))
     myHermes <- generateIL(myHermes, 1, ILParam())
-    exportIL(myHermes, id = 1, folder = getwd(), maxOver = 5, sepFiles = FALSE)
-    exportIL(myHermes, id = 1, folder = getwd(), maxOver = 5, sepFiles = TRUE)
-    file.remove(c("./ExportedIL.csv",
-                paste0(paste("./Injection", seq(1), sep = "_"), ".csv")))
+    exportIL(myHermes, id = 1, file = "./test", maxOver = 5, sepFiles = FALSE)
+    exportIL(myHermes, id = 1, file = "./test", maxOver = 5, sepFiles = TRUE)
+    file.remove(c("./test_complete.csv",
+                paste0(paste("./test_Injection", seq(1), sep = "_"), ".csv")))
     succeed()
 })
 

@@ -100,14 +100,14 @@ function(struct, id, rts, minint = Inf) {
 #'    exportIL(myHermes, 1, 'C:/SomeFolder', maxOver = 5, sepFiles = FALSE)
 #'}
 #'@export
-setGeneric("exportIL", function(struct, id, folder = getwd(),
+setGeneric("exportIL", function(struct, id, file = "./InclusionList",
                                 maxOver = 5, sepFiles = FALSE) {
     standardGeneric("exportIL")
 })
 
 #'@rdname exportIL
 setMethod("exportIL", c("RHermesExp", "numeric", "ANY", "ANY", "ANY"),
-function(struct, id, folder = getwd(), maxOver = 5, sepFiles = FALSE) {
+function(struct, id, file = "./InclusionList", maxOver = 5, sepFiles = FALSE) {
     validObject(struct)
     if (length(struct@data@MS2Exp) == 0) {
         stop("This object doesn't have any ILs")
@@ -127,7 +127,7 @@ function(struct, id, folder = getwd(), maxOver = 5, sepFiles = FALSE) {
         p[, 2] <- p[, 2]/60
         #Added as result of Michi's comment
         p <- cbind(data.frame(Compound = seq_len(nrow(p))), p)
-        write.csv(p, file = paste0(folder, "/Injection_", x, ".csv"),
+        write.csv(p, file = paste0(file, "_Injection_", x, ".csv"),
                     row.names = FALSE)
     }
     } else {
@@ -136,7 +136,7 @@ function(struct, id, folder = getwd(), maxOver = 5, sepFiles = FALSE) {
             p$ID <- x
             return(p)
         }))
-        write.csv(plandf, paste0(folder, "/ExportedIL.csv"))
+        write.csv(plandf, paste0(file, "_complete.csv"))
     }
     return()
 })

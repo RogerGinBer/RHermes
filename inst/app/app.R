@@ -62,18 +62,19 @@ body <- dashboardBody(
             titlePanel(
             div(class="animate__animated animate__pulse", h1(tags$b("RHermes"), align = "center"), style = "text-align: center;")),
             mainPanel(width = 20,
-              p("RHermes is a bioinformatics tool designed to metabolically characterize biological samples of any origin. It works by throwing a database of possible m/z associated to different formulas and adducts onto LC-MS spectra and determine which formulas are present and where they appear on the chromatogram. These results are then condensed into an inclusion list of ions to analyze with MS/MS fragmentation."),
-              p("Combined with this fragmentation, RHermes enables LC-MS spectra \"deconvolution\" and characterization of virtually all ionizable species in a sample."),
+              HTML("<p style = font-size:1.1em>RHermes is a broad-scoped targeted metabolomics software designed to identify compounds in biological and environmental samples.
+                We invert the classical <i>peak-first</i> metabolite detection workflows by first annotating the LC-MS1 raw data points themselves
+                using a database of plasusible formulas and adducts. This ultimately results in a very sample-specific inclusion list of ions to monitor in a MS2 experiment</p>
+                <p style = font-size:1.1em> RHermes has shown that <b>up to 90%</b> of a typical data-dependent acquisition (DDA) MS2 experiment is wasted in redundant and non-biological ions, leading to fake positive
+                identifications while missing the true compounds in the sample.</p>"),
+              HTML("<blockquote style = text-align:left><p> We believe there's a better way to characterize the metabolites in our samples</p> <p>- RHermes</p> </blockquote>"),
               hr(),
-              h2("General outline of the workflow:"),
+              HTML("<h2><b>The Workflow</b></h2>"),
               br(),
-              div(
-                slickR(c("./www/Step1.png", "./www/Step2.png", "./www/Step3.png"),
-                       height = "500px") +
-                settings(dots = TRUE, accessibility = TRUE, infinite = TRUE),
-                style = "height: 600px"
-              ),
-              p("This GUI is split into the main steps of the RHermes workflow."),
+              tags$script(src = 'scroll.js'),
+              img(src = "step1.svg", width = "100%", class = "steps"),
+              img(src = "step2.svg", width = "100%", class = "steps"),
+              img(src = "step3.svg", width = "100%", class = "steps"),
               h2("Troubleshooting"),
               style = "padding : 20px 50px 50px 50px")
     ),

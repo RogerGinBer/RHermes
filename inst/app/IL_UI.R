@@ -22,15 +22,10 @@ IL_UI <- function(id){
                          choices = c("As a single csv file",
                                      "In multiple csv files"),
                          selected = "As a single csv file"),
-            conditionalPanel("input.ILexportmode == 'As a single csv file'",
-                             ns = ns,
-                             shinySaveButton(ns("singleexport"),
-                                             "Select your folder and filename:",
-                                             title = "Select your folder and filename:")
-                             ),
-            conditionalPanel("input.ILexportmode == 'In multiple csv files'", ns = ns,
-                             shinyDirButton(ns("multipleexport"), "Select your folder:",
-                                            "Select your folder:")),
+            shinySaveButton(ns("singleexport"),
+                            "Select your base filename:",
+                            title = "Select your base filename:"),
+
           offset = 1),
           column(3,
                  uiOutput(ns("whenIL")),
@@ -106,25 +101,19 @@ ILServer <- function(id, struct){
         'singleexport',
         roots = getVolumes()
       )
-      shinyDirChoose(
-        input,
-        "multipleexport",
-        roots = getVolumes()
-      )
+
       observeEvent(input$exportIL,{
         sepFiles <- switch(input$ILexportmode,
                            "In multiple csv files" = TRUE,
                            "As a single csv file" = FALSE
                            )
-        if(sepFiles){
-          fname <- as.character(parseDirPath(getVolumes(), input$multipleexport)$datapath)
-        } else {
-          fname <- as.character(parseSavePath(getVolumes(), input$singleexport)$datapath)
-        }
+        fname <- as.character(parseSavePath(getVolumes(), input$singleexport)$datapath)
         message("Now exporting the IL, it may take a bit")
-        exportIL(struct$dataset, as.numeric(input$ILidx), folder = fname , maxOver = input$maxover, sepFiles = sepFiles)
+        exportIL(struct$dataset, as.numeric(input$ILidx), file = fname ,
+                 maxOver = input$maxover, sepFiles = sepFiles)
         output$completedtext <- renderText(paste("The selected IL has been exported to:", fname))
       }, ignoreInit = TRUE, ignoreNULL = TRUE)
+
       toReturn <- reactiveValues(dataset = RHermesExp(), trigger = 0)
       observeEvent(input$startgenIL,{
         filtermz <- input$filtermz

@@ -24,7 +24,7 @@ The recommended system requirements are:
 
 ## Installation
 
-You can install the released version of RHermes from
+You can install (**not yet**) the released version of RHermes from
 [Bioconductor](https://bioconductor.org/) with:
 
 ``` r
@@ -62,7 +62,7 @@ After which you can check the following:
 
 ``` r
 tensorflow::tf_config()
-model <- keras::load_model_tf(system.file("extdata", "model", package = "RHermes"))
+model <- keras::load_model_hdf5(system.file("extdata", "ImprovedModel.h5", package = "RHermes"))
 ```
 
 If both commands don’t give any error (the “Your CPU supports …” warning

@@ -19,8 +19,12 @@ adductTables <- function(ch_max = 1, mult_max = 1) {
 
     negative.ad <- negative.envi[, -c(2, 9)]
     colnames(negative.ad)[c(1, 4)] <- c("adduct", "massdiff")
+    negative.ad$massdiff <- negative.ad$massdiff * abs(negative.ad$Charge)
+
     positive.ad <- positive.envi[, -c(2, 9)]
     colnames(positive.ad)[c(1, 4)] <- c("adduct", "massdiff")
+    positive.ad$massdiff <- positive.ad$massdiff * abs(positive.ad$Charge)
+
     return(list(negative.ad, positive.ad))
 }
 
