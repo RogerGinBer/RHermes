@@ -280,8 +280,8 @@ plotMirror <- function(struct, id, ssnumber, patform, mode = "hits") {
     )
 
     if(mode == "hits"){
-        ref <- struct@data@MS2Exp[[ms2id]]@Ident$MS2_correspondance[[ssnumber]]
-        pattern <- struct@data@MS2Exp[[ms2id]]@Ident$DatabaseSpectra[ref]
+        ref <- struct@data@MS2Exp[[id]]@Ident$MS2_correspondance[[ssnumber]]
+        pattern <- struct@data@MS2Exp[[id]]@Ident$DatabaseSpectra[ref]
         pattern <- unname(pattern) #Avoids "name.subname" when unlisting
         pattern <- unlist(pattern, recursive = FALSE, use.names = TRUE)
     }
@@ -317,8 +317,8 @@ plotMirror <- function(struct, id, ssnumber, patform, mode = "hits") {
                                                         molecmass)) + 20))
         }
         if(mode == "versus"){
-            refmass<-struct@data@MS2Exp[[ms2id]]@Ident$MS2Features$precmass[[x]]
-            refspec <- struct@data@MS2Exp[[ms2id]]@Ident$MS2Features$ssdata[[x]]
+            refmass<-struct@data@MS2Exp[[id]]@Ident$MS2Features$precmass[[x]]
+            refspec <- struct@data@MS2Exp[[id]]@Ident$MS2Features$ssdata[[x]]
             if(is.null(refspec)){return(ggplotly(pl))}
 
             a <- list(
