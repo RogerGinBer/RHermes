@@ -75,6 +75,9 @@ IOServer <- function(id, struct) {
             input$loadselector)$datapath))
         observeEvent(input$loadbutton, {
             if (length(loadpath()) != 0 | input$loadexample) {
+                sendSweetAlert(session = session, title = "Loading",
+                    text = paste("The file", savepath(), "is loading"),
+                    type = "info")
                 if(input$loadexample){
                     f <- system.file("extdata", "exampleObject.rds", package = "RHermes")
                 } else {

@@ -94,7 +94,7 @@ their website and letting `reticulate` know where to find the environment.
 Also check out [Keras](https://tensorflow.rstudio.com/tutorials/beginners/basic-ml/) and [Tensorflow](https://tensorflow.rstudio.com/tutorials/) R tutorials.
 
 ## Analyzing LC-MS data with RHermes
-Once installed, you can use `RHermes` programmaticaly like this:
+Once installed, you can use `RHermes` programmatically like this:
 ```{r example, eval = FALSE}
 library(RHermes)
 #Generate a Exp object

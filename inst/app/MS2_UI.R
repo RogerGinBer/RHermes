@@ -16,8 +16,11 @@ MS2_UI <- function(id){
         hr(),
         numericInput(ns("costhr"), "Minimum cosine score", value = 0.8, min = 0,
                      max = 1, step = 0.01),
-        selectInput(ns("MS2database"), "MS2 reference spectral database",
-                    choices = c("MassBank EU"), selected = "MassBank EU"),
+        materialSwitch(inputId = ns("useDB"), label = "Perform matching against an MS2 database?", value = FALSE),
+        conditionalPanel(condition = "input.useDB",
+            shinyFilesButton(ns("MS2database"), "Enter an MS2ID rds file:", "Select",
+                    FALSE, icon = icon("database"), style = "margin-bottom: 10px")
+                         , ns = ns),
         uiOutput(ns("whenIL")),
         width = 13
       )
@@ -38,6 +41,13 @@ MS2Server <- function(id, struct){
         filetypes = c("mzml", "mzxml")
       )
       output$selecteddir <- renderPrint({parseFilePaths(roots, input$files)})
+
+      shinyFileChoose(
+        input,
+        'MS2database',
+        roots = getVolumes(),
+        filetypes = c("rds")
+      )
 
       ns <- session$ns
       observeEvent(struct$hasIL,{
@@ -63,20 +73,18 @@ MS2Server <- function(id, struct){
 
       toReturn <- reactiveValues(dataset = RHermesExp(), trigger = 0)
       observeEvent(input$startMS2, {
-        db <- switch(input$MS2database,
-               "MassBank EU" = system.file("extdata","sp_MassBankEU_20200316_203615.RData", package = "RHermes")
-               )
-        if(db == ""){
+        if(length(parseFilePaths(roots, input$MS2database)$datapath) == 0 & input$useDB){
           sendSweetAlert(
             session = session,
             title = "MS2 data couldn't be processed",
-            text = "We couldn't find the specified database in the extdata folder",
+            text = "No DB selected",
             type = "error"
           )
         } else {
           toReturn$dataset <- processMS2(struct = struct$dataset, id = as.numeric(input$selectIL),
                                       MS2files = unname(parseFilePaths(roots, input$files)$datapath),
-                                      referenceDB = db,
+                                      referenceDB = parseFilePaths(roots, input$MS2database)$datapath,
+                                      useDB = input$useDB, sstype = "regular",
                                       mincos = input$costhr)
           toReturn$trigger <- toReturn$trigger + 1
           sendSweetAlert(

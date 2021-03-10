@@ -100,7 +100,7 @@ and [Tensorflow](https://tensorflow.rstudio.com/tutorials/) R tutorials.
 
 ## Analyzing LC-MS data with RHermes
 
-Once installed, you can use `RHermes` programmaticaly like this:
+Once installed, you can use `RHermes` programmatically like this:
 
 ``` r
 library(RHermes)

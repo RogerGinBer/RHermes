@@ -656,6 +656,10 @@ setMethod("filterSOI", signature = c("RHermesExp", "numeric", "ANY", "ANY"),
         soiobject <- struct@data@SOI[[id]]
         fname <- soiobject@filename
         PLid <- which(struct@metadata@filenames == fname)
+        if(length(PLid) > 1){
+            PLid <- PLid[1]
+            warning("There's > 1 file with the same name, choosing the first")
+        }
         PL <- struct@data@PL[[PLid]]
         ppm <- struct@metadata@ExpParam@ppm
         soilist <- soiobject@SOIList
