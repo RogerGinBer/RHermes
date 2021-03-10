@@ -84,7 +84,9 @@ body <- dashboardBody(
                    You should provide a detailed description about what happened, screenshots of the error and, <i>desirably</i>, a <a href = 'https://stackoverflow.com/help/minimal-reproducible-example'>minimally reproducible example</a></p>"),
               h2("Citation"),
               HTML("<p style = font-size:1.1em>Please cite this software as:</p>"),
-              HTML("<blockquote style = text-align:left><p> Giné, Roger, Capellades, Jordi, Badia, Josep M., Vughs, Dennis, Schwaiger-Haber, Michaela, Vinaixa, Maria. HERMES: a molecular formula-oriented method to target the metabolome </p> </blockquote>"),
+              HTML("<blockquote style = text-align:left><p> HERMES: a molecular formula-oriented method to target the metabolome </p><p>
+                    Roger Giné, Jordi Capellades, Josep M. Badia, Dennis Vughs, Michaela Schwaiger-Haber, Maria Vinaixa, Andrea M. Brunner, Gary J. Patti, Oscar Yanes</p><p>
+                    bioRxiv 2021.03.08.434466; doi: https://doi.org/10.1101/2021.03.08.434466</p> </blockquote>"),
               style = "padding : 20px 50px 50px 50px")
     ),
 

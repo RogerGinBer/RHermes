@@ -10,13 +10,13 @@ coverage](https://codecov.io/gh/RogerGinBer/RHermes/branch/master/graph/badge.sv
 
 <!-- badges: end -->
 
-RHermes is a broad-scoped targeted metabolomics software used to analyse
-LC-MS and LC-MS/MS data to identify compounds in biological or
+`RHermes` is a broad-scoped targeted metabolomics software used to
+analyse LC-MS and LC-MS/MS data to identify compounds in biological or
 environmental samples.
 
-The RHermes workflow works with both Orbitrap and q-TOF instrument data
-and comes with an easy to use GUI that will guide you every step of the
-way.
+The `RHermes` workflow works with both Orbitrap and q-TOF instrument
+data and comes with an easy to use GUI that will guide you every step of
+the way.
 
 Check out the documentation
 [here](https://rogerginber.github.io/RHermes/)
@@ -42,13 +42,13 @@ devtools::install_github("RogerGinBer/RHermes")
 
 ## Setup
 
-RHermes can perform almost all its functions after installation, but the
-SOI Blank Substraction step requires a valid Keras and Tensorflow
-installation (which rely on Python).
+`RHermes` can perform almost all its functions after installation, but
+the SOI Blank Substraction step requires a valid `keras` and
+`tensorflow` installation (which rely on Python).
 
 ### Option 1: Default installation
 
-In principle both Keras and Tensorflow can be configured with:
+In principle both `keras` and `tensorflow` can be configured with:
 
 ``` r
 reticulate::install_miniconda()
@@ -80,7 +80,7 @@ Now find the Miniconda Prompt in your computer. Instead of relying on
 the default r-reticulate environment, type the following to create a new
 environment:
 
-conda create -n newenv python=3.6 tensorflow keras
+`conda create -n newenv python=3.6 tensorflow keras`
 
 When finished, type in R:
 
@@ -91,14 +91,16 @@ model <- keras::load_model_hdf5(system.file("extdata", "ImprovedModel.h5", packa
 ```
 
 Everything should run smoothly. If not, try manually installing Anaconda
-from their website and letting reticulate know where to find the
+from their website and letting `reticulate` know where to find the
 environment.
 
-Also check out Keras and Tensorflow R tutorials.
+Also check out
+[Keras](https://tensorflow.rstudio.com/tutorials/beginners/basic-ml/)
+and [Tensorflow](https://tensorflow.rstudio.com/tutorials/) R tutorials.
 
 ## Analyzing LC-MS data with RHermes
 
-Once installed, you can use RHermes programmaticaly like this:
+Once installed, you can use `RHermes` programmaticaly like this:
 
 ``` r
 library(RHermes)
@@ -125,5 +127,21 @@ Or start the interactive GUI typing:
 RHermesGUI()
 ```
 
-Please check the User Guide vignette for more detailed info and real
-examples.
+Please check the User Guide
+[vignette](https://rogerginber.github.io/RHermes/articles/RHermes_UserGuide.html)
+for more detailed info and real examples.
+
+## Bug reporting
+
+Suggestions and bug reports are more than welcome at:
+<https://github.com/RogerGinBer/RHermes/issues>
+
+## Citation
+
+Please cite this package as:
+
+HERMES: a molecular formula-oriented method to target the metabolome
+Roger Giné, Jordi Capellades, Josep M. Badia, Dennis Vughs, Michaela
+Schwaiger-Haber, Maria Vinaixa, Andrea M. Brunner, Gary J. Patti, Oscar
+Yanes bioRxiv 2021.03.08.434466; doi:
+<https://doi.org/10.1101/2021.03.08.434466>
