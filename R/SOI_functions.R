@@ -38,7 +38,7 @@
 #'
 #'@export
 #'
-#'@importFrom keras load_model_tf predict_classes
+#'@importFrom keras load_model_hdf5 predict_classes
 #'@importFrom dplyr distinct filter
 #'@import magrittr
 #'@import tensorflow
