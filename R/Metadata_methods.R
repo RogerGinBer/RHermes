@@ -82,25 +82,28 @@ function(struct, params = ExpParam(), template = character(0)) {
     return(struct)
 })
 
-#' @title setDB
-#' @description It updates the RHermesExp object and sets the formula database
+#'@title setDB
+#'@description It updates the RHermesExp object and sets the formula database
 #'  and adduct list to use in the following steps of the workflow. The adduct
-#'   list used is based on the
+#'  list used is based on the
 #'  \href{http://pubs.acs.org/doi/abs/10.1021/acs.analchem.5b00941}{EnviPat}
-#' package
-#' @param struct The RHermesExp object to update
-#' @param db A character defining which database to use. You can test a sample
-#' of HMDB or Norman using "hmdb" and "norman", respectively. Set it to "custom"
-#' to use your own database. You can also specify some kegg pathways with
-#' "kegg_p" and then a list of pathway IDs in the keggpath parameter.
-#' @param adcharge The maximum charge (in absolute value, so polarity
-#'  does not matter) the adducts in the list can have. Defaults to 1.
-#' @param admult The maximum multiplicity (M, 2M, 3M and so on) the adducts
-#'  can have. Defaults to 1.
-#' @param filename Address to where the database is located. Can be either a csv
-#' or a xls/xlsx.
-#' @param keggpath A list of KEGG pathway IDs
-#' @return An RHermesExp object with the formula and adduct database set.
+#'  package
+#'@param struct The RHermesExp object to update
+#'@param db A character defining which database to use. You can test a sample of
+#'  HMDB or Norman using "hmdb" and "norman", respectively. Set it to "custom"
+#'  to use your own database. You can also specify some kegg pathways with
+#'  "kegg_p" and then a list of pathway IDs in the keggpath parameter.
+#'@param adcharge The maximum charge (in absolute value, so polarity does not
+#'  matter) the adducts in the list can have. Defaults to 1.
+#'@param admult The maximum multiplicity (M, 2M, 3M and so on) the adducts can
+#'  have. Defaults to 1.
+#'@param filename Address to where the database is located. Can be either a csv
+#'  or a xls/xlsx.
+#'@param adductfile Address to where the adduct list is located. Can only be a
+#'  csv file and should adhere to EnviPat adduct list format (run data(adducts,
+#'  package = "enviPat") to see how it's like).
+#'@param keggpath A list of KEGG pathway IDs
+#'@return An RHermesExp object with the formula and adduct database set.
 #' @examples
 #' if(FALSE){
 #'     myHermes <- setDB(myHermes, 'hmdb') #Adcharge and admult default to 1
@@ -110,15 +113,16 @@ function(struct, params = ExpParam(), template = character(0)) {
 #'
 #'@export
 setGeneric("setDB", function(struct, db = "hmdb", adcharge = 1,
-                            admult = 1, filename = "./app/www", keggpath = "") {
+                            admult = 1, filename = "", adductfile = "",
+                            keggpath = "") {
     standardGeneric("setDB")
 })
 
 #' @rdname setDB
 setMethod("setDB", signature = c("RHermesExp", "ANY", "ANY", "ANY", "ANY",
-                                    "ANY"),
-function(struct, db = "hmdb", adcharge = 1, admult = 1, filename = "./app/www",
-            keggpath = "") {
+                                 "ANY", "ANY"),
+function(struct, db = "hmdb", adcharge = 1, admult = 1, filename = "",
+            adductfile = "", keggpath = "") {
     validObject(struct)
     message(paste("Parsing the", db, "formula database"))
     minmz <- struct@metadata@ExpParam@minmz
@@ -142,14 +146,22 @@ function(struct, db = "hmdb", adcharge = 1, admult = 1, filename = "./app/www",
     )
     struct@metadata@ExpParam@DB <- dbdata
     #Set corresponding adduct table
-    ad <- adductTables(adcharge, admult)
-    ion <- struct@metadata@ExpParam@ion
-    if (ion == "+") {
-        struct@metadata@ExpParam@adlist <- ad[[2]]
+    if(adductfile != ""){
+        struct@metadata@ExpParam@adlist <- tryCatch(
+            read.csv(adductfile),
+            error = function(cond){stop("Invalid csv address")
+        })
     } else {
-        struct@metadata@ExpParam@adlist <- ad[[1]]
+        ad <- adductTables(adcharge, admult)
+        ion <- struct@metadata@ExpParam@ion
+        if (ion == "+") {
+            struct@metadata@ExpParam@adlist <- ad[[2]]
+        } else {
+            struct@metadata@ExpParam@adlist <- ad[[1]]
+        }
+        row.names(struct@metadata@ExpParam@adlist) <- NULL
     }
-    row.names(struct@metadata@ExpParam@adlist) <- NULL
+
     struct <- setTime(struct, paste("Added the", db,
                                     "formula database and an adduct list",
                                     "with charge", adcharge, "and multiplicity",

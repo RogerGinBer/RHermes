@@ -10,7 +10,8 @@ setDB(
   db = "hmdb",
   adcharge = 1,
   admult = 1,
-  filename = "./app/www",
+  filename = "",
+  adductfile = "",
   keggpath = ""
 )
 
@@ -19,26 +20,31 @@ setDB(
   db = "hmdb",
   adcharge = 1,
   admult = 1,
-  filename = "./app/www",
+  filename = "",
+  adductfile = "",
   keggpath = ""
 )
 }
 \arguments{
 \item{struct}{The RHermesExp object to update}
 
-\item{db}{A character defining which database to use. You can test a sample
-of HMDB or Norman using "hmdb" and "norman", respectively. Set it to "custom"
+\item{db}{A character defining which database to use. You can test a sample of
+HMDB or Norman using "hmdb" and "norman", respectively. Set it to "custom"
 to use your own database. You can also specify some kegg pathways with
 "kegg_p" and then a list of pathway IDs in the keggpath parameter.}
 
-\item{adcharge}{The maximum charge (in absolute value, so polarity
-does not matter) the adducts in the list can have. Defaults to 1.}
+\item{adcharge}{The maximum charge (in absolute value, so polarity does not
+matter) the adducts in the list can have. Defaults to 1.}
 
-\item{admult}{The maximum multiplicity (M, 2M, 3M and so on) the adducts
-can have. Defaults to 1.}
+\item{admult}{The maximum multiplicity (M, 2M, 3M and so on) the adducts can
+have. Defaults to 1.}
 
 \item{filename}{Address to where the database is located. Can be either a csv
 or a xls/xlsx.}
+
+\item{adductfile}{Address to where the adduct list is located. Can only be a
+csv file and should adhere to EnviPat adduct list format (run data(adducts,
+package = "enviPat") to see how it's like).}
 
 \item{keggpath}{A list of KEGG pathway IDs}
 }
@@ -48,9 +54,9 @@ An RHermesExp object with the formula and adduct database set.
 \description{
 It updates the RHermesExp object and sets the formula database
  and adduct list to use in the following steps of the workflow. The adduct
-  list used is based on the
+ list used is based on the
  \href{http://pubs.acs.org/doi/abs/10.1021/acs.analchem.5b00941}{EnviPat}
-package
+ package
 }
 \examples{
 if(FALSE){
