@@ -35,36 +35,26 @@ function(struct, files, labelled = FALSE) {
     message(paste0("Preprocessing steps, calculating possible ionic formulas ",
                     "and isotopic distributions"))
 
-    F_DB <- struct@metadata@ExpParam@DB[,c("MolecularFormula", "EnviPatMass")]
-    #Could break if colname isn't exactly "MolecularFormula"
-    F_DB <- dplyr::distinct_at(F_DB, "MolecularFormula",
-                                .keep_all = T)
-    colnames(F_DB) <- c("fms", "m")
-
-    IF_DB <- IonicForm(F_DB, struct@metadata@ExpParam@adlist,
-                        BiocParallelParam = struct@metadata@cluster)
-
-    IC <- IsoCalc(
-        IF_DB[[1]], FWHM = struct@metadata@ExpParam@res,
-        intTHR = 0.02, kTHR = 1, instr = struct@metadata@ExpParam@instr,
-        refm = 200, BiocParallelParam = struct@metadata@cluster
-    )
+    prepro <- preprocessing(struct)
+    IF_DB <- prepro[[1]]
+    IC <- prepro[[2]]
 
     message("Starting file processing...")
     struct <- setTime(struct, "Started file processing into PL")
     toAdd <- lapply(seq_along(files), function(i) {
-    lf = files[i]
-    message(paste0("Now processing: ", lf))
-    imported <- import_and_filter(lf, 20, noise)
-    ss <- OptScanSearch(DB = IF_DB[[1]],
-                        raw = imported[[3]], mzList = imported[[2]],
-                        ppm = ppm, labelled = labelled,
-                        IsoList = IC,
-                        BiocParallelParam = struct@metadata@cluster)
+        lf = files[i]
+        message(paste0("Now processing: ", lf))
+        imported <- import_and_filter(lf, 20, noise)
+        ss <- OptScanSearch(DB = IF_DB[[1]],
+                            raw = imported[[3]],
+                            ppm = ppm,
+                            labelled = labelled,
+                            IsoList = IC,
+                            BiocParallelParam = struct@metadata@cluster)
 
-    #Construction of S4 Object output
-    RHermesPL(peaklist = ss, header = imported[[2]], raw = imported[[1]],
-                labelled = labelled, filename = lf)
+        #Construction of S4 Object output
+        RHermesPL(peaklist = ss, header = imported[[2]], raw = imported[[1]],
+                    labelled = labelled, filename = lf)
     })
     struct@data@PL <- c(struct@data@PL, toAdd)
     struct@metadata@ExpParam@ionF <- IF_DB
@@ -79,6 +69,24 @@ function(struct, files, labelled = FALSE) {
     return(struct)
 })
 
+
+preprocessing <- function(struct){
+    F_DB <- struct@metadata@ExpParam@DB[,c("MolecularFormula", "EnviPatMass")]
+    #Could break if colname isn't exactly "MolecularFormula"
+    F_DB <- dplyr::distinct_at(F_DB, "MolecularFormula",
+                                .keep_all = T)
+    colnames(F_DB) <- c("fms", "m")
+
+    IF_DB <- IonicForm(F_DB, struct@metadata@ExpParam@adlist,
+                        BiocParallelParam = struct@metadata@cluster)
+
+    IC <- IsoCalc(
+        IF_DB[[1]], FWHM = struct@metadata@ExpParam@res,
+        intTHR = 0.02, kTHR = 1, instr = struct@metadata@ExpParam@instr,
+        refm = 200, BiocParallelParam = struct@metadata@cluster
+    )
+    return(list(IF_DB, IC))
+}
 
 import_and_filter <- function(lf, minpks = 20, noise = 1000) {
     #Opening the connection to a single mzML file
@@ -361,7 +369,7 @@ isocalc_parallel <- function(x, kTHR, resol_factor, isotopecode, isOrbi){
     return(x[, c("ID", "deltam")])
 }
 
-OptScanSearch <- function(DB, raw, mzList, ppm, IsoList, labelled = FALSE,
+OptScanSearch <- function(DB, raw, ppm, IsoList, labelled = FALSE,
                             minhit = 1, BiocParallelParam) {
     message(paste0("This process can take quite a bit of time, depending on ",
                     "the processing power and RAM your computer has"))
