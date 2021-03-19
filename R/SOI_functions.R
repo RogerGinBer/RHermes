@@ -337,7 +337,7 @@ retrievePeaks <- function(i, Groups, PL){
     f <- x[1, 4]
     pks <- PL[.(f)] %>% filter(., .data$rt > rtmin[[1]] &
                                 .data$rt < rtmax[[1]])
-    return(pks[, c(1, 2)])
+    return(pks[, c(1, 2, 5)])
 }
 
 groupShort <- function(Groups, maxlen, BiocParallelParam){
@@ -543,9 +543,10 @@ preparePlottingDF <- function(i, Groups){
         if (is.null(dim(peaks)[1])) {
             next
         }
-    form <- rep(unlist(data[j, ]$formula), nrow(peaks))
-    peaks <- cbind(peaks, form)
-    res <- rbind(res, peaks)
+        peaks <- peaks[,1:2]
+        form <- rep(unlist(data[j, ]$formula), nrow(peaks))
+        peaks <- cbind(peaks, form)
+        res <- rbind(res, peaks)
     }
     res <- res[-1, ]
     return(res)
@@ -740,9 +741,8 @@ recalculateDF <- function(i, soilist){
                     form = character(), stringsAsFactors = FALSE)
     for (j in seq_len(nrow(data))) {
         peaks <- data[j, ]$peaks[[1]]
-        if (is.null(dim(peaks)[1])) {
-            next
-        }
+        if (is.null(dim(peaks)[1])) {next}
+        peaks <- peaks[,1:2]
         form <- rep(unlist(data[j, ]$formula), nrow(peaks))
         peaks <- cbind(peaks, form)
         res <- rbind(res, peaks)
