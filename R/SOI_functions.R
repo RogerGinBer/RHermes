@@ -212,6 +212,11 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename,
         })
     })
 
+    message("Calculating chaos:")
+    Groups$chaos <- lapply(Groups$peaks, function(x) {
+        rho_chaos(x, nlevels = 20, fillGaps = TRUE)
+    }) %>% as.numeric()
+
     setkeyv(Groups, c("formula"))
     message("Generating peaklist for plotting:")
     plist <- bplapply(unique(Groups$formula), preparePlottingDF,
@@ -630,6 +635,33 @@ densityInterpreter <- function(list, cutoff) {
     return(list(start, end))
 }
 
+rho_chaos <- function(data, nlevels = 20, fillGaps = TRUE){
+    data$rtiv <- (data$rtiv - min(data$rtiv)) /
+                    (max(data$rtiv) - min(data$rtiv))
+    ns <- sapply(seq_len(nlevels), function(n){
+        t_n <- n/nlevels
+        data$above <- data$rtiv > t_n
+        nr <- nrow(data)
+        #Filling 1-gaps
+        if(fillGaps){
+            for(i in seq_len(nr-2)){
+                if(data$above[i] & !data$above[i+1] & data$above[i+2]){
+                    data$above[i+1] <- TRUE
+                }
+            }
+        }
+
+        bad <- which(!data$above)
+        if(length(bad) == 0){return(1)}
+        else{
+            add <- 1
+            if(length(bad) == 1){return(1+add)}
+            return(length(which(diff(bad) > 1)) + add)
+        }
+    })
+    rho <- 1 - sum(ns) / (nrow(data) * nlevels)
+    return(rho)
+}
 
 #### filterSOI-related ####
 
