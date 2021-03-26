@@ -32,6 +32,7 @@ test_that("Adduct tables generate successfully",{
 
 context("Ionic formulas")
 test_that("Ionic formulas generate correctly", {
+    BiocParallel::register(BiocParallel::SerialParam())
     hmdb <- RHermes:::database_importer(template = "hmdb")
     ad <- RHermes:::adductTables(1,1)
     colnames(hmdb)[c(2,3)] <- c("m","fms")
@@ -43,6 +44,7 @@ test_that("Ionic formulas generate correctly", {
 
 context("Isotopic distribution calculation")
 test_that("Isotopes generate nicely", {
+    BiocParallel::register(BiocParallel::SerialParam())
     ppm <- 2
     minmass <- 80
     maxmass <- 1050
@@ -64,6 +66,5 @@ test_that("Isotopes generate nicely", {
 
 context("Parallel backend selection")
 test_that("setCluster works", {
-    cl <- RHermes:::setCluster()
-    expect_true(is(cl, "BiocParallelParam"))
+    RHermes:::setCluster()
 })

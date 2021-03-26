@@ -42,9 +42,9 @@
 <meta property="og:title" content="setDB — setDB" />
 <meta property="og:description" content="It updates the RHermesExp object and sets the formula database
  and adduct list to use in the following steps of the workflow. The adduct
-  list used is based on the
+ list used is based on the
  EnviPat
-package" />
+ package" />
 
 
 
@@ -135,9 +135,9 @@ package" />
     <div class="ref-description">
     <p>It updates the RHermesExp object and sets the formula database
  and adduct list to use in the following steps of the workflow. The adduct
-  list used is based on the
+ list used is based on the
  <a href='http://pubs.acs.org/doi/abs/10.1021/acs.analchem.5b00941'>EnviPat</a>
-package</p>
+ package</p>
     </div>
 
     <pre class="usage"><span class='fu'>setDB</span><span class='op'>(</span>
@@ -145,7 +145,8 @@ package</p>
   db <span class='op'>=</span> <span class='st'>"hmdb"</span>,
   adcharge <span class='op'>=</span> <span class='fl'>1</span>,
   admult <span class='op'>=</span> <span class='fl'>1</span>,
-  filename <span class='op'>=</span> <span class='st'>"./app/www"</span>,
+  filename <span class='op'>=</span> <span class='st'>""</span>,
+  adductfile <span class='op'>=</span> <span class='st'>""</span>,
   keggpath <span class='op'>=</span> <span class='st'>""</span>
 <span class='op'>)</span>
 
@@ -155,7 +156,8 @@ package</p>
   db <span class='op'>=</span> <span class='st'>"hmdb"</span>,
   adcharge <span class='op'>=</span> <span class='fl'>1</span>,
   admult <span class='op'>=</span> <span class='fl'>1</span>,
-  filename <span class='op'>=</span> <span class='st'>"./app/www"</span>,
+  filename <span class='op'>=</span> <span class='st'>""</span>,
+  adductfile <span class='op'>=</span> <span class='st'>""</span>,
   keggpath <span class='op'>=</span> <span class='st'>""</span>
 <span class='op'>)</span></pre>
 
@@ -168,25 +170,31 @@ package</p>
     </tr>
     <tr>
       <th>db</th>
-      <td><p>A character defining which database to use. You can test a sample
-of HMDB or Norman using "hmdb" and "norman", respectively. Set it to "custom"
+      <td><p>A character defining which database to use. You can test a sample of
+HMDB or Norman using "hmdb" and "norman", respectively. Set it to "custom"
 to use your own database. You can also specify some kegg pathways with
 "kegg_p" and then a list of pathway IDs in the keggpath parameter.</p></td>
     </tr>
     <tr>
       <th>adcharge</th>
-      <td><p>The maximum charge (in absolute value, so polarity
-does not matter) the adducts in the list can have. Defaults to 1.</p></td>
+      <td><p>The maximum charge (in absolute value, so polarity does not
+matter) the adducts in the list can have. Defaults to 1.</p></td>
     </tr>
     <tr>
       <th>admult</th>
-      <td><p>The maximum multiplicity (M, 2M, 3M and so on) the adducts
-can have. Defaults to 1.</p></td>
+      <td><p>The maximum multiplicity (M, 2M, 3M and so on) the adducts can
+have. Defaults to 1.</p></td>
     </tr>
     <tr>
       <th>filename</th>
       <td><p>Address to where the database is located. Can be either a csv
 or a xls/xlsx.</p></td>
+    </tr>
+    <tr>
+      <th>adductfile</th>
+      <td><p>Address to where the adduct list is located. Can only be a
+csv file and should adhere to EnviPat adduct list format (run data(adducts,
+package = "enviPat") to see how it's like).</p></td>
     </tr>
     <tr>
       <th>keggpath</th>

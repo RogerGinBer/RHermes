@@ -44,14 +44,13 @@ SettingsServer <- function(id, struct){
     observeEvent({
       input$saveSet
     }, {
-      struct$dataset@metadata@cluster <- switch(input$partype,
+      backend <- switch(input$partype,
              serial = BiocParallel::SerialParam(),
              snow = BiocParallel::SnowParam(workers = as.numeric(input$coreN)),
              multicore = BiocParallel::MulticoreParam(workers =
                                                         as.numeric(input$coreN))
       )
-      toReturn$dataset <- struct$dataset
-      toReturn$trigger <- toReturn$trigger + 1
+      BiocParallel::register(backend)
     },ignoreInit = TRUE, ignoreNULL = TRUE)
 
     observeEvent({input$coreN}, {

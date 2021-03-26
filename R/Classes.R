@@ -202,26 +202,16 @@ RHermesMS2Exp <- setClass("RHermesMS2Exp", slots = list(IL = "RHermesIL",
 
 
 #' @title setCluster
-#' @description By default selects the most appropiate BiocParallel backend
-#'   according to your OS and RAM. If used with arguments, it assigns a
-#'   specified backend to an RHermesExp object.
-#' @param struct An RHermesExp object.
-#' @param cl A BiocParallel backend object (like SerialParam(), SnowParam(),
-#'   MulticoreParam(), etc.).
+#' @description Returns the most appropriate BiocParallel backend for RHermes
+#'   according to your OS and RAM. It is entirely optional, but recommended
+#'   nonetheless.
 #' @author Roger Gine
 #' @import BiocParallel
 #' @examples
-#' struct <- RHermesExp()
-#' struct <- setCluster(struct, BiocParallel::SerialParam())
-#' @return An RHermesExp object with an updated BiocParallel backend
+#' BiocParallel::register(setCluster()) #Registers the most appropriate backend
+#' @return A BiocParallel backend
 #' @export
-setCluster <- function(struct = NULL, cl = NULL){
-    if(!is.null(struct) & !is.null(cl)){
-        if(!is(struct, "RHermesExp")){stop("Not a valid RHermesExp object")}
-        if(!is(cl, "BiocParallelParam")){stop("Not a valid BiocParallelParam")}
-        struct@metadata@cluster <- cl
-        return(struct)
-    }
+setCluster <- function(){
     if (Sys.info()[1] == "Windows") {
         ram <- system2("wmic", args =  "OS get FreePhysicalMemory /Value",
                         stdout = TRUE)
@@ -235,15 +225,15 @@ setCluster <- function(struct = NULL, cl = NULL){
         if (nwork <= 1) {
             warning(paste("Maybe you have too little available RAM.",
                             "Proceeding with SerialParam()"))
-            return(BiocParallel::SerialParam(progressbar = TRUE))
+            return(backend <- BiocParallel::SerialParam(progressbar = TRUE))
         }
-        return(BiocParallel::SnowParam(nwork, progressbar = TRUE))
+        return(backend <- BiocParallel::SnowParam(nwork, progressbar = TRUE))
     } else {
-        return(BiocParallel::MulticoreParam(
+        backend <- BiocParallel::MulticoreParam(
             BiocParallel::multicoreWorkers() - 2,
             progressbar = TRUE)
-        )
     }
+    return(backend)
 }
 
 #'@title RHermesMeta
@@ -256,24 +246,20 @@ setCluster <- function(struct = NULL, cl = NULL){
 #'  available for individual PL and SOI objects in their respective slot.
 #'@slot timestamps Timestamps generated when any operation was performed on the
 #'  parental object. You can easily check them with readTime().
-#'@slot cluster Selected automatically based on your operating system and your
-#'  number of cores. Can be set to any valid BiocParallelParam.
 #'@author Roger Gine
 #'@seealso ExpParam readTime setTime setCluster Cluster
 RHermesMeta <- setClass("RHermesMeta",
     slots = list(
         ExpParam = "ExpParam",
         filenames = "character",
-        timestamps = "character",
-        cluster = "BiocParallelParam"
+        timestamps = "character"
     ), prototype = list(
         ExpParam = ExpParam(),
         filenames = character(0),
         timestamps = c(paste("System info:",
                     paste(Sys.info(), collapse = "/")),
                     paste("RHermes version:",
-                    packageVersion("RHermes"))),
-        cluster = setCluster()
+                    packageVersion("RHermes")))
     )
 )
 

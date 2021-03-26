@@ -4,25 +4,18 @@
 \alias{setCluster}
 \title{setCluster}
 \usage{
-setCluster(struct = NULL, cl = NULL)
-}
-\arguments{
-\item{struct}{An RHermesExp object.}
-
-\item{cl}{A BiocParallel backend object (like SerialParam(), SnowParam(),
-MulticoreParam(), etc.).}
+setCluster()
 }
 \value{
-An RHermesExp object with an updated BiocParallel backend
+A BiocParallel backend
 }
 \description{
-By default selects the most appropiate BiocParallel backend
-  according to your OS and RAM. If used with arguments, it assigns a
-  specified backend to an RHermesExp object.
+Returns the most appropriate BiocParallel backend for RHermes
+  according to your OS and RAM. It is entirely optional, but recommended
+  nonetheless.
 }
 \examples{
-struct <- RHermesExp()
-struct <- setCluster(struct, BiocParallel::SerialParam())
+BiocParallel::register(setCluster()) #Registers the most appropriate backend
 }
 \author{
 Roger Gine

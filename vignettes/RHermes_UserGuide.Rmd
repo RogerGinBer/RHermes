@@ -14,6 +14,7 @@ vignette: |
 ---
 
 ```{r setup, include=FALSE}
+BiocParallel::register(BiocParallel::SerialParam())
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message = FALSE)
 knitr::opts_chunk$set(collapse = TRUE)
 library(plotly)
@@ -136,11 +137,6 @@ different polarities or in different instruments can't be processed at the
 same time).
 
 For this guide, we will use a small test mzML provided with the package:
-
-```{r, echo = FALSE}
-#For speed with a small dataset
-myHermes <- setCluster(myHermes, BiocParallel::SerialParam()) 
-```
 
 ```{r}
 myHermes <- processMS1(myHermes,
@@ -323,39 +319,18 @@ And the app should start in your default browser.
 
 ## Advanced functionality 
 ### Parallelization
-<a name="cluster"></a>
+Another parameter you want to set up (especially if you're dealing with
+many formulas and adducts - say >10K formulas) is a custom parallel
+backend. 
 
-Another parameter you would want to set up (especially if you're dealing with
-many formulas and adducts - say >10K formulas) is your RHermesExp parallel
-backend. By default, when initializing the object, your OS and RAM are checked 
-and the most efficient BiocParallel backend is chosen (SnowParam for Windows 
-users and MulticoreParam for Linux / MacOS users). The number of workers is
-automatically estimated according to your RAM.
+RHermes functions use your default backend (bpparam()), but you can set any
+backend you like with register(). You can use setCluster to automatically 
+select an appropiate backend based on your OS and RAM.
 
-If you want to check what parallel settings you are using, just use Cluster()
 ```{r}
-Cluster(myHermes)
+BiocParallel::register(setCluster()) 
 ```
 
-In case you want to change your BiocParallel backend, pass the backend to 
-setCluster(). This is particularly useful if you are dealing with short formula
-lists and want to avoid parallel overhead times or if you want to reprocess
-an old file (or a file processed in another computer) and the original backend
-has already expired.
-```{r}
-#SerialParam as example, others are valid too
-myHermes <- setCluster(myHermes, BiocParallel::SerialParam()) 
-```
-
-
-## Troubleshooting
-Here we will review some common errors that may happen during processing:
-
-- serialize(data, node$con) : error writing to connection
-
-    - This error usually happens when the BiocParallel backend isn't valid
-    anymore. (For instance, you are in a new R session, or using a RHermesExp
-    object generated in another PC). Refer [here](#cluster)
 
 ## Session Info
 

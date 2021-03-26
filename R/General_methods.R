@@ -227,20 +227,3 @@ setMethod("Ident", c("RHermesExp", "numeric"), function(struct, id) {
 })
 
 
-#'@title Cluster
-#'@author Roger Gine
-#'@family Getters
-#'@param struct An RHermesExp object
-#'@return The BiocParallel backend object associated with struct
-#'@examples Cluster(RHermesExp())
-#'@export
-setGeneric("Cluster", function(struct) {
-    standardGeneric("Cluster")
-})
-#' @rdname Cluster
-setMethod("Cluster", c("RHermesExp"), function(struct) {
-    validObject(struct)
-    struct@metadata@cluster
-})
-
-

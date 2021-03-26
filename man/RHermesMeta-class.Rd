@@ -21,9 +21,6 @@ available for individual PL and SOI objects in their respective slot.}
 
 \item{\code{timestamps}}{Timestamps generated when any operation was performed on the
 parental object. You can easily check them with readTime().}
-
-\item{\code{cluster}}{Selected automatically based on your operating system and your
-number of cores. Can be set to any valid BiocParallelParam.}
 }}
 
 \seealso{

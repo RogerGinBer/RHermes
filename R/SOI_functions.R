@@ -97,8 +97,8 @@ function(struct, params, fileID, blankID = numeric(0)) {
         struct@data@SOI <- c(struct@data@SOI,
                             PLprocesser(struct@data@PL[[idx]],
                             struct@metadata@ExpParam, cur, blankPL,
-                            struct@metadata@filenames[idx],
-                            struct@metadata@cluster))
+                            struct@metadata@filenames[idx]
+                            ))
         if (blankID[i] == 0) {
             struct <- setTime(struct,
                             paste("Generated SOI list from",
@@ -115,8 +115,7 @@ function(struct, params, fileID, blankID = numeric(0)) {
 })
 
 #' @importFrom stats  approx  median  sd
-PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename,
-                        BiocParallelParam = SerialParam()) {
+PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename) {
     ## Extracting info from S4 objects into local variables
     DataPL <- PL@peaklist
     h <- PL@header
@@ -140,7 +139,7 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename,
     ## Density filtering
     message("Starting density filtering: ")
     GR <- apply(params, 1, function(x) {
-        densityProc(x, DataPL, h, BiocParallelParam)
+        densityProc(x, DataPL, h)
     })
     ## Grouping different filtered results
     message("Now Grouping:")
@@ -148,7 +147,7 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename,
     setkeyv(Groups, c("formula", "start", "end"))
     if (length(GR) > 1) {
         for (i in 2:length(GR)) {
-        Groups <- groupGrouper(GR, i, Groups, BiocParallelParam)
+        Groups <- groupGrouper(GR, i, Groups)
         }
     }
     Groups <- distinct(Groups)
@@ -156,7 +155,7 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename,
     ## Initial Peak Retrieval
     message("Initial peak retrieval:")
     peakscol <- bplapply(seq_len(nrow(Groups)), retrievePeaks,
-                        Groups, DataPL, BPPARAM = BiocParallelParam)
+                        Groups, DataPL, BPPARAM = bpparam())
     Groups$peaks <- peakscol
     ## Group Characterization
     message("")
@@ -165,12 +164,11 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename,
     setkeyv(Groups, "formula")
     Groups$mass <- formulaDB[.(Groups$formula),2]
     if (any(Groups$length > maxlen)) {
-        Groups <- groupShort(Groups, maxlen, BiocParallelParam)
+        Groups <- groupShort(Groups, maxlen)
     }
     ## Blank substraction
     if (useblank) {
-        Groups <- blankSubstraction(Groups, blankPL,
-                                            BiocParallelParam)
+        Groups <- blankSubstraction(Groups, blankPL)
         if (nrow(Groups) == 0) {return(RHermesSOI())}
     }
     ## Rest of characterization
@@ -220,7 +218,7 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename,
     setkeyv(Groups, c("formula"))
     message("Generating peaklist for plotting:")
     plist <- bplapply(unique(Groups$formula), preparePlottingDF,
-                        Groups, BPPARAM = BiocParallelParam)
+                        Groups, BPPARAM = bpparam())
     plist <- do.call(rbind, plist)
     plist$isov <- rep("M0", nrow(plist))
 
@@ -231,26 +229,25 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename,
         return(output)
     }
 
-densityProc <- function(x, DataPL, h, BiocParallelParam){
+densityProc <- function(x, DataPL, h){
     rtbin <- x[1]
     scanspercent <- x[2]
     shift <- x[3]
     message("Running Density Filter")
-    BinRes <- densityFilter(DataPL, h, rtbin, "M0", shift,
-                                    BiocParallelParam)
+    BinRes <- densityFilter(DataPL, h, rtbin, "M0", shift)
     cutoff <- BinRes[[1]] * scanspercent
 
     #Correcting CUT < 1 cases to avoid errors (eg. if it was 0, any time region
     #would be included). Added a 1 for robustness.
     cutoff[cutoff < 1] <- median(c(cutoff[cutoff > 1], 1))
     message("Running Density Interpreter")
-    nwork <- BiocParallelParam$workers
+    nwork <- bpparam()$workers
     if (!is.numeric(nwork)) nwork <- 1
         uf <- unique(DataPL$formv)
         suppressWarnings({uf <- split(uf, seq_len(nwork))})
         id <- cumsum(vapply(c(0, uf), length, numeric(1))) - 1
     RES <- bplapply(seq_along(uf), parallelInterpreter, uf, cutoff,
-                    BinRes, id, BPPARAM = BiocParallelParam)
+                    BinRes, id, BPPARAM = bpparam())
     RES <- do.call(rbind, RES)
     RES$formula <- unlist(uf)[RES$formula]
 
@@ -270,7 +267,7 @@ resolveGroup <- function(x, Groups, matched, first_df){
         return(corresp[1, ])
     }
 
-groupGrouper <- function(GR, i, Groups, BiocParallelParam){
+groupGrouper <- function(GR, i, Groups){
     first_df <- GR[[i]]
     setkeyv(first_df, c("formula", "start", "end"))
     message(paste("Merging filter", i, "out of", length(GR),
@@ -287,7 +284,7 @@ groupGrouper <- function(GR, i, Groups, BiocParallelParam){
 
     ## Grouping entries and choosing lowest start and highest end time
     res <- bplapply(unique(matched$yid), resolveGroup, Groups,
-                matched, first_df, BPPARAM = BiocParallelParam)
+                matched, first_df, BPPARAM = bpparam())
     res <- do.call(rbind, res)
 
     end <- NULL; start <- NULL #To appease R CMD Check "no visible binding"
@@ -345,12 +342,12 @@ retrievePeaks <- function(i, Groups, PL){
     return(pks[, c(1, 2, 5)])
 }
 
-groupShort <- function(Groups, maxlen, BiocParallelParam){
+groupShort <- function(Groups, maxlen){
     message("Shortening and selecting long groups:")
     SG <- filter(Groups, length <= maxlen)
     LG <- filter(Groups, length > maxlen)
     LG <- bplapply(seq_len(nrow(LG)), parallelGroupShort, LG,
-                maxlen, BPPARAM = BiocParallelParam)
+                maxlen, BPPARAM = bpparam())
     LG <- do.call(rbind, LG)
     return(rbind(SG, LG))
 }
@@ -430,13 +427,13 @@ parallelGroupShort <- function(i, LG, maxlen){
     return(NewGR)
 }
 
-blankSubstraction <- function(Groups, blankPL, BiocParallelParam){
+blankSubstraction <- function(Groups, blankPL){
     message("Blank substraction:")
     setkeyv(blankPL, c("formv", "rt"))
 
     message("First cleaning")
     toKeep <- bplapply(seq_len(nrow(Groups)), firstCleaning, Groups, blankPL,
-                        BPPARAM = BiocParallelParam) %>% unlist()
+                        BPPARAM = bpparam()) %>% unlist()
     sure <- Groups[which(toKeep), ]
     if (any(toKeep)) {Groups <- Groups[-which(toKeep),]}
     reticulate::py_available(initialize = TRUE)
@@ -448,7 +445,7 @@ blankSubstraction <- function(Groups, blankPL, BiocParallelParam){
 
         message("Preparing input for ANN")
         RES <- bplapply(seq_len(nrow(Groups)), prepareNetInput, Groups, blankPL,
-                        BPPARAM = BiocParallelParam)
+                        BPPARAM = bpparam())
         Groups$MLdata <- RES
         NAgroups <- do.call(rbind, lapply(RES, function(x){is.na(x[1])}))
 
@@ -579,8 +576,7 @@ parallelFilter <- function(j, ScanResults, bins, timebin){
     })
 }
 
-densityFilter <- function(ScanResults, h, timebin, iso = "M0", tshift = 0,
-                        BiocParallelParam) {
+densityFilter <- function(ScanResults, h, timebin, iso = "M0", tshift = 0) {
     #Setting time bins
     rtmin <- floor(min(h$retentionTime))
     rtmax <- ceiling(max(h$retentionTime))
@@ -594,13 +590,13 @@ densityFilter <- function(ScanResults, h, timebin, iso = "M0", tshift = 0,
         })
 
     #Counting how many scan entries are on each bin
-    nwork <- BiocParallelParam$workers
+    nwork <- bpparam()$workers
     if (!is.numeric(nwork)) nwork <- 1
 
     idx <- split(unique(ScanResults$formv), seq_len(nwork) * 5)
     setkeyv(ScanResults, c("formv", "rt"))
     RES <- bplapply(idx, parallelFilter, ScanResults, bins, timebin,
-                    BPPARAM = BiocParallelParam)
+                    BPPARAM = bpparam())
 
     RES <- unlist(RES, recursive = FALSE)
     names(RES) <- unlist(idx)
@@ -696,7 +692,6 @@ setMethod("filterSOI", signature = c("RHermesExp", "numeric", "ANY", "ANY"),
         PL <- struct@data@PL[[PLid]]
         ppm <- struct@metadata@ExpParam@ppm
         soilist <- soiobject@SOIList
-        BiocParallelParam <- struct@metadata@cluster
 
         ##Filter by maximum intensity
         intense_enough <- which(soilist$MaxInt > minint)
@@ -706,7 +701,7 @@ setMethod("filterSOI", signature = c("RHermesExp", "numeric", "ANY", "ANY"),
         if (isofidelity) {
             # Isotopic elution similarity
             message("Computing isotopic elution similarity:")
-            soilist <- isoCos(soilist, PL, isothr = 0.85, BiocParallelParam)
+            soilist <- isoCos(soilist, PL, isothr = 0.85)
             good <- which(!(soilist$MaxInt > 1e+06 & soilist$isofound == 0))
             soilist <- soilist[good, ]
             with_isos <- intense_enough[good]
@@ -754,14 +749,13 @@ setMethod("filterSOI", signature = c("RHermesExp", "numeric", "ANY", "ANY"),
         setkeyv(soilist, c("formula"))
         message("Recalculating peaklist for plotting:")
         plist <- bplapply(unique(soilist$formula), recalculateDF, soilist,
-                        BPPARAM = BiocParallelParam)
+                        BPPARAM = bpparam())
         plist <- do.call(rbind, plist)
         plist$isov <- rep("M0", nrow(plist))
 
         ##Annotate adducts by cosine similarity
         soilist <- adCos(soilist, adthr = 0.8,
-                                FATable = struct@metadata@ExpParam@ionF[[2]],
-                                BiocParallelParam = BiocParallelParam)
+                                FATable = struct@metadata@ExpParam@ionF[[2]])
         struct@data@SOI[[id]]@SOIList <- soilist
         struct@data@SOI[[id]]@PlotDF <- as.data.table(plist)
         return(struct)
@@ -785,13 +779,13 @@ recalculateDF <- function(i, soilist){
 
 
 
-isoCos <- function(soilist, PL, isothr = 0.99, BiocParallelParam) {
+isoCos <- function(soilist, PL, isothr = 0.99) {
     PL <- PL@peaklist
     setkeyv(PL, c("formv"))
     message("Calculating isotope similarity:")
     clist <- bplapply(seq_len(nrow(soilist)), parallelIsoCos, soilist, PL,
                     isothr,
-                    BPPARAM = BiocParallelParam)
+                    BPPARAM = bpparam())
     hits <- lapply(clist, function(x) {return(x[[1]])})
     hitdf <- lapply(clist, function(x) {return(x[[2]])})
     soilist$isofound <- as.numeric(hits)
@@ -799,7 +793,7 @@ isoCos <- function(soilist, PL, isothr = 0.99, BiocParallelParam) {
     return(soilist)
 }
 
-adCos <- function(soilist, FATable, adthr = 0.8, BiocParallelParam) {
+adCos <- function(soilist, FATable, adthr = 0.8) {
     message("Calculating adduct similarity:")
     parseanot <- lapply(soilist$anot, function(x) {
         strsplit(x = x, split = "_")
@@ -812,7 +806,7 @@ adCos <- function(soilist, FATable, adthr = 0.8, BiocParallelParam) {
     })
     setkey(FATable, "f")
     clist <- bplapply(seq_len(nrow(soilist)), parallelAdCos, soilist, FATable,
-                    adthr, BPPARAM = BiocParallelParam)
+                    adthr, BPPARAM = bpparam())
     soilist$adrows <- clist
     return(soilist)
 }
@@ -959,7 +953,7 @@ generateDiffDB <- function(DB, formulas, polarity = 1){
 
 #' @rawNamespace import(data.table, except = between)
 #' @importFrom BiocParallel bplapply
-anotateISF <- function(SL, DB, polarity = 1, BiocParallelParam = SerialParam()){
+anotateISF <- function(SL, DB, polarity = 1){
     DB$df_spectra <- as.data.table(DB$df_spectra)
     DB$df_metabolite <- as.data.table(DB$df_metabolite)
     DB$df_spectraMetabolite <- as.data.table(DB$df_spectraMetabolite)
@@ -972,7 +966,7 @@ anotateISF <- function(SL, DB, polarity = 1, BiocParallelParam = SerialParam()){
 
     SL$ISF <- bplapply(seq_len(nrow(SL)), anotateParallelISF,
                         SL = SL, DB = DB, polarity = polarity,
-                        BPPARAM  = BiocParallelParam)
+                        BPPARAM  = bpparam())
     return(SL)
 }
 
@@ -1104,14 +1098,13 @@ cleanupISF <- function(SL){
 removeISF <- function(struct, id, DBpath = "D:/MS2ID_B2R_20201113_083214.rds",
                         justAnnotate = FALSE){
     DB <- readRDS(DBpath)
-    BiocParallelParam <- struct@metadata@cluster
     polarity <- ifelse(struct@metadata@ExpParam@ion == "+", 1, 0)
 
-    #Anotate and remove ISF
+    #Annotate and remove ISF
     SoiObj <- struct@data@SOI[[id]]
     SL <- SoiObj@SOIList
     message("Anotating ISF:")
-    SL <- anotateISF(SL, DB, polarity, BiocParallelParam)
+    SL <- anotateISF(SL, DB, polarity)
     message("Creating ISF network and cleaning:")
     SL <- cleanupISF(SL)
     SL <- as.data.table(SL)
@@ -1119,7 +1112,7 @@ removeISF <- function(struct, id, DBpath = "D:/MS2ID_B2R_20201113_083214.rds",
 
     #Recalculate plotting DF
     plist <- bplapply(unique(SL$formula), preparePlottingDF,
-                    SL, BPPARAM = BiocParallelParam)
+                    SL, BPPARAM = bpparam())
     plist <- do.call(rbind, plist)
     plist$isov <- rep("M0", nrow(plist))
 

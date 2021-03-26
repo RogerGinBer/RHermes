@@ -49,8 +49,7 @@ function(struct, files, labelled = FALSE) {
                             raw = imported[[3]],
                             ppm = ppm,
                             labelled = labelled,
-                            IsoList = IC,
-                            BiocParallelParam = struct@metadata@cluster)
+                            IsoList = IC)
 
         #Construction of S4 Object output
         RHermesPL(peaklist = ss, header = imported[[2]], raw = imported[[1]],
@@ -77,13 +76,12 @@ preprocessing <- function(struct){
                                 .keep_all = T)
     colnames(F_DB) <- c("fms", "m")
 
-    IF_DB <- IonicForm(F_DB, struct@metadata@ExpParam@adlist,
-                        BiocParallelParam = struct@metadata@cluster)
+    IF_DB <- IonicForm(F_DB, struct@metadata@ExpParam@adlist)
 
     IC <- IsoCalc(
         IF_DB[[1]], FWHM = struct@metadata@ExpParam@res,
         intTHR = 0.02, kTHR = 1, instr = struct@metadata@ExpParam@instr,
-        refm = 200, BiocParallelParam = struct@metadata@cluster
+        refm = 200
     )
     return(list(IF_DB, IC))
 }
@@ -111,10 +109,10 @@ import_and_filter <- function(lf, minpks = 20, noise = 1000) {
     return(list(raw, h, filtered))
 }
 
-IonicForm <- function(F_DB, Ad_DB, BiocParallelParam = SerialParam()) {
+IonicForm <- function(F_DB, Ad_DB) {
     suppressWarnings({
         RES <- bplapply(seq_len(nrow(F_DB)), calculate_ionic_forms,
-                            BPPARAM = BiocParallelParam, F_DB = F_DB,
+                            BPPARAM = bpparam(), F_DB = F_DB,
                             Ad_DB = Ad_DB)
     })
     db <- do.call(rbind, lapply(RES, function(x) {x[[1]]}))
@@ -257,8 +255,7 @@ multform <- function(f, k) {
     }, names(f), f), collapse = "")
 }
 
-IsoCalc <- function(DB, FWHM, intTHR, kTHR, instr = "Orbitrap", refm = 200,
-                    BiocParallelParam = BiocParallel::SerialParam()) {
+IsoCalc <- function(DB, FWHM, intTHR, kTHR, instr = "Orbitrap", refm = 200) {
     isotopes <- NULL #To appease R CMD Check "no visible binding"
     data(isotopes, package = "enviPat", envir = environment())
     isotopecode <- data.frame(
@@ -303,7 +300,7 @@ IsoCalc <- function(DB, FWHM, intTHR, kTHR, instr = "Orbitrap", refm = 200,
     suppressWarnings({
         testres <- bplapply(testiso,
                             isocalc_parallel, kTHR, resol_factor,
-                            isotopecode, isOrbi, BPPARAM = BiocParallelParam)
+                            isotopecode, isOrbi, BPPARAM = bpparam())
     }) #Suppress warnings to avoid the split() "object not multiple of ..."
 
     #All different isopologues detected in the ionic formula set and their
@@ -370,7 +367,7 @@ isocalc_parallel <- function(x, kTHR, resol_factor, isotopecode, isOrbi){
 }
 
 OptScanSearch <- function(DB, raw, ppm, IsoList, labelled = FALSE,
-                            minhit = 1, BiocParallelParam) {
+                            minhit = 1) {
     message(paste0("This process can take quite a bit of time, depending on ",
                     "the processing power and RAM your computer has"))
     setkeyv(raw, c("mz"))
@@ -384,14 +381,14 @@ OptScanSearch <- function(DB, raw, ppm, IsoList, labelled = FALSE,
         }))
     }
 
-    ncores <- ifelse(is.numeric(BiocParallelParam$workers[[1]]),
-                    yes = BiocParallelParam$workers, no = 1)
+    ncores <- ifelse(is.numeric(bpparam()$workers[[1]]),
+                    yes = bpparam()$workers, no = 1)
 
     #Splitting the formulas into a list (with l = number of workers) to reduce
     #time loss associated with variable loading (in SOCK only)
     flist <- split(DB, f = seq_len(ncores))
     PLresults <- bplapply(seq_along(flist), PLparallelfun, flist, raw, IsoList,
-                        labelled, ppm, minhit, BPPARAM = BiocParallelParam)
+                        labelled, ppm, minhit, BPPARAM = bpparam())
     PLresults <- do.call(rbind, PLresults)
 
     #Output coherence with PLProcesser input

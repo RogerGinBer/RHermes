@@ -25,7 +25,6 @@ DB(struct)
 }
 \seealso{
 Other Getters: 
-\code{\link{Cluster}()},
 \code{\link{IL}()},
 \code{\link{Ident}()},
 \code{\link{MS2Data}()},

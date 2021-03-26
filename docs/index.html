@@ -92,8 +92,8 @@
 <!-- badges: start -->
 
 <!-- badges: end -->
-<p>RHermes is a broad-scoped targeted metabolomics software used to analyse LC-MS and LC-MS/MS data to identify compounds in biological or environmental samples.</p>
-<p>The RHermes workflow works with both Orbitrap and q-TOF instrument data and comes with an easy to use GUI that will guide you every step of the way.</p>
+<p><code>RHermes</code> is a broad-scoped targeted metabolomics software used to analyse LC-MS and LC-MS/MS data to identify compounds in biological or environmental samples.</p>
+<p>The <code>RHermes</code> workflow works with both Orbitrap and q-TOF instrument data and comes with an easy to use GUI that will guide you every step of the way.</p>
 <p>Check out the documentation <a href="https://rogerginber.github.io/RHermes/">here</a></p>
 <div id="system-requirements" class="section level2">
 <h2 class="hasAnchor">
@@ -117,11 +117,11 @@
 <div id="setup" class="section level2">
 <h2 class="hasAnchor">
 <a href="#setup" class="anchor"></a>Setup</h2>
-<p>RHermes can perform almost all its functions after installation, but the SOI Blank Substraction step requires a valid Keras and Tensorflow installation (which rely on Python).</p>
+<p><code>RHermes</code> can perform almost all its functions after installation, but the SOI Blank Substraction step requires a valid <code>keras</code> and <code>tensorflow</code> installation (which rely on Python).</p>
 <div id="option-1-default-installation" class="section level3">
 <h3 class="hasAnchor">
 <a href="#option-1-default-installation" class="anchor"></a>Option 1: Default installation</h3>
-<p>In principle both Keras and Tensorflow can be configured with:</p>
+<p>In principle both <code>keras</code> and <code>tensorflow</code> can be configured with:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">reticulate</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/reticulate/man/install_miniconda.html">install_miniconda</a></span><span class="op">(</span><span class="op">)</span>
 <span class="fu">keras</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/keras/man/install_keras.html">install_keras</a></span><span class="op">(</span><span class="op">)</span>
@@ -140,20 +140,20 @@
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">reticulate</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/reticulate/man/install_miniconda.html">install_miniconda</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
 <p>Now find the Miniconda Prompt in your computer. Instead of relying on the default r-reticulate environment, type the following to create a new environment:</p>
-<p>conda create -n newenv python=3.6 tensorflow keras</p>
+<p><code>conda create -n newenv python=3.6 tensorflow keras</code></p>
 <p>When finished, type in R:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">reticulate</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/reticulate/man/use_python.html">use_condaenv</a></span><span class="op">(</span><span class="st">"newenv"</span>, required <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="fu">tensorflow</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tensorflow/man/tf_config.html">tf_config</a></span><span class="op">(</span><span class="op">)</span>
 <span class="va">model</span> <span class="op">&lt;-</span> <span class="fu">keras</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/keras/man/save_model_hdf5.html">load_model_hdf5</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"ImprovedModel.h5"</span>, package <span class="op">=</span> <span class="st">"RHermes"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<p>Everything should run smoothly. If not, try manually installing Anaconda from their website and letting reticulate know where to find the environment.</p>
-<p>Also check out Keras and Tensorflow R tutorials.</p>
+<p>Everything should run smoothly. If not, try manually installing Anaconda from their website and letting <code>reticulate</code> know where to find the environment.</p>
+<p>Also check out <a href="https://tensorflow.rstudio.com/tutorials/beginners/basic-ml/">Keras</a> and <a href="https://tensorflow.rstudio.com/tutorials/">Tensorflow</a> R tutorials.</p>
 </div>
 </div>
 <div id="analyzing-lc-ms-data-with-rhermes" class="section level2">
 <h2 class="hasAnchor">
 <a href="#analyzing-lc-ms-data-with-rhermes" class="anchor"></a>Analyzing LC-MS data with RHermes</h2>
-<p>Once installed, you can use RHermes programmaticaly like this:</p>
+<p>Once installed, you can use <code>RHermes</code> programmatically like this:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">RHermes</span><span class="op">)</span>
 <span class="co">#Generate a Exp object</span>
@@ -174,7 +174,18 @@
 <p>Or start the interactive GUI typing:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="reference/RHermesGUI.html">RHermesGUI</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<p>Please check the User Guide vignette for more detailed info and real examples.</p>
+<p>Please check the User Guide <a href="https://rogerginber.github.io/RHermes/articles/RHermes_UserGuide.html">vignette</a> for more detailed info and real examples.</p>
+</div>
+<div id="bug-reporting" class="section level2">
+<h2 class="hasAnchor">
+<a href="#bug-reporting" class="anchor"></a>Bug reporting</h2>
+<p>Suggestions and bug reports are more than welcome at: <a href="https://github.com/RogerGinBer/RHermes/issues" class="uri">https://github.com/RogerGinBer/RHermes/issues</a></p>
+</div>
+<div id="citation" class="section level2">
+<h2 class="hasAnchor">
+<a href="#citation" class="anchor"></a>Citation</h2>
+<p>Please cite this package as:</p>
+<p>HERMES: a molecular formula-oriented method to target the metabolome Roger Giné, Jordi Capellades, Josep M. Badia, Dennis Vughs, Michaela Schwaiger-Haber, Maria Vinaixa, Andrea M. Brunner, Gary J. Patti, Oscar Yanes bioRxiv 2021.03.08.434466; doi: <a href="https://doi.org/10.1101/2021.03.08.434466" class="uri">https://doi.org/10.1101/2021.03.08.434466</a></p>
 </div>
 </div>
   </div>

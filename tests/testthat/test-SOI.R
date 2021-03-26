@@ -8,6 +8,7 @@ test_that("A SOI param class can be created",{
 })
 
 test_that("SOI generation works",{
+    BiocParallel::register(BiocParallel::SerialParam())
     myHermes <- readRDS(system.file("extdata",
                                     "exampleObject.rds",
                                     package = "RHermes"))

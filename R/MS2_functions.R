@@ -280,7 +280,6 @@ MSMSimporter <- function(IL, filelist) {
 
 #' @import ggplot2
 CliqueMSMS <- function(MS2Exp, idx, contaminant = 173.5, delta = 0.1,
-                        BPPARAM = BiocParallel::SerialParam(),
                         sstype = "regular") {
     IL <- MS2Exp@IL
     MS2list <- MS2Exp@MS2Data[idx]
@@ -296,7 +295,7 @@ CliqueMSMS <- function(MS2Exp, idx, contaminant = 173.5, delta = 0.1,
     #Main function
     if (sstype == "regular") {
         suppressWarnings(
-            RES <- bplapply(seq_along(idx), generate_ss, BPPARAM = BPPARAM,
+            RES <- bplapply(seq_along(idx), generate_ss, BPPARAM = bpparam(),
                             MS2list, contaminant, delta, fs, idx, FALSE)
         )
         RES <- do.call(rbind, RES)
