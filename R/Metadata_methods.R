@@ -97,11 +97,13 @@ function(struct, params = ExpParam(), template = character(0)) {
 #'  matter) the adducts in the list can have. Defaults to 1.
 #'@param admult The maximum multiplicity (M, 2M, 3M and so on) the adducts can
 #'  have. Defaults to 1.
-#'@param filename Address to where the database is located. Can be either a csv
+#'@param DBfile Address to where the database is located. Can be either a csv
 #'  or a xls/xlsx.
 #'@param adductfile Address to where the adduct list is located. Can only be a
 #'  csv file and should adhere to EnviPat adduct list format (run data(adducts,
 #'  package = "enviPat") to see how it's like).
+#'@param adlist Vector of adduct names to use. It is an alternative to setting
+#'your own adduct file or using the default lists.
 #'@param keggpath A list of KEGG pathway IDs
 #'@return An RHermesExp object with the formula and adduct database set.
 #' @examples
@@ -113,16 +115,16 @@ function(struct, params = ExpParam(), template = character(0)) {
 #'
 #'@export
 setGeneric("setDB", function(struct, db = "hmdb", adcharge = 1,
-                            admult = 1, filename = "", adductfile = "",
-                            keggpath = "") {
+                            admult = 1, DBfile = "", adductfile = "",
+                            adlist = NA, keggpath = "") {
     standardGeneric("setDB")
 })
 
 #' @rdname setDB
 setMethod("setDB", signature = c("RHermesExp", "ANY", "ANY", "ANY", "ANY",
-                                 "ANY", "ANY"),
-function(struct, db = "hmdb", adcharge = 1, admult = 1, filename = "",
-            adductfile = "", keggpath = "") {
+                                 "ANY", "ANY", "ANY"),
+function(struct, db = "hmdb", adcharge = 1, admult = 1, DBfile = "",
+            adductfile = "", adlist = NA, keggpath = "") {
     validObject(struct)
     message(paste("Parsing the", db, "formula database"))
     minmz <- struct@metadata@ExpParam@minmz
@@ -135,7 +137,7 @@ function(struct, db = "hmdb", adcharge = 1, admult = 1, filename = "",
                                             minmass = minmz,
                                             maxmass = maxmz),
         custom = database_importer("custom",
-                                            filename = filename,
+                                            filename = DBfile,
                                             minmass = minmz,
                                             maxmass = maxmz),
         kegg_p = database_importer("kegg_p",
@@ -160,6 +162,13 @@ function(struct, db = "hmdb", adcharge = 1, admult = 1, filename = "",
             struct@metadata@ExpParam@adlist <- ad[[1]]
         }
         row.names(struct@metadata@ExpParam@adlist) <- NULL
+        if(all(!is.na(adlist))){
+            struct@metadata@ExpParam@adlist <- filter(adlist(struct),
+                                                      adduct %in% adlist)
+            if(nrow(adlist(struct)) == 0){
+                warning("No adducts remaining, please check the adduct names.")
+            }
+        }
     }
 
     struct <- setTime(struct, paste("Added the", db,

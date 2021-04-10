@@ -77,24 +77,31 @@ load a *real* (usually >10^3 formulas) database, use db = "custom":
 
 ```{r, eval = FALSE}
 #Use either a csv or a xlsx (Excel) file
-myHermes <- setDB(myHermes, db = "custom", filename = "myDatabase.csv") 
-myHermes <- setDB(myHermes, db = "custom", filename = "myDatabase.xlsx")
+myHermes <- setDB(myHermes, db = "custom", DBfile = "myDatabase.csv") 
+myHermes <- setDB(myHermes, db = "custom", DBfile = "myDatabase.xlsx")
 ```
 
 This database needs at least two columns named **exactly** like this: 
-*Name* and *MolecularFormula*. You may have other columns with metadata related
+`Name` and `MolecularFormula`. You may have other columns with metadata related
 to the compounds, RHermes just needs those two.
 
 
 A general list of adducts will be set according to the experimental
 parameters (positive or negative ionizzation). You can choose multicharged 
-and multimer adducts by using the *adcharge* and *admult* parameters in setDB().
+and multimer adducts by using the `adcharge` and `admult` parameters in setDB().
 For instance, you could do:
 ```{r}
 myHermes <- setDB(myHermes, db = "hmdb", admult = 2, adcharge = 2)
 ```
 And this would set your adduct list to all adducts with charge <=2 and 
 multiplicity <= 2 (for instance [2M+H]+, [M+2H]2+ and so on).
+
+You may also just select a subset of adducts using with `adlist` param:
+```{r}
+myHermes <- setDB(myHermes, db = "hmdb", admult = 2, adcharge = 2,
+                  adlist = c("M+H", "M+Na", "M+K", "M+2H", "2M+H"))
+```
+
 
 In general, the less formula/adduct combinations, the faster the program runs.
 It is advisable to remove very uncommon adducts from the adduct list 
