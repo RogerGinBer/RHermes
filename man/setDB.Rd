@@ -10,8 +10,9 @@ setDB(
   db = "hmdb",
   adcharge = 1,
   admult = 1,
-  filename = "",
+  DBfile = "",
   adductfile = "",
+  adlist = NA,
   keggpath = ""
 )
 
@@ -20,8 +21,9 @@ setDB(
   db = "hmdb",
   adcharge = 1,
   admult = 1,
-  filename = "",
+  DBfile = "",
   adductfile = "",
+  adlist = NA,
   keggpath = ""
 )
 }
@@ -39,12 +41,15 @@ matter) the adducts in the list can have. Defaults to 1.}
 \item{admult}{The maximum multiplicity (M, 2M, 3M and so on) the adducts can
 have. Defaults to 1.}
 
-\item{filename}{Address to where the database is located. Can be either a csv
+\item{DBfile}{Address to where the database is located. Can be either a csv
 or a xls/xlsx.}
 
 \item{adductfile}{Address to where the adduct list is located. Can only be a
 csv file and should adhere to EnviPat adduct list format (run data(adducts,
 package = "enviPat") to see how it's like).}
+
+\item{adlist}{Vector of adduct names to use. It is an alternative to setting
+your own adduct file or using the default lists.}
 
 \item{keggpath}{A list of KEGG pathway IDs}
 }

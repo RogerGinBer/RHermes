@@ -60,7 +60,7 @@ function(struct, id, formula, ads= NA, rtrange = c(0,1e4), dynamicaxis = TRUE) {
     datafile$ad <- ""
     for (f in unique(datafile$formv)) {
         ad <- as.character(fs$an[fs$ion == f])
-        datafile$ad[datafile$formv == f] <- ad
+        datafile$ad[datafile$formv == f] <- ad[1]
     }
     datafile <- filter(datafile, ad %in% ads)
     if (nrow(datafile) == 0) {return()}
@@ -219,13 +219,13 @@ function(struct, id, formula, ads = NA, rtrange= c(0, 1e4), dynamicaxis = TRUE,
     datafile$ad <- ""
     for (f in unique(datafile$formv)) {
         ad <- as.character(fs$an[fs$ion == f])
-        datafile$ad[datafile$formv == f] <- ad
+        datafile$ad[datafile$formv == f] <- ad[1]
     }
 
     soiinfo$ad <- ""
     for (f in unique(soiinfo$formv)) {
         ad <- as.character(fs$an[fs$ion == f])
-        soiinfo$ad[soiinfo$formv == f] <- ad
+        soiinfo$ad[soiinfo$formv == f] <- ad[1]
     }
 
     datafile <- filter(datafile, .data$ad %in% ads)

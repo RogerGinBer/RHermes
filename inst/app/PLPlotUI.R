@@ -102,8 +102,9 @@ PLPlotServer <- function(id, struct){
                                server = TRUE)
           updateRadioButtons(session, "PLfiles", choices = peakLists)
           updateRadioButtons(session, "PLfiles_raw", choices = peakLists)
-          updateSliderInput(session, "RTinterval", max = ceiling(max(struct$dataset@data@PL[[1]]@raw$rt)),
-                            value = c(0, ceiling(max(struct$dataset@data@PL[[1]]@raw$rt))))
+          updateSliderInput(session, "RTinterval",
+                            max = ceiling(max(struct$dataset@data@PL[[1]]@raw$rt, 1500)),
+                            value = c(0, ceiling(max(struct$dataset@data@PL[[1]]@raw$rt, 1500))))
           updatePickerInput(session, "ads", choices = struct$dataset@metadata@ExpParam@adlist$adduct,
                             selected = struct$dataset@metadata@ExpParam@adlist$adduct)
         }else{
@@ -153,14 +154,19 @@ PLPlotServer <- function(id, struct){
       },{
           if(struct$hasPL){
               d <- struct$dataset@data@PL[[as.numeric(input$PLfiles)]]@raw
-              target <- as.numeric(input$targetmz)
-              tol <- as.numeric(input$mztol)
-              d <- filter(d, between(mz, target - tol, target + tol) &
-                              between(rt, as.numeric(input$RTinterval[[1]]),
-                                      as.numeric(input$RTinterval[[2]])))
+              if(is.data.frame(d) & nrow(d) > 0){
+                    target <- as.numeric(input$targetmz)
+                    tol <- as.numeric(input$mztol)
+                    d <- filter(d, between(mz, target - tol, target + tol) &
+                                  between(rt, as.numeric(input$RTinterval[[1]]),
+                                          as.numeric(input$RTinterval[[2]])))
 
-              output$RawMS1Plot <- renderPlotly(ggplotly(ggplot(d) + geom_point(aes(x=rt, y=mz, color = rtiv))))
-
+                    output$RawMS1Plot <- renderPlotly(
+                        ggplotly(ggplot(d) +
+                                     geom_point(aes(x=rt, y=mz, color = rtiv))
+                                 )
+                        )
+              }
           }
 
 
