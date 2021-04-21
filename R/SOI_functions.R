@@ -485,11 +485,11 @@ firstCleaning <- function(i, Groups, blankPL){
     blankpks <- distinct(blankpks[, c(1, 2)])
     if (nrow(blankpks) < 5) {return(TRUE)} #No blank signals
 
-    blankCV <- IQR(samp$rtiv) /
-        (quantile(samp$rtiv, 0.25) + quantile(samp$rtiv, 0.75))
+    sampleCV <- IQR(peaks$rtiv) /
+        (quantile(peaks$rtiv, 0.25) + quantile(peaks$rtiv, 0.75))
     
-    sampleCV <-  IQR(blank$rtiv) /
-        (quantile(blank$rtiv, 0.25) + quantile(blank$rtiv, 0.75))
+    blankCV <-  IQR(blankpks$rtiv) /
+        (quantile(blankpks$rtiv, 0.25) + quantile(blankpks$rtiv, 0.75))
     
     sampleMax <- max(peaks$rtiv)
     # blankMax <- max(blankpks$rtiv)
