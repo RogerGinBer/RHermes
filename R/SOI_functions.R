@@ -485,14 +485,19 @@ firstCleaning <- function(i, Groups, blankPL){
     blankpks <- distinct(blankpks[, c(1, 2)])
     if (nrow(blankpks) < 5) {return(TRUE)} #No blank signals
 
-    sampleCV <- sd(peaks$rtiv)/mean(peaks$rtiv)
-    blankCV <- sd(blankpks$rtiv)/mean(blankpks$rtiv)
+    blankCV <- IQR(samp$rtiv) /
+        (quantile(samp$rtiv, 0.25) + quantile(samp$rtiv, 0.75))
+    
+    sampleCV <-  IQR(blank$rtiv) /
+        (quantile(blank$rtiv, 0.25) + quantile(blank$rtiv, 0.75))
+    
     sampleMax <- max(peaks$rtiv)
-    blankMax <- max(blankpks$rtiv)
-
+    # blankMax <- max(blankpks$rtiv)
+    q90_ratio <- quantile(peaks$rtiv,0.9) / quantile(blankpks$rtiv,0.9)
+    
     #We have to be restrictive with the conditions, otherwise we collect junk
     if (sampleCV/blankCV > 5) {return(TRUE)}
-    if (sampleMax/blankMax > 3 & sampleMax > 15000) {return(TRUE)}
+    if (q90_ratio > 3 & sampleMax > 15000) {return(TRUE)}
 
     return(FALSE) #Can't decide if the SOI is good enough, let the ANN decide
 }
