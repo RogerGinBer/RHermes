@@ -228,7 +228,7 @@ SOIPlotServer <- function(id, struct){
             selected <- strsplit(input$choicescos, " ")[[1]][[1]] %>% as.numeric(.)
             tryCatch({
                 sois <- struct$dataset@data@SOI[[as.numeric(input$soifiles)]]@SOIList
-                cos <- sapply(sois$peaks, function(x){cosineSim(sois$peaks[[selected]],
+                cos <- sapply(sois$peaks, function(x){RHermes:::cosineSim(sois$peaks[[selected]],
                                                                 query = x, nscans = 5)})
                 m <- sois$mass[[selected]]
                 sois$deltam <- sois$mass - m
