@@ -214,7 +214,7 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename) {
     Groups$chaos <- lapply(Groups$peaks, function(x) {
         rho_chaos(x, nlevels = 20, fillGaps = TRUE)
     }) %>% as.numeric()
-
+    
     setkeyv(Groups, c("formula"))
     message("Generating peaklist for plotting:")
     plist <- bplapply(unique(Groups$formula), preparePlottingDF,
@@ -676,12 +676,12 @@ rho_chaos <- function(data, nlevels = 20, fillGaps = TRUE){
 #'                              package = "RHermes"))}
 #' struct <- filterSOI(struct, id = 1, minint = 10000, isofidelity = TRUE)
 #' @export
-setGeneric("filterSOI", function(struct, id, minint = 1e4, isofidelity) {
+setGeneric("filterSOI", function(struct, id, minint = 1e4, isofidelity, minscore = 0.8) {
     standardGeneric("filterSOI")
 })
 #' @rdname filterSOI
-setMethod("filterSOI", signature = c("RHermesExp", "numeric", "ANY", "ANY"),
-    function(struct, id, minint = 1e4, isofidelity) {
+setMethod("filterSOI", signature = c("RHermesExp", "numeric", "ANY", "ANY", "ANY"),
+    function(struct, id, minint = 1e4, isofidelity, minscore = 0.8) {
         soiobject <- struct@data@SOI[[id]]
         fname <- soiobject@filename
         PLid <- which(struct@metadata@filenames == fname)
@@ -713,7 +713,8 @@ setMethod("filterSOI", signature = c("RHermesExp", "numeric", "ANY", "ANY"),
                                 BPPARAM = SerialParam(progressbar = FALSE))
 
             cos <- vapply(isodata, function(x){x[[3]]}, numeric(1))
-            soilist <- soilist[cos > 0.5, ]
+            soilist$isofidelity <- cos
+            soilist <- soilist[cos > minscore, ]
 
             rtmargin <- 20
             # Removing confirmed isotopic signals

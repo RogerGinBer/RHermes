@@ -185,7 +185,7 @@ function(struct, id, formula, ads = NA, rtrange= c(0, 1e4), dynamicaxis = TRUE,
 
     datafile <- struct@data@PL[[plid]]@peaklist
     datafile <- datafile[.data$isov == "M0", ]
-    Class <- NULL #To appease R CMD Check "no visible binding"
+    Class <- NULL; isov <- NULL  #To appease R CMD Check "no visible binding"
     datafile[, Class := "Sample"]
 
     #Importing blank data if blank subtraction was performed on the SOI list
@@ -194,7 +194,7 @@ function(struct, id, formula, ads = NA, rtrange= c(0, 1e4), dynamicaxis = TRUE,
                             struct@data@SOI[[id]]@SOIParam@blankname)
         if(length(blankid) > 1) blankid <- blankid[1]
         blankfile <- struct@data@PL[[blankid]]@peaklist
-        blankfile <- blankfile[.data$isov == "M0", ]
+        blankfile <- blankfile[isov == "M0", ]
         blankfile[, Class := "Blank"]
         datafile <- rbind(datafile, blankfile)
     } else {blankid <- NA}
@@ -445,7 +445,7 @@ function(struct, id, entry, plot = TRUE) {
     } else if (sum(eint) == 0) {
         cos <- 0  #No isotopes detected when there should be
     } else {
-        cos <- sum((tint * eint))/(sqrt(sum(tint^2)) * sqrt(sum(eint^2)))
+        cos <- 1 - philentropy::dice_dist(eint,tint, testNA = F)
     }
 
     ##Other atom checks

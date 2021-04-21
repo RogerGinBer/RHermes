@@ -38,7 +38,12 @@ setMethod("removeSOI", c("RHermesExp", "numeric"), function(struct, id) {
     return(struct)
 })
 
-
+duplicateSOI <- function(struct, id){
+    validObject(struct)
+    if(!id %in% seq_along(struct@data@SOI))
+    struct@data@SOI <- c(struct@data@SOI, SOI(struct, id))
+    return(struct)
+}
 
 
 #' @title getSOIpar
