@@ -1,5 +1,5 @@
 name;ppm;res;nthr;minmz;maxmz;ion;instr
-qtof-pos;5;60000;1000;50;1200;+;QTOF
-qtof-neg;5;60000;1000;50;1200;-;QTOF
+qtof-pos;5;30000;1000;50;1200;+;QTOF
+qtof-neg;5;30000;1000;50;1200;-;QTOF
 orbi-pos;2;120000;1000;50;1200;+;Orbitrap
 orbi-neg;2;120000;1000;50;1200;-;Orbitrap

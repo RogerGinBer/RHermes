@@ -30,7 +30,7 @@ ExtraInfo_UI <- function(id){
                  div(radioButtons(inputId = ns("ILfiles"), label = "Select inclusion list:",
                                   choices = "", selected = ""), style = "margin-left: 5%; margin-top: 3%"), width = "AUTO"),
                sidebarPanel(
-                   plotlyOutput(outputId = ns("plotIL")),
+                   plotlyOutput(outputId = ns("plotIL"),height = "800px"),
                    DT::dataTableOutput(ns("ILtable"), width = "auto"),
                    width = "AUTO")
       ),
