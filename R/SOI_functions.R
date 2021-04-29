@@ -342,12 +342,12 @@ retrievePeaks <- function(i, Groups, PL){
     return(pks[, c(1, 2, 5)])
 }
 
-groupShort <- function(Groups, maxlen){
+groupShort <- function(Groups, maxlen, BPPARAM = bpparam()){
     message("Shortening and selecting long groups:")
     SG <- filter(Groups, length <= maxlen)
     LG <- filter(Groups, length > maxlen)
     LG <- bplapply(seq_len(nrow(LG)), parallelGroupShort, LG,
-                maxlen, BPPARAM = bpparam())
+                maxlen, BPPARAM = BPPARAM)
     LG <- do.call(rbind, LG)
     return(rbind(SG, LG))
 }
