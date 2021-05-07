@@ -135,11 +135,15 @@ injectionPlanner <- function(IL, injections, maxover, byMaxInt = TRUE,
     } else {
         deep_IL <- data.frame()
     }
+    
+    mint <- min(IL$start)
+    maxt <- max(IL$end)
+    
     if(mode %in% c("continuous", "both")){
         while (nrow(IL) != 0 & injections > 0) {
-            timeInt <- seq(min(IL$start, na.rm = TRUE),
-                           max(IL$end, na.rm = TRUE),
-                           by = 0.05)
+            timeInt <- seq(mint,
+                           maxt,
+                           by = 0.005)
             OL <- rep(0, length(timeInt))
             ok_entries <- c()
             for (i in seq_len(nrow(IL))) {
@@ -177,7 +181,7 @@ injectionPlanner <- function(IL, injections, maxover, byMaxInt = TRUE,
             while (nrow(deep_IL) != 0 & injections > 0) {
                 timeInt <- seq(min(deep_IL$start, na.rm = TRUE),
                                max(deep_IL$end, na.rm = TRUE),
-                               by = 0.05)
+                               by = 0.005)
                 OL <- rep(0, length(timeInt))
                 deep_ok_entries <- c()
                 for (i in seq_len(nrow(deep_IL))) {
@@ -195,9 +199,9 @@ injectionPlanner <- function(IL, injections, maxover, byMaxInt = TRUE,
         }
     } else {
         while (nrow(deep_IL) != 0 & injections > 0) {
-            timeInt <- seq(min(IL$start, na.rm = TRUE),
-                           max(IL$end, na.rm = TRUE),
-                           by = 0.05)
+            timeInt <- seq(min(deep_IL$start, na.rm = TRUE),
+                           max(deep_IL$end, na.rm = TRUE),
+                           by = 0.005)
             OL <- rep(0, length(timeInt))
             deep_ok_entries <- c()
             for (i in seq_len(nrow(deep_IL))) {

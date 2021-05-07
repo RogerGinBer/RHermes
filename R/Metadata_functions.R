@@ -43,6 +43,9 @@ database_importer <- function(template = "hmdb",
     } else if (template == "custom") {
         if (grepl(pattern = "csv", x = filename)) {
             db <- read.csv(filename)
+            if(ncol(db) == 1){
+                db <- read.csv2(filename)
+            }
         } else {
             db <- readxl::read_excel(filename)
         }
