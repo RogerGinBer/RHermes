@@ -7,53 +7,49 @@ PLPlotUI <- function(id){
                                   `<i class="fas fa-database"></i> Raw MS1 data` = "raw"),
                       justified = TRUE),
     conditionalPanel("input.selectclass == 'comp'", ns = ns,
-          dropdown(circle = FALSE, status = "info",
-                 label = HTML('<span style = "margin-left:10px; margin-right:10px">Settings</span>'),
-                       tooltip = tooltipOptions(title = "Plotting settings"),
-                       icon = icon("align-justify"),
-                       sidebarPanel(fluidRow(
-          column(3, offset = 0,
-                 radioButtons(ns("PLplotmode"), label = "Select mode:",
-                              c("By compound name", "By formula"), selected = "By compound name"),
-                 conditionalPanel("input.PLcompselect != 'No file detected'", ns = ns,
-                                  radioButtons(ns("PLfiles"), "Select which PL to use: ", choices = "", 1, inline = TRUE))
-          ),
-          column(9, offset = 0,
-                 fluidRow(
-                   column(8,
-                          conditionalPanel(condition = "input.PLplotmode == 'By compound name'", ns = ns,
-                                           selectizeInput(inputId = ns("PLcompselect"), label ="Select compound",
-                                                          choices = "No file detected", selected = NULL, multiple = FALSE),
-                          ),
-                          conditionalPanel(condition = "input.PLplotmode == 'By formula'", ns = ns,
-                                           selectizeInput(inputId = ns("PLformselect"), label = "Select formula",
-                                                          choices = "No file detected", selected = NULL, multiple = FALSE),
-                          )),
 
-                   column(3, offset = 1, tags$b("Dynamic axis"), switchInput(
-                     inputId = ns("dynamicaxis"),
-                     onStatus = "success",
-                     offStatus = "danger",
-                     value = TRUE, size = "small"
-                   ))
-                 ),
-                 conditionalPanel("input.PLcompselect != 'No file detected'", ns = ns,
-                                  sliderInput(ns("RTinterval"), label = "Select an RT interval:",
-                                              min = 0, max = 1800, value = c(0,1800)),
-                                  pickerInput(
-                                    inputId = ns("ads"),
-                                    label = "Select adducts to plot",
-                                    choices = NULL,
-                                    options = list(
-                                      `actions-box` = TRUE),
-                                    multiple = TRUE
+        fluidRow(
+            column(8, {plotlyOutput(outputId = ns("PLPlot"), height = "800px")}),
+            column(4,
+                sidebarPanel(
+                         radioButtons(ns("PLplotmode"), label = "Select mode:",
+                                      c("By compound name", "By formula"), selected = "By compound name"),
+                         conditionalPanel("input.PLcompselect != 'No file detected'", ns = ns,
+                                          radioButtons(ns("PLfiles"), "Select which PL to use: ", choices = "", 1, inline = TRUE)),
+                                  conditionalPanel(condition = "input.PLplotmode == 'By compound name'", ns = ns,
+                                                   selectizeInput(inputId = ns("PLcompselect"), label ="Select compound",
+                                                                  choices = "No file detected", selected = NULL, multiple = FALSE),
                                   ),
-                                  verbatimTextOutput(outputId = ns("othercomp")),
-                                  tags$head(tags$style("#PLPlotUI-othercomp{overflow-y:scroll; max-height: 250px; background: ghostwhite;}")))
-          )
-        ),width = 12), width = "100%"),
-        plotlyOutput(outputId = ns("PLPlot"), height = "800px")
-    ),
+                                  conditionalPanel(condition = "input.PLplotmode == 'By formula'", ns = ns,
+                                                   selectizeInput(inputId = ns("PLformselect"), label = "Select formula",
+                                                                  choices = "No file detected", selected = NULL, multiple = FALSE),
+                                         tags$b("Dynamic axis"),
+                                         switchInput(
+                                             inputId = ns("dynamicaxis"),
+                                             onStatus = "success",
+                                             offStatus = "danger",
+                                             value = TRUE, size = "small"
+                                           )),
+                                  conditionalPanel("input.PLcompselect != 'No file detected'", ns = ns,
+                                          sliderInput(ns("RTinterval"), label = "Select an RT interval:",
+                                                      min = 0, max = 1800, value = c(0,1800)),
+                                          pickerInput(
+                                            inputId = ns("ads"),
+                                            label = "Select adducts to plot",
+                                            choices = NULL,
+                                            options = list(
+                                              `actions-box` = TRUE),
+                                            multiple = TRUE
+                                          ),
+                                          verbatimTextOutput(outputId = ns("othercomp")),
+                                          tags$head(tags$style("#PLPlotUI-othercomp{overflow-y:scroll; max-height: 250px; background: ghostwhite;}"))
+                                  )
+
+                         , width = 12),
+                    )
+                )
+
+        ),
     conditionalPanel("input.selectclass == 'raw'", ns = ns,
         dropdown(circle = FALSE, status = "info",
             label = HTML('<span style = "margin-left:10px; margin-right:10px">Settings</span>'),
