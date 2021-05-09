@@ -146,7 +146,10 @@ SOIPlotServer <- function(id, struct){
           }
         })
         output$blanktext <- renderText(blankNames[[as.numeric(input$soifiles)]])
-        other <- with(struct$dataset@metadata@ExpParam@DB, {Name[MolecularFormula == f]})
+        other <- with(struct$dataset@metadata@ExpParam@DB,
+                      {Name[MolecularFormula == f]})
+        other <- other[!is.na(other)]
+
         output$othercomp <- renderText(paste(other, collapse = "\n"))
         output$SoiPlot <- renderPlotly(plotSOI(struct = struct$dataset,
                                                               id = as.numeric(input$soifiles),
@@ -168,7 +171,14 @@ SOIPlotServer <- function(id, struct){
       if(struct$hasSOI){
         if(input$SOIplotmode == "By compound name"){
           if(input$SOIcompselect == ""){return()}
-          formula <- with(struct$dataset@metadata@ExpParam@DB,{MolecularFormula[Name == input$SOIcompselect]})
+            formula <- with(struct$dataset@metadata@ExpParam@DB,
+                            {MolecularFormula[Name == input$SOIcompselect]})
+            formula <- formula[!is.na(formula)]
+            if(length(formula) > 1){
+                warning("Something is wrong with your database names.
+                      More than one formula for the same name")
+            }
+            formula <- formula[1]
         } else {
           if(input$SOIformselect == ""){return()}
           formula <- input$SOIformselect
