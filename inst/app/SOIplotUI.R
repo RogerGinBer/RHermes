@@ -188,7 +188,15 @@ SOIPlotServer <- function(id, struct){
           paste(unlist(equivalences[equivalences$ion == x, c("f", "an")]), collapse = "~")
         }, character(1)
         )
-        rows <- paste(ids, fa_names, rep(" Intensity:", length(ids)),round(SOIlist$MaxInt[ids]))
+        rows <- paste(ids,
+                      fa_names,
+                      rep(" Intensity:", length(ids)),
+                      round(SOIlist$MaxInt[ids]),
+                      rep(" Apex (s):", length(ids)),
+                      sapply(SOIlist$peaks[ids], function(x){
+                          round(x$rt[which.max(x$rtiv)], 2)
+                      })
+        )
         updateSelectizeInput(session, "choicesfidelity", choices = rows)
         updateSelectizeInput(session, "choicescos", choices = rows)
 
