@@ -7,7 +7,7 @@ SOIPlotUI <- function(id){
       label = "Select a graph :",
       choices = c(`<i class="fas fa-mountain"></i> SOI plots` = "soiplot",
                   `<i class='fa fa-bar-chart'></i> Isotopic fidelity` = "fidelityplot",
-                  `<i class='fa fa-project-diagram'></i> Inter-SOI cosine similarity` = "cossim"),
+                  `<i class='fa fa-project-diagram'></i> Inter-SOI shape similarity` = "cossim"),
       justified = TRUE
     ),
     conditionalPanel("input.selectplot == 'soiplot'", ns = ns,
@@ -67,7 +67,7 @@ SOIPlotUI <- function(id){
     conditionalPanel("input.selectplot == 'cossim'", ns = ns,
                      selectizeInput(ns("choicescos"), choices = NULL, selected = NULL,
                                     label = "Select SOI to check", width = "600px"),
-                     actionButton(ns("start_cos_calculation"), label = "Calculate cosines"),
+                     actionButton(ns("start_cos_calculation"), label = "Calculate similarity"),
                      dataTableOutput(ns("cos_table"), height = "600px")
     )
   )
@@ -146,7 +146,10 @@ SOIPlotServer <- function(id, struct){
           }
         })
         output$blanktext <- renderText(blankNames[[as.numeric(input$soifiles)]])
-        other <- with(struct$dataset@metadata@ExpParam@DB, {Name[MolecularFormula == f]})
+        other <- with(struct$dataset@metadata@ExpParam@DB,
+                      {Name[MolecularFormula == f]})
+        other <- other[!is.na(other)]
+
         output$othercomp <- renderText(paste(other, collapse = "\n"))
         output$SoiPlot <- renderPlotly(plotSOI(struct = struct$dataset,
                                                               id = as.numeric(input$soifiles),
@@ -168,7 +171,14 @@ SOIPlotServer <- function(id, struct){
       if(struct$hasSOI){
         if(input$SOIplotmode == "By compound name"){
           if(input$SOIcompselect == ""){return()}
-          formula <- with(struct$dataset@metadata@ExpParam@DB,{MolecularFormula[Name == input$SOIcompselect]})
+            formula <- with(struct$dataset@metadata@ExpParam@DB,
+                            {MolecularFormula[Name == input$SOIcompselect]})
+            formula <- formula[!is.na(formula)]
+            if(length(formula) > 1){
+                warning("Something is wrong with your database names.
+                      More than one formula for the same name")
+            }
+            formula <- formula[1]
         } else {
           if(input$SOIformselect == ""){return()}
           formula <- input$SOIformselect
@@ -188,7 +198,15 @@ SOIPlotServer <- function(id, struct){
           paste(unlist(equivalences[equivalences$ion == x, c("f", "an")]), collapse = "~")
         }, character(1)
         )
-        rows <- paste(ids, fa_names, rep(" Intensity:", length(ids)),round(SOIlist$MaxInt[ids]))
+        rows <- paste(ids,
+                      fa_names,
+                      rep(" Intensity:", length(ids)),
+                      round(SOIlist$MaxInt[ids]),
+                      rep(" Apex (s):", length(ids)),
+                      sapply(SOIlist$peaks[ids], function(x){
+                          round(x$rt[which.max(x$rtiv)], 2)
+                      })
+        )
         updateSelectizeInput(session, "choicesfidelity", choices = rows)
         updateSelectizeInput(session, "choicescos", choices = rows)
 
@@ -215,7 +233,7 @@ SOIPlotServer <- function(id, struct){
           }
           output$valoration <- renderText(paste0("Calculated number of carbon atoms: ", isoresults[[2]], "\n",
                                                  "Veredict: ", isoresults[[3]], "\n",
-                                                 "Isotopic cosine score: ", isoresults[[4]], "\n",
+                                                 "Isotopic similarity score: ", isoresults[[4]], "\n",
                                                  het_text))
         }, error = function(e){message(e)})
 

@@ -96,6 +96,19 @@ inclusionList <- function(struct, params, id) {
         return(paste(unique(unlist(res)), sep = "$", collapse = "#"))
     }, character(1))
     GL$entrynames <- unlist(GL$entrynames)
+
+    PL_id <- which(struct@metadata@filenames == SoiList@filename)[1]
+    raw <- PL(struct, PL_id)@raw
+    if(nrow(raw) != 0){
+        GL$XIC <- lapply(seq_len(nrow(GL)), function(x){
+            cur <- GL[x,]
+            mzs <- c(min(cur$mass) * (1 - ppm * 1e-6),
+                        max(cur$mass) * (1 + ppm * 1e-6))
+            calculate_XIC_estimation(raw,
+                                     mzs,
+                                     c(cur$start, cur$end))
+        })
+    }
     GL <- RHermesIL(IL = as.data.table(GL[, -5]), annotation = GL$jointentries,
                     SOInum = id, ILParam = params)
     return(GL)

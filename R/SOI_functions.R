@@ -52,6 +52,11 @@ setMethod("findSOI", c("RHermesExp", "ANY", "ANY", "ANY"),
 function(struct, params, fileID, blankID = numeric(0)) {
     if (length(blankID) == 0) {
         blankID <- rep(0, length(fileID))
+    } else if (length(blankID) < length(fileID)){
+        message("Less blanks than files, reusing the last ID provided.")
+        blankID <- c(blankID,
+                     rep(blankID[length(blankID)],
+                         length(fileID) - length(blankID)))
     }
     maxn <- length(struct@data@PL)
     if (any(c(fileID, blankID) > maxn)) {
@@ -69,7 +74,7 @@ function(struct, params, fileID, blankID = numeric(0)) {
         idx <- fileID[i]
         if (idx == blankID[i]) {
             stop(paste("You've tried to substract the blank from",
-                        "the same file. That's not allowed."))
+                        "the same file. This is not allowed."))
         }
         if (multParams) {
             cur <- params[[specID[i]]]
@@ -214,7 +219,7 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename) {
     Groups$chaos <- lapply(Groups$peaks, function(x) {
         rho_chaos(x, nlevels = 20, fillGaps = TRUE)
     }) %>% as.numeric()
-    
+
     setkeyv(Groups, c("formula"))
     message("Generating peaklist for plotting:")
     plist <- bplapply(unique(Groups$formula), preparePlottingDF,
@@ -342,12 +347,12 @@ retrievePeaks <- function(i, Groups, PL){
     return(pks[, c(1, 2, 5)])
 }
 
-groupShort <- function(Groups, maxlen){
+groupShort <- function(Groups, maxlen, BPPARAM = bpparam()){
     message("Shortening and selecting long groups:")
     SG <- filter(Groups, length <= maxlen)
     LG <- filter(Groups, length > maxlen)
     LG <- bplapply(seq_len(nrow(LG)), parallelGroupShort, LG,
-                maxlen, BPPARAM = bpparam())
+                maxlen, BPPARAM = BPPARAM)
     LG <- do.call(rbind, LG)
     return(rbind(SG, LG))
 }
@@ -485,14 +490,19 @@ firstCleaning <- function(i, Groups, blankPL){
     blankpks <- distinct(blankpks[, c(1, 2)])
     if (nrow(blankpks) < 5) {return(TRUE)} #No blank signals
 
-    sampleCV <- sd(peaks$rtiv)/mean(peaks$rtiv)
-    blankCV <- sd(blankpks$rtiv)/mean(blankpks$rtiv)
+    sampleCV <- IQR(peaks$rtiv) /
+        (quantile(peaks$rtiv, 0.25) + quantile(peaks$rtiv, 0.75))
+
+    blankCV <-  IQR(blankpks$rtiv) /
+        (quantile(blankpks$rtiv, 0.25) + quantile(blankpks$rtiv, 0.75))
+
     sampleMax <- max(peaks$rtiv)
-    blankMax <- max(blankpks$rtiv)
+    # blankMax <- max(blankpks$rtiv)
+    q90_ratio <- quantile(peaks$rtiv,0.9) / quantile(blankpks$rtiv,0.9)
 
     #We have to be restrictive with the conditions, otherwise we collect junk
     if (sampleCV/blankCV > 5) {return(TRUE)}
-    if (sampleMax/blankMax > 3 & sampleMax > 15000) {return(TRUE)}
+    if (q90_ratio > 3 & sampleMax > 15000) {return(TRUE)}
 
     return(FALSE) #Can't decide if the SOI is good enough, let the ANN decide
 }

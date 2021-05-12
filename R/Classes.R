@@ -41,7 +41,7 @@ ExpParam <- setClass("ExpParam", slots = list(ppm = "numeric",
     res = "numeric", nthr = "numeric", minmz = "numeric", maxmz = "numeric",
     ion = "character", instr = "character", DB = "list", adlist = "data.frame",
     ionF = "list", isoList = "list"), prototype = list(ppm = 5,
-    res = 60000, nthr = 1000, minmz = 80, maxmz = 1000, ion = "+",
+    res = 30000, nthr = 1000, minmz = 80, maxmz = 1200, ion = "+",
     instr = "QTOF", DB = list(), adlist = data.frame(), ionF = list(),
     isoList = list()))
 

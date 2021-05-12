@@ -1,35 +1,3 @@
-injectionPlanner <- function(IL, injections, maxover, byMaxInt = TRUE,
-                                returnAll = FALSE) {
-    if (returnAll) {injections <- 1e4}
-    if (byMaxInt) {IL <- IL[order(-IL$MaxInt), ]}
-    idx <- which(is.na(IL$start) | is.na(IL$end))  #NA depuration
-    if (length(idx) != 0) {IL <- IL[-idx, ]}
-    plan <- list()
-    while (nrow(IL) != 0 & injections > 0) {
-        timeInt <- seq(min(IL$start, na.rm = TRUE),
-                       max(IL$end, na.rm = TRUE),
-                       by = 0.5)
-        OL <- rep(0, length(timeInt))
-        ok_entries <- c()
-        for (i in seq_len(nrow(IL))) {
-            timeidx <- which(timeInt >= IL$start[i] & timeInt <= IL$end[i])
-            if (any(OL[timeidx] >= maxover)) {next}
-            ok_entries <- c(ok_entries, i)
-            OL[timeidx] <- OL[timeidx] + 1
-        }
-        curinj <- IL[ok_entries, ]
-        IL <- IL[-ok_entries, ]
-        plan <- c(plan, list(curinj))
-        injections <- injections - 1
-    }
-    if (nrow(IL) != 0) {
-        warning(paste0("Some SOI haven't been added to the injection plan due",
-                        " to lack of space. Try again with more injections,",
-                        "  more maxover or returnAll = TRUE"))
-    }
-    return(plan)
-}
-
 #'@title filterIL
 #'@description Filters out IL entries lower than a specified intensity in a
 #' given RT interval.
@@ -102,13 +70,15 @@ function(struct, id, rts, minint = Inf) {
 #'}
 #'@export
 setGeneric("exportIL", function(struct, id, file = "./InclusionList",
-                                maxOver = 5, sepFiles = FALSE) {
+                                mode = "both", maxOver = 5, defaultIT = 100,
+                                sepFiles = FALSE, maxInjections = 9999) {
     standardGeneric("exportIL")
 })
 
 #'@rdname exportIL
-setMethod("exportIL", c("RHermesExp", "numeric", "ANY", "ANY", "ANY"),
-function(struct, id, file = "./InclusionList", maxOver = 5, sepFiles = FALSE) {
+setMethod("exportIL", c("RHermesExp", "numeric", "ANY", "ANY", "ANY", "ANY"),
+function(struct, id, file = "./InclusionList", mode = "both", maxOver = 5,
+         defaultIT = 100, sepFiles = FALSE, maxInjections = 9999) {
     validObject(struct)
     if (length(struct@data@MS2Exp) == 0) {
         stop("This object doesn't have any ILs")
@@ -117,15 +87,23 @@ function(struct, id, file = "./InclusionList", maxOver = 5, sepFiles = FALSE) {
         stop("Please enter a valid IL number")
     }
     IL <- struct@data@MS2Exp[[id]]@IL@IL
-    plan <- injectionPlanner(IL, 10, maxOver, byMaxInt = TRUE, returnAll = TRUE)
+    IL$IT <- defaultIT
+    plan <- injectionPlanner(IL, 10, maxOver, byMaxInt = TRUE,
+                             injections = maxInjections,
+                             mode = mode)
     if (sepFiles) {
     for (x in seq_along(plan)) {
         p <- plan[[x]]
-        p <- p[, c("start", "end", "mass")]
+        p$IT[p$IT > 1500] <- 1500
+        p$f <- character(nrow(p))
+        p$ad <- character(nrow(p))
+        p$z <- 1
+        p <- p[, c("f", "ad", "mass", "z", "start", "end",  "IT")]
         #Setting column style for Thermo Xcalibur import
-        colnames(p) <- c("t start (min)", "t stop (min)", "m/z")
-        p[, 1] <- p[, 1]/60
-        p[, 2] <- p[, 2]/60
+        colnames(p) <- c("Formula", "Adduct", "m/z", "z", "t start (min)",
+                         "t stop (min)", "Maximum Injection time (ms)")
+        p[, 5] <- p[, 5]/60
+        p[, 6] <- p[, 6]/60
         #Added as result of Michi's comment
         p <- cbind(data.frame(Compound = seq_len(nrow(p))), p)
         write.csv(p, file = paste0(file, "_Injection_", x, ".csv"),
@@ -135,12 +113,129 @@ function(struct, id, file = "./InclusionList", maxOver = 5, sepFiles = FALSE) {
         plandf <- do.call(rbind, lapply(seq_along(plan), function(x) {
             p <- plan[[x]]
             p$ID <- x
-            return(p)
+            return(p[,c("start", "end", "mass", "MaxInt", "ID")])
         }))
-        write.csv(plandf, paste0(file, "_complete.csv"))
+        write.csv(plandf, paste0(file, "_complete.csv"), row.names = FALSE)
     }
     return()
 })
+
+
+injectionPlanner <- function(IL, injections, maxover, byMaxInt = TRUE,
+                             mode = "continuous", returnAll = FALSE) {
+    if (returnAll) {injections <- 1e4}
+    if (byMaxInt) {IL <- IL[order(-IL$MaxInt), ]}
+    idx <- which(is.na(IL$start) | is.na(IL$end))  #NA depuration
+    if (length(idx) != 0) {IL <- IL[-idx, ]}
+    plan <- list()
+    
+    if(mode != "continuous"){
+        message("Calculating high IT scans")
+        deep_IL <- calculate_deep_IL(IL)
+    } else {
+        deep_IL <- data.frame()
+    }
+    
+    mint <- min(IL$start)
+    maxt <- max(IL$end)
+    
+    if(mode %in% c("continuous", "both")){
+        while (nrow(IL) != 0 & injections > 0) {
+            timeInt <- seq(mint,
+                           maxt,
+                           by = 0.005)
+            OL <- rep(0, length(timeInt))
+            ok_entries <- c()
+            for (i in seq_len(nrow(IL))) {
+                timeidx <- which(timeInt >= IL$start[i] & timeInt <= IL$end[i])
+                if (any(OL[timeidx] >= maxover)) {next}
+                ok_entries <- c(ok_entries, i)
+                OL[timeidx] <- OL[timeidx] + 1
+            }
+            curinj <- IL[ok_entries, ]
+            IL <- IL[-ok_entries, ]
+            
+            if(mode == "both" & any(OL == 0)){
+                deep_ok_entries <- c()
+                for (i in seq_len(nrow(deep_IL))) {
+                    timeidx <- which(timeInt >= deep_IL$start[i] &
+                                         timeInt <= deep_IL$end[i])
+                    if (any(OL[timeidx] >= 1)) {next}
+                    deep_ok_entries <- c(deep_ok_entries, i)
+                    OL[timeidx] <- OL[timeidx] + 1
+                }
+                if(length(deep_ok_entries) != 0){
+                    deep_curinj <- deep_IL[deep_ok_entries, ]
+                    deep_IL <- deep_IL[-deep_ok_entries, ]
+                    curinj <- rbind(curinj, deep_curinj, fill = TRUE)
+                }
+            }
+            
+            plan <- c(plan, list(curinj))
+            injections <- injections - 1
+        }
+        if(mode == "both" & nrow(deep_IL) != 0){
+            message(paste(nrow(deep_IL), "high IT scans could not be planned",
+                          "within the continuous MS2 injections.",
+                          "Adding them separately."))
+            while (nrow(deep_IL) != 0 & injections > 0) {
+                timeInt <- seq(min(deep_IL$start, na.rm = TRUE),
+                               max(deep_IL$end, na.rm = TRUE),
+                               by = 0.005)
+                OL <- rep(0, length(timeInt))
+                deep_ok_entries <- c()
+                for (i in seq_len(nrow(deep_IL))) {
+                    timeidx <- which(timeInt >= deep_IL$start[i] &
+                                         timeInt <= deep_IL$end[i])
+                    if (any(OL[timeidx] >= 1)) {next}
+                    deep_ok_entries <- c(deep_ok_entries, i)
+                    OL[timeidx] <- OL[timeidx] + 1
+                }
+                deep_curinj <- deep_IL[deep_ok_entries, ]
+                deep_IL <- deep_IL[-deep_ok_entries, ]
+                plan <- c(plan, list(deep_curinj))
+                injections <- injections - 1
+            }
+        }
+    } else {
+        while (nrow(deep_IL) != 0 & injections > 0) {
+            timeInt <- seq(min(deep_IL$start, na.rm = TRUE),
+                           max(deep_IL$end, na.rm = TRUE),
+                           by = 0.005)
+            OL <- rep(0, length(timeInt))
+            deep_ok_entries <- c()
+            for (i in seq_len(nrow(deep_IL))) {
+                timeidx <- which(timeInt >= deep_IL$start[i] &
+                                     timeInt <= deep_IL$end[i])
+                if (any(OL[timeidx] >= 1)) {next}
+                deep_ok_entries <- c(deep_ok_entries, i)
+                OL[timeidx] <- OL[timeidx] + 1
+            }
+            deep_curinj <- deep_IL[deep_ok_entries, ]
+            deep_IL <- deep_IL[-deep_ok_entries, ]
+            plan <- c(plan, list(deep_curinj))
+            injections <- injections - 1
+        }
+    }
+
+    
+    if (nrow(IL) != 0) {
+        message(paste0(nrow(IL), "ILs haven't been added to the injection plan",
+                       " due to lack of space. Try again with more injections,",
+                       " more maxover or returnAll = TRUE"))
+    }
+    # print(plot(cumsum(sapply(plan, nrow))))
+    # hist_data <- lapply(seq_along(plan), function(x){
+    #     loc_plan <- plan[[x]]
+    #     p <- hist(x = loc_plan$MaxInt %>% log10,
+    #          breaks = seq(4,10,0.5))$counts
+    #     # p <- p / nrow(loc_plan) * 100
+    #     data.frame(sample = x, int = seq(4.25,10,0.5), p = p)
+    # })
+    # hist_data <- do.call(rbind, hist_data)
+    # print(ggplotly(ggplot(hist_data) + geom_tile(aes(x=sample, y = int, fill = p))))
+    return(plan)
+}
 
 
 #'@export
@@ -151,3 +246,79 @@ setMethod("show", "RHermesIL", function(object){
     message(paste("\tIL entries:", nrow(object@IL)))
     message(paste("\tSOI index:", object@SOInum))
 })
+
+calculate_XIC_estimation <- function(raw, mzs, rts){
+    points <- filter(raw, between(mz, mzs[1], mzs[2]))
+    points <- filter(points, between(rt, rts[1], rts[2]))
+    xic <- sapply(unique(points$rt), function(rt){
+        sum(points$rtiv[points$rt == rt])    
+    })
+    xic <- data.frame(rt = unique(points$rt), int = xic)
+    return(xic)
+}
+
+
+calculate_deep_IL <- function(IL, intThr = 1e4){
+    IL_deep <- IL %>%
+        filter(.data$MaxInt > intThr)
+    IL_deep <- lapply(seq_len(nrow(IL_deep)),function(entry){
+        cur <- IL_deep[entry,]
+        scans <- calculate_best_interval(cur$XIC[[1]], objective = 3e4)
+        scans <- as.data.frame(scans)
+        if(nrow(scans) == 0){return()}
+        colnames(scans) <- c("start", "end")
+        scans$mass <- cur$mass
+        scans$MaxInt <- cur$MaxInt
+        scans$entrynames <- cur$entrynames
+        scans$XIC <- cur$XIC
+        return(scans)
+    })
+    IL_deep <- do.call(rbind, IL_deep)
+    IL_deep$IT <- (IL_deep$end - IL_deep$start) * 1000
+    return(IL_deep)
+}
+
+calculate_apex <- function(scans){
+    scans$rt[which.max(scans$int)]
+}
+
+calculate_best_interval <- function(scans, objective = 1e6, maxIT = 2000){
+    if(nrow(scans) > 10){
+        apexes <- scans$rt[inflect(scans$int, 4)]
+        if(length(apexes) == 0){apexes <- calculate_apex(scans)}
+    } else {
+        apexes <- calculate_apex(scans)
+    }
+    intervals <- lapply(apexes, function(apex){
+        maxt <- min(max(apex - min(scans$rt), max(scans$rt) - apex), maxIT/1000)
+        scans <- approx(scans$rt, scans$int, n = 1000) %>% do.call(rbind, .) %>%
+            t %>% as.data.frame %>% rename(rt = x, rtiv = y)
+        for(t in seq(0.1, maxt, 0.01)){
+            integral <- calculate_integral(filter(scans,
+                                                  between(rt, apex-t, apex+t)))
+            if(integral > objective){return(c(apex-t, apex+t))}
+        }
+        return(c(apex-maxt, apex+maxt))
+    })
+    return(do.call(rbind, intervals))
+}
+
+calculate_integral <- function(scans){
+    sum(diff(scans[[1]]) * (scans[[2]][-nrow(scans)] + diff(scans[[2]])/2))
+}
+
+
+# Authorship Evan Friedland, Stackoverflow #6836409
+inflect <- function(x, threshold = 1){
+    up   <- sapply(1:threshold, function(n) c(x[-(seq(n))], rep(NA, n)))
+    down <-  sapply(-1:-threshold, function(n){ 
+        c(rep(NA, abs(n)),
+            x[-seq(length(x), length(x) - abs(n) + 1)])
+    })
+    a    <- cbind(x,up,down)
+    which(apply(a, 1, max) == a[,1])
+}
+
+
+
+

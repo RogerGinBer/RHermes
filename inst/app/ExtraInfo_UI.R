@@ -30,7 +30,7 @@ ExtraInfo_UI <- function(id){
                  div(radioButtons(inputId = ns("ILfiles"), label = "Select inclusion list:",
                                   choices = "", selected = ""), style = "margin-left: 5%; margin-top: 3%"), width = "AUTO"),
                sidebarPanel(
-                   plotlyOutput(outputId = ns("plotIL")),
+                   plotlyOutput(outputId = ns("plotIL"),height = "800px"),
                    DT::dataTableOutput(ns("ILtable"), width = "auto"),
                    width = "AUTO")
       ),
@@ -132,6 +132,9 @@ ExtraInfoServer <- function(id, struct){
       })
       observeEvent({input$ILfiles},{
         data <- struct$dataset@data@MS2Exp[[as.numeric(input$ILfiles)]]@IL@IL
+        if(any(colnames(data) == "XIC")){
+            data <- data[,-c("XIC")]
+        }
         output$ILtable <- DT::renderDataTable(data, options = list(scrollX = TRUE, autoWidth = TRUE))
         output$plotIL <- renderPlotly(plotIL(struct$dataset, as.numeric(input$ILfiles)))
       }, ignoreInit = TRUE, ignoreNULL = TRUE)
