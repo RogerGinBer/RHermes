@@ -19,8 +19,8 @@ knitr::opts_chunk$set(
 [![Codecov test coverage](https://codecov.io/gh/RogerGinBer/RHermes/branch/master/graph/badge.svg?token=HL73R4GHFJ)](https://codecov.io/gh/RogerGinBer/RHermes?branch=master)
 
 <!-- badges: end -->
-<img align = "right" style = "padding-left: 10%" 
-width = "250px" height = "250px" src = "`r system.file("extdata/stickerNoBioc.svg", package = "RHermes")`">
+<img align = "right" style = "padding-left: 10%; padding-bottom: 10%; padding-top: 2%" 
+width = "250px" height = "285px" src = "https://i.postimg.cc/Tw9SvJ11/sticker-No-Bioc.png">
 
 `RHermes` is a broad-scoped targeted metabolomics software designed to analyse 
 LC-MS and LC-MS/MS data to identify compounds in biological or environmental

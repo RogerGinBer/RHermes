@@ -10,8 +10,8 @@ coverage](https://codecov.io/gh/RogerGinBer/RHermes/branch/master/graph/badge.sv
 
 <!-- badges: end -->
 
-<img align = "right" style = "padding-left: 10%" 
-width = "250px" height = "250px" src = "C:/Users/Roger G/AppData/Local/Temp/RtmpWEMtVz/temp_libpath1c442bd722be/RHermes/extdata/stickerNoBioc.svg">
+<img align = "right" style = "padding-left: 10%; padding-bottom: 10%; padding-top: 2%" 
+width = "250px" height = "285px" src = "https://i.postimg.cc/Tw9SvJ11/sticker-No-Bioc.png">
 
 `RHermes` is a broad-scoped targeted metabolomics software designed to
 analyse LC-MS and LC-MS/MS data to identify compounds in biological or
