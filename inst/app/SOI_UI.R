@@ -248,21 +248,18 @@ SOIServer <- function(id, struct){
       }, ignoreNULL = TRUE,ignoreInit = TRUE, priority = 100)
 
       observeEvent(input$minfilter,{
-
         updateNumericInput(session, "numericval", value = input$minfilter)
-
       })
 
       observeEvent(input$soiClean,{
-
-
-        filterSOI(struct$dataset, as.numeric(input$soiChoices),
-                   as.numeric(input$minfilter), input$isofiltering)
+        struct$dataset <- filterSOI(struct$dataset,
+                            as.numeric(input$soiChoices),
+                            as.numeric(input$minfilter),
+                            input$isofiltering)
         sendSweetAlert(session = session, title = "Finished",
                        text = paste("The SOI list", input$soiChoices,
                                     "has been cleaned"),
                        type = "success")
-
       })
 
       #Help Modals

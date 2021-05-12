@@ -132,6 +132,9 @@ ExtraInfoServer <- function(id, struct){
       })
       observeEvent({input$ILfiles},{
         data <- struct$dataset@data@MS2Exp[[as.numeric(input$ILfiles)]]@IL@IL
+        if(any(colnames(data) == "XIC")){
+            data <- data[,-c("XIC")]
+        }
         output$ILtable <- DT::renderDataTable(data, options = list(scrollX = TRUE, autoWidth = TRUE))
         output$plotIL <- renderPlotly(plotIL(struct$dataset, as.numeric(input$ILfiles)))
       }, ignoreInit = TRUE, ignoreNULL = TRUE)

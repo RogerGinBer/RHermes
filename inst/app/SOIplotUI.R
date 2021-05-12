@@ -7,7 +7,7 @@ SOIPlotUI <- function(id){
       label = "Select a graph :",
       choices = c(`<i class="fas fa-mountain"></i> SOI plots` = "soiplot",
                   `<i class='fa fa-bar-chart'></i> Isotopic fidelity` = "fidelityplot",
-                  `<i class='fa fa-project-diagram'></i> Inter-SOI cosine similarity` = "cossim"),
+                  `<i class='fa fa-project-diagram'></i> Inter-SOI shape similarity` = "cossim"),
       justified = TRUE
     ),
     conditionalPanel("input.selectplot == 'soiplot'", ns = ns,
@@ -67,7 +67,7 @@ SOIPlotUI <- function(id){
     conditionalPanel("input.selectplot == 'cossim'", ns = ns,
                      selectizeInput(ns("choicescos"), choices = NULL, selected = NULL,
                                     label = "Select SOI to check", width = "600px"),
-                     actionButton(ns("start_cos_calculation"), label = "Calculate cosines"),
+                     actionButton(ns("start_cos_calculation"), label = "Calculate similarity"),
                      dataTableOutput(ns("cos_table"), height = "600px")
     )
   )
@@ -233,7 +233,7 @@ SOIPlotServer <- function(id, struct){
           }
           output$valoration <- renderText(paste0("Calculated number of carbon atoms: ", isoresults[[2]], "\n",
                                                  "Veredict: ", isoresults[[3]], "\n",
-                                                 "Isotopic cosine score: ", isoresults[[4]], "\n",
+                                                 "Isotopic similarity score: ", isoresults[[4]], "\n",
                                                  het_text))
         }, error = function(e){message(e)})
 

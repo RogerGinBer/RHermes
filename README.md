@@ -10,7 +10,10 @@ coverage](https://codecov.io/gh/RogerGinBer/RHermes/branch/master/graph/badge.sv
 
 <!-- badges: end -->
 
-`RHermes` is a broad-scoped targeted metabolomics software used to
+<img align = "right" style = "padding-left: 10%" 
+width = "250px" height = "250px" src = "C:/Users/Roger G/AppData/Local/Temp/RtmpWEMtVz/temp_libpath1c442bd722be/RHermes/extdata/stickerNoBioc.svg">
+
+`RHermes` is a broad-scoped targeted metabolomics software designed to
 analyse LC-MS and LC-MS/MS data to identify compounds in biological or
 environmental samples.
 
@@ -18,8 +21,19 @@ The `RHermes` workflow works with both Orbitrap and q-TOF instrument
 data and comes with an easy to use GUI that will guide you every step of
 the way.
 
-Check out the documentation
-[here](https://rogerginber.github.io/RHermes/)
+You are in control of your metabolites: whether it’s natural products,
+biomedical or enviormental samples, `RHermes` has you covered. By
+restricting the formula database, you can focus on just the compounds
+you are interested in.
+
+Have you ever wished you could just **see** the metabolites in your
+data? With `RHermes` you can do that and much more. Say goodbye to
+manually calculating m/z’s and plotting XIC of different adducts: with
+our GUI you are just one click away from a metabolite-centric plot.
+
+For more info, check out the documentation
+[here](https://rogerginber.github.io/RHermes/) and our article preprint
+[here](https://www.biorxiv.org/content/10.1101/2021.03.08.434466v1.full.pdf)
 
 ## System requirements
 
@@ -44,11 +58,11 @@ devtools::install_github("RogerGinBer/RHermes")
 
 `RHermes` can perform almost all its functions after installation, but
 the SOI Blank Substraction step requires a valid `keras` and
-`tensorflow` installation (which rely on Python).
+`tensorflow` installation (which rely on Python code).
 
 ### Option 1: Default installation
 
-In principle both `keras` and `tensorflow` can be configured with:
+For most users, both `keras` and `tensorflow` can be configured with:
 
 ``` r
 reticulate::install_miniconda()
@@ -66,7 +80,7 @@ is(model, "python.builtin.object") #Gives TRUE if the loading is successful.
 
 If both commands don’t give any error (the “Your CPU supports …” warning
 is fine) the installation has been successful. If it fails (which can
-happen in some devices, try Option 2).
+happen in some users with previous Python installations, try Option 2).
 
 ### Option 2: Manual installation
 
@@ -126,6 +140,9 @@ Or start the interactive GUI typing:
 ``` r
 RHermesGUI()
 ```
+
+In the GUI you will find abundant help pages to guide you along the
+processing :+1:
 
 Please check the User Guide
 [vignette](https://rogerginber.github.io/RHermes/articles/RHermes_UserGuide.html)
