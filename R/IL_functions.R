@@ -102,10 +102,10 @@ inclusionList <- function(struct, params, id) {
     if(nrow(raw) != 0){
         GL$XIC <- lapply(seq_len(nrow(GL)), function(x){
             cur <- GL[x,]
-            cur$mzs < c(min(cur$mass) * (1 - ppm * 1e-6),
+            mzs <- c(min(cur$mass) * (1 - ppm * 1e-6),
                         max(cur$mass) * (1 + ppm * 1e-6))
             calculate_XIC_estimation(raw,
-                                     c(-filtermz / 2, filtermz / 2) + cur$mass,
+                                     mzs,
                                      c(cur$start, cur$end))
         })
     }
