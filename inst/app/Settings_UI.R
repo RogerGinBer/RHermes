@@ -11,7 +11,6 @@ Settings_UI <- function(id){
                             value = 1, min = 1,
                             max = BiocParallel::bpworkers(),
                             step = 1), width = 4),
-        column(uiOutput(ns("warning")), width = 4)
       ),
       fluidRow(
         column(actionButton(ns("saveSet"), label = "Save Settings",
@@ -51,19 +50,7 @@ SettingsServer <- function(id, struct){
                                                         as.numeric(input$coreN))
       )
       BiocParallel::register(backend)
-    },ignoreInit = TRUE, ignoreNULL = TRUE)
-
-    observeEvent({input$coreN}, {
-      if((as.numeric(input$coreN)/ BiocParallel::bpworkers()) > 0.75){
-        output$warning <- renderUI(
-          p(tags$b("Warning:"),
-            "Using more than 75% cores may cause undesired effects like system unstability",
-            style = "background-color: #4d4263; color: #fff;
-            padding: 15px 15px 15px 15px; text-align: center")
-        )
-      } else {
-          output$warning <- renderUI(p(""))
-      }})
+    }, ignoreInit = TRUE, ignoreNULL = TRUE)
 
     return(toReturn)
   })
