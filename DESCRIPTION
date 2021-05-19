@@ -46,9 +46,10 @@ Imports:
 	shinyWidgets,
 	shinydashboard,
 	slickR,
+	DT
 Suggests:
     readxl,
     knitr,
     testthat,
-    covr,
-	DT
+    covr
+
