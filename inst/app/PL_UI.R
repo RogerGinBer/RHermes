@@ -227,7 +227,7 @@ PLServer <- function(id, struct){
             struct$dataset <- setDB(struct$dataset, db = input$db,
                                     adcharge = as.numeric(input$adcharge),
                                     admult = as.numeric(input$admult),
-                                    filename = loadpath(), keggpath = keggpath)
+                                    DBfile = loadpath(), keggpath = keggpath)
             sel <- struct$dataset@metadata@ExpParam@adlist$adduct %in% input$ads
             ads <- struct$dataset@metadata@ExpParam@adlist[sel,]
             struct$dataset@metadata@ExpParam@adlist <- ads
