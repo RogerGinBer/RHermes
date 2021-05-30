@@ -391,11 +391,9 @@ OptScanSearch <- function(DB, raw, ppm, IsoList, labelled = FALSE,
     PLresults <- bplapply(seq_along(flist), PLparallelfun, flist, raw, IsoList,
                         labelled, ppm, minhit, BPPARAM = bpparam())
     PLresults <- do.call(rbind, PLresults)
-
     #Output coherence with PLProcesser input
     return(PLresults[, c(3, 2, 4, 5, 1)])
 }
-
 
 PLparallelfun <- function(gr, flist, raw, IsoList, labelled, ppm, minhit){
     curDB <- flist[[gr]]
@@ -428,33 +426,32 @@ regularProc <- function(curDB, mass, formula, pmz, curiso, ppm, IsoList, minhit,
     ch <- curDB[i, 3]  #Charge to normalize isotope deltam's
 
     scanid <- raw[ss]
-    scanid$formv <- formula
     scanid$isov <- "M0"
-
     isom <- mass + (isodf$deltam/abs(ch[[1]]))
-    isoss <- lapply(isom, function(m) {
-        if (m < pmz[1, 1] | m > pmz[nrow(pmz), 1]) {return()}
-        #Added small multiplicative factor to ppm. We've seen that
-        #isotope peaks may have a bit more error than M0
-        binarySearch(pmz, m, ppm * 1.5)
-    })
-    isol <- vapply(isoss, length, FUN.VALUE = numeric(1))
+    valid <- isom >= pmz[1, 1] & isom <= pmz[nrow(pmz), 1]
+    if(any(valid)){
+        isoss <- lapply(isom[valid], function(m) {
+            #Added small multiplicative factor to ppm. We've seen that
+            #isotope peaks may have a bit more error than M0
+            binarySearch(pmz, m, ppm * 1.5)
+        })
+        isol <- vapply(isoss, function(x) length(x) != 0, FUN.VALUE = T)
 
-    isoidx <- which(isol != 0)
-    if (length(isoidx) != 0) {
-        isoentries <- do.call(rbind,
-            lapply(isoidx,
-                function(x) {
-                    isoid <- raw[isoss[[x]]]
-                    isoid$formv <- formula
-                    isoid$isov <- as.character(isodf$ID[x])
-                    return(isoid)
-                }
+        if (any(isol)) {
+            isoentries <- do.call(rbind,
+                                  lapply(which(isol),
+                                         function(x) {
+                                             isoid <- raw[isoss[[x]]]
+                                             isoid$isov <- as.character(isodf$ID[valid][x])
+                                             return(isoid)
+                                         }
+                                  )
             )
-        )
-        isoentries <- isoentries[isoentries$rt %in% unique(scanid$rt), ]
-        scanid <- rbind(scanid, isoentries)
+            isoentries <- isoentries[isoentries$rt %in% unique(scanid$rt), ]
+            scanid <- rbind(scanid, isoentries)
+        }
     }
+    scanid$formv <- formula
     return(scanid)
 }
 
