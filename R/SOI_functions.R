@@ -157,10 +157,11 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename) {
     }
     Groups <- distinct(Groups)
 
+    
     ## Initial Peak Retrieval
     message("Initial peak retrieval:")
-    peakscol <- bplapply(seq_len(nrow(Groups)), retrievePeaks,
-                        Groups, DataPL, BPPARAM = bpparam())
+    peakscol <- lapply(seq_len(nrow(Groups)), retrievePeaks,
+                        Groups, DataPL)
     Groups$peaks <- peakscol
     ## Group Characterization
     message("")
@@ -217,13 +218,13 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename) {
 
     message("Calculating chaos:")
     Groups$chaos <- lapply(Groups$peaks, function(x) {
-        rho_chaos(x, nlevels = 20, fillGaps = TRUE)
+        rho_chaos(x, nlevels = 10, fillGaps = TRUE)
     }) %>% as.numeric()
 
     setkeyv(Groups, c("formula"))
     message("Generating peaklist for plotting:")
-    plist <- bplapply(unique(Groups$formula), preparePlottingDF,
-                        Groups, BPPARAM = bpparam())
+    plist <- lapply(unique(Groups$formula), preparePlottingDF,
+                        Groups)
     plist <- do.call(rbind, plist)
     plist$isov <- rep("M0", nrow(plist))
 
@@ -241,20 +242,20 @@ densityProc <- function(x, DataPL, h){
     message("Running Density Filter")
     BinRes <- densityFilter(DataPL, h, rtbin, "M0", shift)
     cutoff <- BinRes[[1]] * scanspercent
-
+    
     #Correcting CUT < 1 cases to avoid errors (eg. if it was 0, any time region
     #would be included). Added a 1 for robustness.
     cutoff[cutoff < 1] <- median(c(cutoff[cutoff > 1], 1))
     message("Running Density Interpreter")
-    nwork <- bpparam()$workers
-    if (!is.numeric(nwork)) nwork <- 1
-        uf <- unique(DataPL$formv)
-        suppressWarnings({uf <- split(uf, seq_len(nwork))})
-        id <- cumsum(vapply(c(0, uf), length, numeric(1))) - 1
-    RES <- bplapply(seq_along(uf), parallelInterpreter, uf, cutoff,
-                    BinRes, id, BPPARAM = bpparam())
+    uf <- unique(DataPL$formv)
+    RES <- lapply(BinRes[-c(1,2)], parallelInterpreter, cutoff)
+    RES <- RES[vapply(RES, is.data.frame, logical(1))]
+    if(length(RES) == 0){return()}
+    RES <- lapply(names(RES), function(anot){
+        RES[[anot]]$formula <- anot
+        RES[[anot]]
+    })
     RES <- do.call(rbind, RES)
-    RES$formula <- unlist(uf)[RES$formula]
 
     #Changing from index to corresponding RT
     RES[, 1] <- (RES[, 1] * rtbin) - rtbin + floor(min(h$retentionTime)) + shift
@@ -288,8 +289,8 @@ groupGrouper <- function(GR, i, Groups){
     setkeyv(matched, "yid")
 
     ## Grouping entries and choosing lowest start and highest end time
-    res <- bplapply(unique(matched$yid), resolveGroup, Groups,
-                matched, first_df, BPPARAM = bpparam())
+    res <- lapply(unique(matched$yid), resolveGroup, Groups,
+                matched, first_df)
     res <- do.call(rbind, res)
 
     end <- NULL; start <- NULL #To appease R CMD Check "no visible binding"
@@ -351,8 +352,8 @@ groupShort <- function(Groups, maxlen, BPPARAM = bpparam()){
     message("Shortening and selecting long groups:")
     SG <- filter(Groups, length <= maxlen)
     LG <- filter(Groups, length > maxlen)
-    LG <- bplapply(seq_len(nrow(LG)), parallelGroupShort, LG,
-                maxlen, BPPARAM = BPPARAM)
+    LG <- lapply(seq_len(nrow(LG)), parallelGroupShort, LG,
+                maxlen)
     LG <- do.call(rbind, LG)
     return(rbind(SG, LG))
 }
@@ -437,8 +438,8 @@ blankSubstraction <- function(Groups, blankPL){
     setkeyv(blankPL, c("formv", "rt"))
 
     message("First cleaning")
-    toKeep <- bplapply(seq_len(nrow(Groups)), firstCleaning, Groups, blankPL,
-                        BPPARAM = bpparam()) %>% unlist()
+    toKeep <- lapply(seq_len(nrow(Groups)), firstCleaning, Groups, blankPL) %>%
+        unlist()
     sure <- Groups[which(toKeep), ]
     if (any(toKeep)) {Groups <- Groups[-which(toKeep),]}
     reticulate::py_available(initialize = TRUE)
@@ -449,8 +450,7 @@ blankSubstraction <- function(Groups, blankPL){
         setkeyv(blankPL, "formv")
 
         message("Preparing input for ANN")
-        RES <- bplapply(seq_len(nrow(Groups)), prepareNetInput, Groups, blankPL,
-                        BPPARAM = bpparam())
+        RES <- lapply(seq_len(nrow(Groups)), prepareNetInput, Groups, blankPL)
         Groups$MLdata <- RES
         NAgroups <- do.call(rbind, lapply(RES, function(x){is.na(x[1])}))
 
@@ -471,7 +471,7 @@ blankSubstraction <- function(Groups, blankPL){
         Groups <- Groups[, -c("MLdata")]
         }
     } else {
-        warning(paste0("A Keras installation was not found and blank",
+        warning(paste("A Keras installation was not found and ANN blank",
                 "substraction was not performed"))
     }
     Groups <- rbind(sure, Groups)
@@ -564,66 +564,47 @@ preparePlottingDF <- function(i, Groups){
     return(res)
 }
 
-parallelFilter <- function(j, ScanResults, bins, timebin){
-    lapply(j, function(i) {
-        data <- as.vector(ScanResults[.(i), "rt"])
-        mint <- min(data)
-        maxt <- max(data)
-        res <- rep(0, length(bins))
-        goodbins <- bins[between(bins, mint - timebin, maxt + timebin)]
-        if (length(goodbins) == 0) {
-            return(res)
-        }
-    l <- mapply(function(b1, b2) {
-        return(length(which(data > b1 & data < b2)))
-    }, goodbins[-length(goodbins)], goodbins[-1]) #n? of entries in the time bin
-    if (length(l) == 0) {
-        return(res)
-    }
-    st <- which(bins == goodbins[1])
-    res[seq(st, (st + length(goodbins) - 2))] <- l
+parallelFilter <- function(anot, ScanResults, bins, timebin){
+    data <- as.vector(ScanResults[.(anot), "rt"])
+    mint <- min(data)
+    maxt <- max(data)
+    res <- rep(0, length(bins))
+    
+    #Shortcut to get in which bin each point is
+    l <- table(ceiling((data - bins[1]) / timebin))
+    if (length(l) == 0) return(res)
+    res[as.numeric(names(l))] <- l
     return(res)
-    })
 }
 
 densityFilter <- function(ScanResults, h, timebin, iso = "M0", tshift = 0) {
     #Setting time bins
     rtmin <- floor(min(h$retentionTime))
     rtmax <- ceiling(max(h$retentionTime))
-    bins <- seq(from = rtmin + tshift, to = rtmax + tshift, by = timebin)
-
+    bins <- seq(from = rtmin - tshift, to = rtmax + tshift, by = timebin)
+    
     #Getting how many scans were taken on each bin
     scans <- lapply(bins, function(curbin) {
         return(h %>% filter(., .data$retentionTime > curbin &
-                            .data$retentionTime <= curbin + timebin) %>%
-                    dim(.) %>% .[1])
-        })
-
+                                .data$retentionTime <= curbin + timebin) %>%
+                   dim(.) %>% .[1])
+    })
+    
     #Counting how many scan entries are on each bin
-    nwork <- bpparam()$workers
-    if (!is.numeric(nwork)) nwork <- 1
-
-    idx <- split(unique(ScanResults$formv), seq_len(nwork) * 5)
     setkeyv(ScanResults, c("formv", "rt"))
-    RES <- bplapply(idx, parallelFilter, ScanResults, bins, timebin,
-                    BPPARAM = bpparam())
-
-    RES <- unlist(RES, recursive = FALSE)
-    names(RES) <- unlist(idx)
+    RES <- lapply(unique(ScanResults$formv), parallelFilter, ScanResults,
+                  bins, timebin)
+    names(RES) <- unique(ScanResults$formv)
     RES <- c(list(unlist(scans)), list(bins), RES)
     names(RES)[c(1,2)] <- c("Bins","Scans")
     return(RES)
 }
 
-parallelInterpreter <- function(x, uf, cutoff, BinRes, id) {
-    do.call(rbind, lapply((seq_along(uf[[x]])) + id[x] + 2, function(i) {
-        bin <- BinRes[[i]]
-        interlist <- densityInterpreter(bin, cutoff)
-        if (length(interlist[[1]]) == 0) {return()}
-        df1 <- data.frame(start = interlist[[1]], end = interlist[[2]],
-                        formula = rep(i - 2, times = length(interlist[[1]])))
-        return(df1)
-    }))
+parallelInterpreter <- function(x, cutoff) {
+    interlist <- densityInterpreter(x, cutoff)
+    if (length(interlist[[1]]) == 0) {return()}
+    res <- data.frame(start = interlist[[1]], end = interlist[[2]])
+    return(res)
 }
 
 densityInterpreter <- function(list, cutoff) {
@@ -718,9 +699,8 @@ setMethod("filterSOI", signature = c("RHermesExp", "numeric", "ANY", "ANY", "ANY
 
             # Isotopic pattern similarity
             message("Calculating isotopic fidelity metrics:")
-            isodata <- bplapply(with_isos, plotFidelity, struct = struct,
-                                id = id, plot = FALSE,
-                                BPPARAM = SerialParam(progressbar = FALSE))
+            isodata <- lapply(with_isos, plotFidelity, struct = struct,
+                                id = id, plot = FALSE)
 
             cos <- vapply(isodata, function(x){x[[3]]}, numeric(1))
             soilist$isofidelity <- cos
@@ -759,8 +739,7 @@ setMethod("filterSOI", signature = c("RHermesExp", "numeric", "ANY", "ANY", "ANY
         ##Recalculate peaklist for plotting
         setkeyv(soilist, c("formula"))
         message("Recalculating peaklist for plotting:")
-        plist <- bplapply(unique(soilist$formula), recalculateDF, soilist,
-                        BPPARAM = bpparam())
+        plist <- lapply(unique(soilist$formula), recalculateDF, soilist)
         plist <- do.call(rbind, plist)
         plist$isov <- rep("M0", nrow(plist))
 
@@ -787,16 +766,12 @@ recalculateDF <- function(i, soilist){
     return(res)
 }
 
-
-
-
 isoCos <- function(soilist, PL, isothr = 0.99) {
     PL <- PL@peaklist
     setkeyv(PL, c("formv"))
     message("Calculating isotope similarity:")
-    clist <- bplapply(seq_len(nrow(soilist)), parallelIsoCos, soilist, PL,
-                    isothr,
-                    BPPARAM = bpparam())
+    clist <- lapply(seq_len(nrow(soilist)), parallelIsoCos, soilist, PL,
+                    isothr)
     hits <- lapply(clist, function(x) {return(x[[1]])})
     hitdf <- lapply(clist, function(x) {return(x[[2]])})
     soilist$isofound <- as.numeric(hits)
@@ -816,8 +791,8 @@ adCos <- function(soilist, FATable, adthr = 0.8) {
         vapply(x, function(y) {y[[2]]}, character(1))
     })
     setkey(FATable, "f")
-    clist <- bplapply(seq_len(nrow(soilist)), parallelAdCos, soilist, FATable,
-                    adthr, BPPARAM = bpparam())
+    clist <- lapply(seq_len(nrow(soilist)), parallelAdCos, soilist, FATable,
+                    adthr)
     soilist$adrows <- clist
     return(soilist)
 }
@@ -1122,8 +1097,8 @@ removeISF <- function(struct, id, DBpath = "D:/MS2ID_B2R_20201113_083214.rds",
     setkeyv(SL, "formula")
 
     #Recalculate plotting DF
-    plist <- bplapply(unique(SL$formula), preparePlottingDF,
-                    SL, BPPARAM = bpparam())
+    plist <- lapply(unique(SL$formula), preparePlottingDF,
+                    SL)
     plist <- do.call(rbind, plist)
     plist$isov <- rep("M0", nrow(plist))
 
