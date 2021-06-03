@@ -521,31 +521,33 @@ prepareNetInput <- function(i, Groups, blankPL){
         if (nrow(peaks) <= 2 | length(unique(peaks$rt)) <= 2) {
             return(NA) #No signal
         }
-    smooth_pks <- data.frame(approx(x = peaks, xout = seq(from = st, to = end,
-                                                        length.out = Npoints),
-                                    rule = 1)) #Interpolate to N points
-    smooth_pks[is.na(smooth_pks[, "y"]), "y"] <- 0
-    blankpks <- blankPL[.(f)] %>% filter(., .data$rt >= st - deltat &
-                                            .data$rt <= end + deltat &
-                                            .data$isov == "M0")
-    blankpks <- distinct(blankpks[, c(1, 2)])
-    if (length(unique(blankpks$rt)) < 2) {
-        blankpks <- data.frame(rt = c(st, end), rtiv = c(0, 0))
-        smooth_blankpks <- data.frame(
-            approx(x = blankpks,
-                xout = seq(from = st, to = end, length.out = Npoints),
-                rule = 1))
-    } else {
-        smooth_blankpks <- data.frame(
-            approx(x = blankpks,
-                xout = seq(from = st, to = end, length.out = Npoints),
-                rule = 1))
-        smooth_blankpks[is.na(smooth_blankpks[, "y"]), "y"] <- 0
-    }
-    return(as.matrix(rbind(smooth_pks[, 2], smooth_blankpks[,2])) /
-            max(smooth_pks[, 2]))
-    }, error = function(cond) {
-        return(NA)
+        #Interpolate to N points
+        smooth_pks <- data.frame(approx(x = peaks,
+                                        xout = seq(from = st, to = end,
+                                                    length.out = Npoints),
+                                        rule = 1, ties = min)) 
+        smooth_pks[is.na(smooth_pks[, "y"]), "y"] <- 0
+        blankpks <- blankPL[.(f)] %>% filter(., .data$rt >= st - deltat &
+                                                .data$rt <= end + deltat &
+                                                .data$isov == "M0")
+        blankpks <- distinct(blankpks[, c(1, 2)])
+        if (length(unique(blankpks$rt)) < 2) {
+            blankpks <- data.frame(rt = c(st, end), rtiv = c(0, 0))
+            smooth_blankpks <- data.frame(
+                approx(x = blankpks,
+                    xout = seq(from = st, to = end, length.out = Npoints),
+                    rule = 1, ties = min))
+        } else {
+            smooth_blankpks <- data.frame(
+                approx(x = blankpks,
+                    xout = seq(from = st, to = end, length.out = Npoints),
+                    rule = 1, ties = min))
+            smooth_blankpks[is.na(smooth_blankpks[, "y"]), "y"] <- 0
+        }
+        return(as.matrix(rbind(smooth_pks[, 2], smooth_blankpks[,2])) /
+                max(smooth_pks[, 2]))
+        }, error = function(cond) {
+            return(NA)
     })
 }
 
