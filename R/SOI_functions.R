@@ -496,10 +496,12 @@ firstCleaning <- function(i, Groups, blankPL){
     blankCV <-  IQR(blankpks$rtiv) /
         (quantile(blankpks$rtiv, 0.25) + quantile(blankpks$rtiv, 0.75))
 
+    if(is.na(sampleCV) | is.na(blankCV)){return(FALSE)}
+    
     sampleMax <- max(peaks$rtiv)
     # blankMax <- max(blankpks$rtiv)
     q90_ratio <- quantile(peaks$rtiv,0.9) / quantile(blankpks$rtiv,0.9)
-
+    
     #We have to be restrictive with the conditions, otherwise we collect junk
     if (sampleCV/blankCV > 5) {return(TRUE)}
     if (q90_ratio > 3 & sampleMax > 15000) {return(TRUE)}
