@@ -79,8 +79,10 @@ function(struct, id, MS2files, sstype = "regular", useDB = FALSE,
     purifiedSpectra <- CliqueMSMS(MS2Exp, idx, sstype = sstype)
     if (!useDB) {
         message("No spectral matching was performed. Done!")
-        purifiedSpectra$results <- rep("No DB matching",
-                                        times = nrow(purifiedSpectra))
+        purifiedSpectra$results <- rep(
+            "No MS2 Spectral DB matching",
+            times = nrow(purifiedSpectra)
+        )
         MS2Exp@Ident <- list(MS2Features = purifiedSpectra,
                             DatabaseSpectra = list(),
                             MS2_correspondance = list())
