@@ -101,13 +101,14 @@ function(struct, id, file = "./InclusionList", mode = "both", maxOver = 5,
         p <- p[, c("f", "ad", "mass", "z", "start", "end",  "IT")]
         #Setting column style for Thermo Xcalibur import
         colnames(p) <- c("Formula", "Adduct", "m/z", "z", "t start (min)",
-                         "t stop (min)", "Maximum Injection time (ms)")
-        p[, 5] <- p[, 5]/60
-        p[, 6] <- p[, 6]/60
+                         "t stop (min)", "Maximum Injection Time (ms)")
+        p[, 5] <- floor(p[, 5]*100/60)/100
+        p[, 6] <- ceiling(p[, 6]*100/60)/100
+        # JC: need to consider max absolute RT
         #Added as result of Michi's comment
         p <- cbind(data.frame(Compound = seq_len(nrow(p))), p)
         write.csv(p, file = paste0(file, "_Injection_", x, ".csv"),
-                    row.names = FALSE)
+                  quote=F, row.names = FALSE)
     }
     } else {
         plandf <- do.call(rbind, lapply(seq_along(plan), function(x) {
