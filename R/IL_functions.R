@@ -56,12 +56,22 @@ inclusionList <- function(struct, params, id) {
         low <- which(GL$MaxInt < 50000)
         rare <- which(vapply(GL$ad[low], function(x) {
             !any(unlist(x) %in% c("M+H", "M+NH4", "M+Na", "M+K", "M+", "M-H",
-                                    "M+Cl", "M+Br", "M+H2O-H"))
+                                  "M+Cl", "M+Br", "M+H2O-H"))
         }, logical(1)))
         if (length(rare) != 0) {GL <- GL[-low[rare], ]}
+        GL <- GL[, c("start", "end", "formula", "mass", "MaxInt", "anot")]
+        GL$originalSOI <- unlist(sapply(seq(nrow(GL)),function(j){
+            y <- GL[j,]
+            which(oSoi$start==y$start &
+                      oSoi$end==y$end &
+                      oSoi$mass==y$mass &
+                      oSoi$formula==y$formula)
+        }))
+    }else{
+        GL <- oSoi[, c("start", "end", "formula", "mass", "MaxInt", "anot")]
+        GL$originalSOI <- seq_len(nrow(GL))
     }
-    GL <- GL[, c("start", "end", "formula", "mass", "MaxInt", "anot")]
-    GL$originalSOI <- seq_len(nrow(GL))
+    # GL$originalSOI <- seq_len(nrow(GL))
 
     GL <- lapply(seq_len(nrow(GL)), function(x) {
         cur <- GL[x, ]
