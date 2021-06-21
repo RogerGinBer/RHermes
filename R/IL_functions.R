@@ -52,7 +52,7 @@ inclusionList <- function(struct, params, id) {
     filtermz <- params@filtermz
     filterrt <- params@filterrt
     if (priorization == "yes") {
-        GL <- RHermes:::GLprior(oSoi, adduct, rtmargin, ppm)
+        GL <- GLprior(oSoi, adduct, rtmargin, ppm)
         low <- which(GL$MaxInt < 50000)
         rare <- which(vapply(GL$ad[low], function(x) {
             !any(unlist(x) %in% c("M+H", "M+NH4", "M+Na", "M+K", "M+", "M-H",
