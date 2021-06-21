@@ -45,7 +45,7 @@ setMethod("generateIL", c("RHermesExp", "numeric", "ANY"),
 inclusionList <- function(struct, params, id) {
     SoiList <- struct@data@SOI[[id]]
     ppm <- struct@metadata@ExpParam@ppm
-    GL <- SoiList@SOIList
+    oSoi <- SoiList@SOIList
     rtmargin <- params@rtmargin
     priorization <- params@priorization
     adduct <- params@ad
