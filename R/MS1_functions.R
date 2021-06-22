@@ -116,11 +116,9 @@ import_and_filter <- function(lf, minpks = 20, noise = 1000) {
 }
 
 IonicForm <- function(F_DB, Ad_DB) {
-    suppressWarnings({
-        RES <- bplapply(seq_len(nrow(F_DB)), calculate_ionic_forms,
-                            BPPARAM = bpparam(), F_DB = F_DB,
-                            Ad_DB = Ad_DB)
-    })
+    RES <- lapply(seq_len(nrow(F_DB)), calculate_ionic_forms,
+                        F_DB = F_DB,
+                        Ad_DB = Ad_DB)
     db <- do.call(rbind, lapply(RES, function(x) {x[[1]]}))
     db <- db[!duplicated(db[, 1]), ]
     connections <- do.call(rbind, lapply(RES, function(x) {x[[2]]}))
@@ -303,12 +301,10 @@ IsoCalc <- function(DB, FWHM, intTHR, kTHR, instr = "Orbitrap", refm = 200) {
     rm(DB) #Free up space for Windows SOCK users
     message("")
     message("Calculating isotopes given the instrumental resolution: ")
-
-    suppressWarnings({
-        testres <- bplapply(testiso,
-                            isocalc_parallel, kTHR, resol_factor,
-                            isotopecode, isOrbi, BPPARAM = bpparam())
-    }) #Suppress warnings to avoid the split() "object not multiple of ..."
+    
+    testres <- lapply(testiso,
+                        isocalc_parallel, kTHR, resol_factor,
+                        isotopecode, isOrbi)
 
     #All different isopologues detected in the ionic formula set and their
     #deltaM with respect to M0
@@ -388,47 +384,33 @@ OptScanSearch <- function(DB, raw, ppm, IsoList, labelled = FALSE,
         }))
     }
 
-    ncores <- ifelse(is.numeric(bpparam()$workers[[1]]),
-                    yes = bpparam()$workers, no = 1)
-
-    #Splitting the formulas into a list (with l = number of workers) to reduce
-    #time loss associated with variable loading (in SOCK only)
-    flist <- split(DB, f = seq_len(ncores))
-    PLresults <- bplapply(seq_along(flist), PLparallelfun, flist, raw, IsoList,
-                        labelled, ppm, minhit, BPPARAM = bpparam())
-    PLresults <- do.call(rbind, PLresults)
-
+    pmz <- as.matrix(raw[, 1])
+    curiso <- IsoList[[1]][DB$f]
+    PLresults <- lapply(seq_len(nrow(DB)), function(i) {
+        n <- DB$f[i]
+        mass <- DB$m[i]
+        formula <- as.character(n)
+        if (!labelled) {
+            regularProc(DB, mass, formula, pmz, curiso, ppm,
+                        IsoList, minhit, i, raw)
+        } else {
+            numC <- DB$numC[i]
+            labelledProc(DB, mass, formula, pmz, curiso, ppm,
+                         IsoList, minhit, i, raw, numC)
+        }
+    })
+    PLresults <- rbindlist(PLresults)
+    
     #Output coherence with PLProcesser input
     return(PLresults[, c(3, 2, 4, 5, 1)])
 }
 
-
-PLparallelfun <- function(gr, flist, raw, IsoList, labelled, ppm, minhit){
-    curDB <- flist[[gr]]
-    pmz <- as.matrix(raw[, 1])
-    curiso <- IsoList[[1]][curDB$f]
-    localRES <- lapply(seq_len(nrow(curDB)), function(i) {
-        n <- curDB$f[i]
-        mass <- curDB$m[i]
-        formula <- as.character(n)
-        if (!labelled) {
-            regularProc(curDB, mass, formula, pmz, curiso, ppm,
-                                    IsoList, minhit, i, raw)
-        } else {
-            numC <- curDB$numC[i]
-            labelledProc(curDB, mass, formula, pmz, curiso, ppm,
-                                    IsoList, minhit, i, raw, numC)
-        }
-    })
-    return(do.call(rbind, localRES))
-}
 
 regularProc <- function(curDB, mass, formula, pmz, curiso, ppm, IsoList, minhit,
                         i, raw){
     if (mass < pmz[1, 1] | mass > pmz[nrow(pmz), 1]) {return()}
     ss <- binarySearch(pmz, mass, ppm)
     if (length(ss) < minhit) {return()}  #Return nothing if no M0 hit
-
     isofactors <- curiso[[i]]  #If hit, let's find the isotopologues
     isodf <- IsoList[[2]][isofactors, ]
     ch <- curDB[i, 3]  #Charge to normalize isotope deltam's
@@ -439,10 +421,11 @@ regularProc <- function(curDB, mass, formula, pmz, curiso, ppm, IsoList, minhit,
 
     isom <- mass + (isodf$deltam/abs(ch[[1]]))
     isoss <- lapply(isom, function(m) {
-        if (m < pmz[1, 1] | m > pmz[nrow(pmz), 1]) {return()}
+        # if (m > pmz[nrow(pmz), 1]) {return()}
         #Added small multiplicative factor to ppm. We've seen that
         #isotope peaks may have a bit more error than M0
-        binarySearch(pmz, m, ppm * 1.5)
+        k <- binarySearch(pmz, m, ppm * 1.5)
+        return(k)
     })
     isol <- vapply(isoss, length, FUN.VALUE = numeric(1))
 
@@ -518,14 +501,12 @@ labelledProc <- function(curDB, mass, formula, pmz, curiso, ppm,
 }
 
 binarySearch <- function(plist, m, ppm) {
-    i <- round((m - plist[1, 1])/(plist[nrow(plist), 1] - plist[1,1]) *
-                nrow(plist))[[1]]  #Biased start based on target
-    if (i == 0) {i <- 1}
+    i <- floor(nrow(plist)/2)
     ub <- nrow(plist)
     lb <- 1
     cycles <- 1
     out <- FALSE
-    while (cycles < 50) {
+    while (cycles < 30) {
         dist <- (plist[i, 1] - m)/m * 1e+06
         if (i == ub) {
             break
@@ -572,6 +553,4 @@ binarySearch <- function(plist, m, ppm) {
     if (!out) {return()}
     return(bot:top)
 }
-
-
 
