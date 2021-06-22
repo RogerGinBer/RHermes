@@ -45,23 +45,33 @@ setMethod("generateIL", c("RHermesExp", "numeric", "ANY"),
 inclusionList <- function(struct, params, id) {
     SoiList <- struct@data@SOI[[id]]
     ppm <- struct@metadata@ExpParam@ppm
-    GL <- SoiList@SOIList
+    oSoi <- SoiList@SOIList
     rtmargin <- params@rtmargin
     priorization <- params@priorization
     adduct <- params@ad
     filtermz <- params@filtermz
     filterrt <- params@filterrt
     if (priorization == "yes") {
-        GL <- GLprior(GL, adduct, rtmargin, ppm)
+        GL <- GLprior(oSoi, adduct, rtmargin, ppm)
         low <- which(GL$MaxInt < 50000)
         rare <- which(vapply(GL$ad[low], function(x) {
             !any(unlist(x) %in% c("M+H", "M+NH4", "M+Na", "M+K", "M+", "M-H",
-                                    "M+Cl", "M+Br", "M+H2O-H"))
+                                  "M+Cl", "M+Br", "M+H2O-H"))
         }, logical(1)))
         if (length(rare) != 0) {GL <- GL[-low[rare], ]}
+        GL <- GL[, c("start", "end", "formula", "mass", "MaxInt", "anot")]
+        GL$originalSOI <- unlist(sapply(seq(nrow(GL)),function(j){
+            y <- GL[j,]
+            which(oSoi$start==y$start &
+                      oSoi$end==y$end &
+                      oSoi$mass==y$mass &
+                      oSoi$formula==y$formula)
+        }))
+    }else{
+        GL <- oSoi[, c("start", "end", "formula", "mass", "MaxInt", "anot")]
+        GL$originalSOI <- seq_len(nrow(GL))
     }
-    GL <- GL[, c("start", "end", "formula", "mass", "MaxInt", "anot")]
-    GL$originalSOI <- seq_len(nrow(GL))
+    # GL$originalSOI <- seq_len(nrow(GL))
 
     GL <- lapply(seq_len(nrow(GL)), function(x) {
         cur <- GL[x, ]
@@ -102,8 +112,12 @@ inclusionList <- function(struct, params, id) {
     if(nrow(raw) != 0){
         GL$XIC <- lapply(seq_len(nrow(GL)), function(x){
             cur <- GL[x,]
-            mzs <- c(min(cur$mass) * (1 - ppm * 1e-6),
-                        max(cur$mass) * (1 + ppm * 1e-6))
+            # mzs <- c(min(cur$mass) * (1 - ppm * 1e-6),
+            # max(cur$mass) * (1 + ppm * 1e-6))
+            # mzs <- c(min(cur$mass) - filtermz,
+                     # max(cur$mass) + filtermz)
+            mzs <- c(min(cur$jointentries[[1]]$mass) * (1 - ppm * 1e-6),
+                     max(cur$jointentries[[1]]$mass) * (1 + ppm * 1e-6))
             calculate_XIC_estimation(raw,
                                      mzs,
                                      c(cur$start, cur$end))
