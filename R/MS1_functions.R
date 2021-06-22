@@ -91,12 +91,18 @@ import_and_filter <- function(lf, minpks = 20, noise = 1000) {
     fileml <- mzR::openMSfile(lf)
     plist <- mzR::peaks(fileml)
     h <- mzR::header(fileml)
+
     #Filtering header
     h <- h[, -which(vapply(h, function(x) all(x == 0), FUN.VALUE = logical(1)))]
     if (any(h$peaksCount < minpks)) {
         #Removing scans with very very few peaks detected
         plist <- plist[-which(h$peaksCount < minpks)]
         h <- h[-which(h$peaksCount < minpks), ]
+    }
+    #Removing all MS>1 scans
+    if(any(h$msLevel != 1)){
+        plist <- plist[-which(h$msLevel != 1)]
+        h <- h[-which(h$msLevel != 1), ]
     }
     raw <- lapply(seq_along(plist), function(x) {
         #Extracting raw data into a DT
