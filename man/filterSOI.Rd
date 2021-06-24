@@ -5,9 +5,9 @@
 \alias{filterSOI,RHermesExp,numeric-method}
 \title{filterSOI}
 \usage{
-filterSOI(struct, id, minint = 10000, isofidelity)
+filterSOI(struct, id, minint = 10000, isofidelity, minscore = 0.8)
 
-\S4method{filterSOI}{RHermesExp,numeric}(struct, id, minint = 10000, isofidelity)
+\S4method{filterSOI}{RHermesExp,numeric}(struct, id, minint = 10000, isofidelity, minscore = 0.8)
 }
 \arguments{
 \item{struct}{The RHermesExp object to which the SOI list will be saved.}

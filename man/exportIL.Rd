@@ -5,9 +5,27 @@
 \alias{exportIL,RHermesExp,numeric-method}
 \title{exportIL}
 \usage{
-exportIL(struct, id, file = "./InclusionList", maxOver = 5, sepFiles = FALSE)
+exportIL(
+  struct,
+  id,
+  file = "./InclusionList",
+  mode = "both",
+  maxOver = 5,
+  defaultIT = 100,
+  sepFiles = FALSE,
+  maxInjections = 9999
+)
 
-\S4method{exportIL}{RHermesExp,numeric}(struct, id, file = "./InclusionList", maxOver = 5, sepFiles = FALSE)
+\S4method{exportIL}{RHermesExp,numeric}(
+  struct,
+  id,
+  file = "./InclusionList",
+  mode = "both",
+  maxOver = 5,
+  defaultIT = 100,
+  sepFiles = FALSE,
+  maxInjections = 9999
+)
 }
 \arguments{
 \item{struct}{The RHermesExp object.}
