@@ -157,7 +157,7 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename) {
     }
     Groups <- distinct(Groups)
 
-    
+
     ## Initial Peak Retrieval
     message("Initial peak retrieval:")
     peakscol <- lapply(seq_len(nrow(Groups)), retrievePeaks,
@@ -242,7 +242,7 @@ densityProc <- function(x, DataPL, h){
     message("Running Density Filter")
     BinRes <- densityFilter(DataPL, h, rtbin, "M0", shift)
     cutoff <- BinRes[[1]] * scanspercent
-    
+
     #Correcting CUT < 1 cases to avoid errors (eg. if it was 0, any time region
     #would be included). Added a 1 for robustness.
     cutoff[cutoff < 1] <- median(c(cutoff[cutoff > 1], 1))
@@ -477,6 +477,7 @@ blankSubstraction <- function(Groups, blankPL){
     Groups <- rbind(sure, Groups)
 }
 
+#'@importFrom stats IQR quantile
 firstCleaning <- function(i, Groups, blankPL){
     cur <- Groups[i, ]
     st <- cur$start
@@ -497,11 +498,11 @@ firstCleaning <- function(i, Groups, blankPL){
         (quantile(blankpks$rtiv, 0.25) + quantile(blankpks$rtiv, 0.75))
 
     if(is.na(sampleCV) | is.na(blankCV)){return(FALSE)}
-    
+
     sampleMax <- max(peaks$rtiv)
     # blankMax <- max(blankpks$rtiv)
     q90_ratio <- quantile(peaks$rtiv,0.9) / quantile(blankpks$rtiv,0.9)
-    
+
     #We have to be restrictive with the conditions, otherwise we collect junk
     if (sampleCV/blankCV > 5) {return(TRUE)}
     if (q90_ratio > 3 & sampleMax > 15000) {return(TRUE)}
@@ -525,7 +526,7 @@ prepareNetInput <- function(i, Groups, blankPL){
         smooth_pks <- data.frame(approx(x = peaks,
                                         xout = seq(from = st, to = end,
                                                     length.out = Npoints),
-                                        rule = 1, ties = min)) 
+                                        rule = 1, ties = min))
         smooth_pks[is.na(smooth_pks[, "y"]), "y"] <- 0
         blankpks <- blankPL[.(f)] %>% filter(., .data$rt >= st - deltat &
                                                 .data$rt <= end + deltat &
@@ -573,7 +574,7 @@ parallelFilter <- function(anot, ScanResults, bins, timebin){
     mint <- min(data)
     maxt <- max(data)
     res <- rep(0, length(bins))
-    
+
     #Shortcut to get in which bin each point is
     l <- table(ceiling((data - bins[1]) / timebin))
     if (length(l) == 0) return(res)
@@ -586,14 +587,14 @@ densityFilter <- function(ScanResults, h, timebin, iso = "M0", tshift = 0) {
     rtmin <- floor(min(h$retentionTime))
     rtmax <- ceiling(max(h$retentionTime))
     bins <- seq(from = rtmin - tshift, to = rtmax + tshift, by = timebin)
-    
+
     #Getting how many scans were taken on each bin
     scans <- lapply(bins, function(curbin) {
         return(h %>% filter(., .data$retentionTime > curbin &
                                 .data$retentionTime <= curbin + timebin) %>%
                    dim(.) %>% .[1])
     })
-    
+
     #Counting how many scan entries are on each bin
     setkeyv(ScanResults, c("formv", "rt"))
     RES <- lapply(unique(ScanResults$formv), parallelFilter, ScanResults,
@@ -656,21 +657,23 @@ rho_chaos <- function(data, nlevels = 20, fillGaps = TRUE){
 
 #### filterSOI-related ####
 
-#' @title filterSOI
-#' @author Roger Gine
-#' @description Performs a series of filters and quality checks to a given SOI
-#'   list, removing unwanted SOIs in the process.
-#' @inheritParams findSOI
-#' @param id ID of the SOI list to be filtered/checked.
-#' @param minint Minimun SOI intensity. All SOIs below this value will be
-#'   removed from the SOI list
-#' @param isofidelity Boolean. Whether to perform an isotopic fidelity check.
-#' @return A filtered SOI list.
+#'@title filterSOI
+#'@author Roger Gine
+#'@description Performs a series of filters and quality checks to a given SOI
+#'  list, removing unwanted SOIs in the process.
+#'@inheritParams findSOI
+#'@param id ID of the SOI list to be filtered/checked.
+#'@param minint Minimun SOI intensity. All SOIs below this value will be removed
+#'  from the SOI list
+#'@param isofidelity Boolean. Whether to perform an isotopic fidelity check.
+#'@param minscore Numeric. Minimum value (between 0 and 1) of isofidelity to
+#'  retain an entry. Defaults to 0.8.
+#'@return A filtered SOI list.
 #' @examples
 #'\dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
 #'                              package = "RHermes"))}
 #' struct <- filterSOI(struct, id = 1, minint = 10000, isofidelity = TRUE)
-#' @export
+#'@export
 setGeneric("filterSOI", function(struct, id, minint = 1e4, isofidelity, minscore = 0.8) {
     standardGeneric("filterSOI")
 })

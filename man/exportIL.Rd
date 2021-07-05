@@ -30,32 +30,43 @@ exportIL(
 \arguments{
 \item{struct}{The RHermesExp object.}
 
-\item{id}{The IL ID in the RHermesExp object. The IDs are
-assigned by the order in which the IL are generated.}
+\item{id}{The IL ID in the RHermesExp object. The IDs are assigned by the
+order in which the IL are generated.}
 
-\item{maxOver}{Numeric, very important. It's the number of
-mz-rt segments that can be monitored at the same time by the
-MS instrument. Higher numbers lead to less injections but the
-number of scans for each IL entry will be reduced and gives
-problems when deconvoluting the MS2 spectras.}
+\item{file}{A string containing the folder to save the IL csv/s into and the
+basename for the file. By default will be your working directory and the
+default name is 'InclusionList' as in './InclusionList'.}
 
-\item{sepFiles}{Logical, whether to generate a single csv file
-or multiple csvs, each corresponding to each
-injection/chromatographic run. From our experience with an
-Orbitrap Fusion, separate csvs will simplify the task.}
+\item{mode}{Whether to plan set of continuous MS2 entries (PRM), adaptative
+injection time scans at the apexes of the entries' peaks or both (which
+optimizes instrument free time). Options are: "continuous", "deep" or
+"both".}
 
-\item{folder}{A string containing the folder to save the IL
-csv/s into. By default will be your working directory}
+\item{maxOver}{Numeric, very important. It's the number of mz-rt segments that
+can be monitored at the same time by the MS instrument. Higher numbers lead
+to less injections but the number of scans for each IL entry will be reduced
+and gives problems when deconvoluting the MS2 spectras. It is ignored if
+mode = "deep". Defaults to 5.}
+
+\item{defaultIT}{Numeric, the default IT in ms for continuous MS2 scans (only
+aplicable in Orbitrap instruments and for "continuous" and "both" modes).
+Defaults to 100ms.}
+
+\item{sepFiles}{Logical, whether to generate a single csv file or multiple
+csvs, each corresponding to each injection/chromatographic run. From our
+experience with an Orbitrap Fusion, separate csvs will simplify the task.}
+
+\item{maxInjections}{Numeric, the maximum number of planned injections to
+export. Defaults to 9999 to export all of them.}
 }
 \value{
-Nothing. As a side effect, it generates one/multiple
-.csv files with the inclusion list data
+Nothing. As a side effect, it generates one/multiple .csv files with
+the inclusion list data
 }
 \description{
-Organizes the IL entries into multiple injections
-taking into account the user-specified parameters. Outputs a
-single or multiple csv files that serve as input for the MS
-to performed MSMS analysis.
+Organizes the IL entries into multiple injections taking into
+account the user-specified parameters. Outputs a single or multiple csv
+files that serve as input for the MS to performed MSMS analysis.
 }
 \examples{
 if(FALSE){
