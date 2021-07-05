@@ -31,7 +31,8 @@ comes with an easy to use GUI that will guide you every step of the way.
 
 You are in control of your metabolites: whether it's natural products, biomedical or
 enviormental samples, `RHermes` has you covered. By restricting the formula database,
-you can focus on just the compounds you are interested in.
+you can focus on just the compounds you are interested in and achieve greater
+metabolome coverage depth.
 
 Have you ever wished you could just **see** the metabolites in your data? With
 `RHermes` you can do that and much more. Say goodbye to manually calculating m/z's
@@ -46,8 +47,7 @@ and our article preprint [here](https://www.biorxiv.org/content/10.1101/2021.03.
 
 The recommended system requirements are:
 
-* At least a 4 core processor
-* 8-16 GB of RAM or more
+* At least 8-16 GB of RAM 
 * An internet connection to perform KEGG queries
 
 ## Installation
@@ -64,7 +64,7 @@ devtools::install_github("RogerGinBer/RHermes")
 ## Setup
 `RHermes` can perform almost all its functions after installation, but the SOI
 Blank Substraction step requires a valid `keras` and `tensorflow` installation
-(which rely on Python code).
+(which rely on Python).
 
 ### Option 1: Default installation
 For most users, both `keras` and `tensorflow` can be configured with:
@@ -77,7 +77,8 @@ tensorflow::install_tensorflow()
 After which you can check the following:
 ```{r, eval = FALSE}
 tensorflow::tf_config()
-model <- keras::load_model_hdf5(system.file("extdata", "ImprovedModel.h5", package = "RHermes"))
+model <- keras::load_model_hdf5(system.file("extdata", "ImprovedModel.h5",
+                                            package = "RHermes"))
 is(model, "python.builtin.object") #Gives TRUE if the loading is successful.
 ```
 If both commands don't give any error (the "Your CPU supports ..." warning is
@@ -100,7 +101,8 @@ When finished, type in R:
 ```{r, eval = FALSE}
 reticulate::use_condaenv("newenv", required = TRUE)
 tensorflow::tf_config()
-model <- keras::load_model_hdf5(system.file("extdata", "ImprovedModel.h5", package = "RHermes"))
+model <- keras::load_model_hdf5(system.file("extdata", "ImprovedModel.h5",
+                                            package = "RHermes"))
 ```
 
 Everything should run smoothly. If not, try manually installing Anaconda from
@@ -125,9 +127,13 @@ example <- processMS1(example,
 #Generate SOIs
 example <- findSOI(example, getSOIpar(), 1)
 
-#Generate an IL 
+#Generate an IL (Inclusion List)
 example <- generateIL(example, 1, ILParam())
 ```
+
+With the generated inclusion list, you can export it and run a Parallel Reaction
+Monitoring (PRM) MS2 experiment to reveal coeluting isomers or use any other MS2 mode
+you see fit.
 
 Or start the interactive GUI typing:
 ```{r, eval = FALSE}

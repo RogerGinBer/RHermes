@@ -43,27 +43,35 @@ function(struct, id, rts, minint = Inf) {
 
 #'@title exportIL
 #'@md
-#'@description Organizes the IL entries into multiple injections
-#'  taking into account the user-specified parameters. Outputs a
-#'  single or multiple csv files that serve as input for the MS
-#'  to performed MSMS analysis.
+#'@description Organizes the IL entries into multiple injections taking into
+#'  account the user-specified parameters. Outputs a single or multiple csv
+#'  files that serve as input for the MS to performed MSMS analysis.
 #'
 #'@param struct The RHermesExp object.
-#'@param id The IL ID in the RHermesExp object. The IDs are
-#'  assigned by the order in which the IL are generated.
-#'@param folder A string containing the folder to save the IL
-#'  csv/s into. By default will be your working directory
-#'@param maxOver Numeric, very important. It's the number of
-#'  mz-rt segments that can be monitored at the same time by the
-#'  MS instrument. Higher numbers lead to less injections but the
-#'  number of scans for each IL entry will be reduced and gives
-#'  problems when deconvoluting the MS2 spectras.
-#'@param sepFiles Logical, whether to generate a single csv file
-#'  or multiple csvs, each corresponding to each
-#'  injection/chromatographic run. From our experience with an
-#'  Orbitrap Fusion, separate csvs will simplify the task.
-#'@return Nothing. As a side effect, it generates one/multiple
-#'  .csv files with the inclusion list data
+#'@param id The IL ID in the RHermesExp object. The IDs are assigned by the
+#'  order in which the IL are generated.
+#'@param file A string containing the folder to save the IL csv/s into and the
+#'  basename for the file. By default will be your working directory and the
+#'  default name is 'InclusionList' as in './InclusionList'.
+#'@param mode Whether to plan set of continuous MS2 entries (PRM), adaptative
+#'  injection time scans at the apexes of the entries' peaks or both (which
+#'  optimizes instrument free time). Options are: "continuous", "deep" or
+#'  "both".
+#'@param maxOver Numeric, very important. It's the number of mz-rt segments that
+#'  can be monitored at the same time by the MS instrument. Higher numbers lead
+#'  to less injections but the number of scans for each IL entry will be reduced
+#'  and gives problems when deconvoluting the MS2 spectras. It is ignored if
+#'  mode = "deep". Defaults to 5.
+#'@param defaultIT Numeric, the default IT in ms for continuous MS2 scans (only
+#'  aplicable in Orbitrap instruments and for "continuous" and "both" modes).
+#'  Defaults to 100ms.
+#'@param maxInjections Numeric, the maximum number of planned injections to
+#'  export. Defaults to 9999 to export all of them.
+#'@param sepFiles Logical, whether to generate a single csv file or multiple
+#'  csvs, each corresponding to each injection/chromatographic run. From our
+#'  experience with an Orbitrap Fusion, separate csvs will simplify the task.
+#'@return Nothing. As a side effect, it generates one/multiple .csv files with
+#'  the inclusion list data
 #'@examples
 #'if(FALSE){
 #'    exportIL(myHermes, 1, 'C:/SomeFolder', maxOver = 5, sepFiles = FALSE)
@@ -101,13 +109,14 @@ function(struct, id, file = "./InclusionList", mode = "both", maxOver = 5,
         p <- p[, c("f", "ad", "mass", "z", "start", "end",  "IT")]
         #Setting column style for Thermo Xcalibur import
         colnames(p) <- c("Formula", "Adduct", "m/z", "z", "t start (min)",
-                         "t stop (min)", "Maximum Injection time (ms)")
-        p[, 5] <- p[, 5]/60
-        p[, 6] <- p[, 6]/60
+                         "t stop (min)", "Maximum Injection Time (ms)")
+        p[, 5] <- floor(p[, 5]*100/60)/100
+        p[, 6] <- ceiling(p[, 6]*100/60)/100
+        # JC: need to consider max absolute RT
         #Added as result of Michi's comment
         p <- cbind(data.frame(Compound = seq_len(nrow(p))), p)
         write.csv(p, file = paste0(file, "_Injection_", x, ".csv"),
-                    row.names = FALSE)
+                  quote=F, row.names = FALSE)
     }
     } else {
         plandf <- do.call(rbind, lapply(seq_along(plan), function(x) {
@@ -128,17 +137,17 @@ injectionPlanner <- function(IL, injections, maxover, byMaxInt = TRUE,
     idx <- which(is.na(IL$start) | is.na(IL$end))  #NA depuration
     if (length(idx) != 0) {IL <- IL[-idx, ]}
     plan <- list()
-    
+
     if(mode != "continuous"){
         message("Calculating high IT scans")
         deep_IL <- calculate_deep_IL(IL)
     } else {
         deep_IL <- data.frame()
     }
-    
+
     mint <- min(IL$start)
     maxt <- max(IL$end)
-    
+
     if(mode %in% c("continuous", "both")){
         while (nrow(IL) != 0 & injections > 0) {
             timeInt <- seq(mint,
@@ -154,7 +163,7 @@ injectionPlanner <- function(IL, injections, maxover, byMaxInt = TRUE,
             }
             curinj <- IL[ok_entries, ]
             IL <- IL[-ok_entries, ]
-            
+
             if(mode == "both" & any(OL == 0)){
                 deep_ok_entries <- c()
                 for (i in seq_len(nrow(deep_IL))) {
@@ -170,7 +179,7 @@ injectionPlanner <- function(IL, injections, maxover, byMaxInt = TRUE,
                     curinj <- rbind(curinj, deep_curinj, fill = TRUE)
                 }
             }
-            
+
             plan <- c(plan, list(curinj))
             injections <- injections - 1
         }
@@ -218,7 +227,7 @@ injectionPlanner <- function(IL, injections, maxover, byMaxInt = TRUE,
         }
     }
 
-    
+
     if (nrow(IL) != 0) {
         message(paste0(nrow(IL), "ILs haven't been added to the injection plan",
                        " due to lack of space. Try again with more injections,",
@@ -248,10 +257,10 @@ setMethod("show", "RHermesIL", function(object){
 })
 
 calculate_XIC_estimation <- function(raw, mzs, rts){
-    points <- filter(raw, between(mz, mzs[1], mzs[2]))
-    points <- filter(points, between(rt, rts[1], rts[2]))
+    points <- filter(raw, between(.data$mz, mzs[1], mzs[2]))
+    points <- filter(points, between(.data$rt, rts[1], rts[2]))
     xic <- sapply(unique(points$rt), function(rt){
-        sum(points$rtiv[points$rt == rt])    
+        sum(points$rtiv[points$rt == rt])
     })
     xic <- data.frame(rt = unique(points$rt), int = xic)
     return(xic)
@@ -292,10 +301,11 @@ calculate_best_interval <- function(scans, objective = 1e6, maxIT = 2000){
     intervals <- lapply(apexes, function(apex){
         maxt <- min(max(apex - min(scans$rt), max(scans$rt) - apex), maxIT/1000)
         scans <- approx(scans$rt, scans$int, n = 1000) %>% do.call(rbind, .) %>%
-            t %>% as.data.frame %>% rename(rt = x, rtiv = y)
+            t %>% as.data.frame
         for(t in seq(0.1, maxt, 0.01)){
             integral <- calculate_integral(filter(scans,
-                                                  between(rt, apex-t, apex+t)))
+                                                  between(.data$x,
+                                                          apex-t, apex+t)))
             if(integral > objective){return(c(apex-t, apex+t))}
         }
         return(c(apex-maxt, apex+maxt))
@@ -311,7 +321,7 @@ calculate_integral <- function(scans){
 # Authorship Evan Friedland, Stackoverflow #6836409
 inflect <- function(x, threshold = 1){
     up   <- sapply(1:threshold, function(n) c(x[-(seq(n))], rep(NA, n)))
-    down <-  sapply(-1:-threshold, function(n){ 
+    down <-  sapply(-1:-threshold, function(n){
         c(rep(NA, abs(n)),
             x[-seq(length(x), length(x) - abs(n) + 1)])
     })

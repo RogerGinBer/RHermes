@@ -24,7 +24,7 @@ the way.
 You are in control of your metabolites: whether it’s natural products,
 biomedical or enviormental samples, `RHermes` has you covered. By
 restricting the formula database, you can focus on just the compounds
-you are interested in.
+you are interested in and achieve greater metabolome coverage depth.
 
 Have you ever wished you could just **see** the metabolites in your
 data? With `RHermes` you can do that and much more. Say goodbye to
@@ -39,8 +39,7 @@ For more info, check out the documentation
 
 The recommended system requirements are:
 
--   At least a 4 core processor
--   8-16 GB of RAM or more
+-   At least 8-16 GB of RAM
 -   An internet connection to perform KEGG queries
 
 ## Installation
@@ -58,7 +57,7 @@ devtools::install_github("RogerGinBer/RHermes")
 
 `RHermes` can perform almost all its functions after installation, but
 the SOI Blank Substraction step requires a valid `keras` and
-`tensorflow` installation (which rely on Python code).
+`tensorflow` installation (which rely on Python).
 
 ### Option 1: Default installation
 
@@ -74,7 +73,8 @@ After which you can check the following:
 
 ``` r
 tensorflow::tf_config()
-model <- keras::load_model_hdf5(system.file("extdata", "ImprovedModel.h5", package = "RHermes"))
+model <- keras::load_model_hdf5(system.file("extdata", "ImprovedModel.h5",
+                                            package = "RHermes"))
 is(model, "python.builtin.object") #Gives TRUE if the loading is successful.
 ```
 
@@ -101,7 +101,8 @@ When finished, type in R:
 ``` r
 reticulate::use_condaenv("newenv", required = TRUE)
 tensorflow::tf_config()
-model <- keras::load_model_hdf5(system.file("extdata", "ImprovedModel.h5", package = "RHermes"))
+model <- keras::load_model_hdf5(system.file("extdata", "ImprovedModel.h5",
+                                            package = "RHermes"))
 ```
 
 Everything should run smoothly. If not, try manually installing Anaconda
@@ -131,9 +132,13 @@ example <- processMS1(example,
 #Generate SOIs
 example <- findSOI(example, getSOIpar(), 1)
 
-#Generate an IL 
+#Generate an IL (Inclusion List)
 example <- generateIL(example, 1, ILParam())
 ```
+
+With the generated inclusion list, you can export it and run a Parallel
+Reaction Monitoring (PRM) MS2 experiment to reveal coeluting isomers or
+use any other MS2 mode you see fit.
 
 Or start the interactive GUI typing:
 

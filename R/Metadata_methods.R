@@ -164,7 +164,7 @@ function(struct, db = "hmdb", adcharge = 1, admult = 1, DBfile = "",
         row.names(struct@metadata@ExpParam@adlist) <- NULL
         if(all(!is.na(adlist))){
             struct@metadata@ExpParam@adlist <- filter(adlist(struct),
-                                                      adduct %in% adlist)
+                                                      .data$adduct %in% adlist)
             if(nrow(adlist(struct)) == 0){
                 warning("No adducts remaining, please check the adduct names.")
             }
