@@ -32,7 +32,7 @@ test_that("Labelled proc works",{
                                         package = "RHermes"),
                             labelled = TRUE)
 
-    expect_equal(nrow(myHermes@data@PL[[2]]@peaklist), 1534)
+    expect_equal(nrow(myHermes@data@PL[[2]]@peaklist), 1378)
 })
 
 test_that("PL plot works", {

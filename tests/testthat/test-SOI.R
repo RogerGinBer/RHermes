@@ -110,7 +110,7 @@ test_that("SOI are filtered correctly", {
                                     package = "RHermes"))
     myHermes <- filterSOI(myHermes, 1, 20000, TRUE)
     #Performs equal to the precalculated version
-    expect_equal(nrow(myHermes@data@SOI[[1]]@SOIList), 9)
+    expect_equal(nrow(myHermes@data@SOI[[1]]@SOIList), 8)
 })
 
 
