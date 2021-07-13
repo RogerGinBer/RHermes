@@ -436,13 +436,12 @@ parallelGroupShort <- function(i, LG, maxlen){
 blankSubstraction <- function(Groups, blankPL){
     message("Blank substraction:")
     setkeyv(blankPL, c("formv", "rt"))
-
     message("First cleaning")
     toKeep <- lapply(seq_len(nrow(Groups)), firstCleaning, Groups, blankPL) %>%
         unlist()
     sure <- Groups[which(toKeep), ]
     if (any(toKeep)) {Groups <- Groups[-which(toKeep),]}
-    reticulate::py_available(initialize = TRUE)
+    reticulate::py_available(initialize = TRUE)  #Start Python connection
     if (reticulate::py_module_available("keras") &
         reticulate::py_module_available("tensorflow")) {
         model <- load_model_hdf5(system.file("extdata", "ImprovedModel.h5",
@@ -469,12 +468,15 @@ blankSubstraction <- function(Groups, blankPL){
 
         Groups <- Groups[-which(q == 0), ]  #ANN output
         Groups <- Groups[, -c("MLdata")]
+        Groups <- rbind(sure, Groups)
         }
     } else {
-        warning(paste("A Keras installation was not found and ANN blank",
-                "substraction was not performed"))
+        Groups <- sure
+        warning("A Keras installation was not found and ANN blank ",
+                "substraction was not performed. A rougher intensity ",
+                "quotient metric was applied instead.")
     }
-    Groups <- rbind(sure, Groups)
+    return(Groups)
 }
 
 #'@importFrom stats IQR quantile
