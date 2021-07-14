@@ -68,8 +68,7 @@ function(struct, id, rts, minint = Inf) {
 #'@param maxInjections Numeric, the maximum number of planned injections to
 #'  export. Defaults to 9999 to export all of them.
 #'@param sepFiles Logical, whether to generate a single csv file or multiple
-#'  csvs, each corresponding to each injection/chromatographic run. From our
-#'  experience with an Orbitrap Fusion, separate csvs will simplify the task.
+#'  csvs, each corresponding to each injection/chromatographic run. 
 #'@return Nothing. As a side effect, it generates one/multiple .csv files with
 #'  the inclusion list data
 #'@examples
@@ -79,14 +78,14 @@ function(struct, id, rts, minint = Inf) {
 #'@export
 setGeneric("exportIL", function(struct, id, file = "./InclusionList",
                                 mode = "both", maxOver = 5, defaultIT = 100,
-                                sepFiles = FALSE, maxInjections = 9999) {
+                                sepFiles = TRUE, maxInjections = 9999) {
     standardGeneric("exportIL")
 })
 
 #'@rdname exportIL
 setMethod("exportIL", c("RHermesExp", "numeric", "ANY", "ANY", "ANY", "ANY"),
 function(struct, id, file = "./InclusionList", mode = "both", maxOver = 5,
-         defaultIT = 100, sepFiles = FALSE, maxInjections = 9999) {
+         defaultIT = 100, sepFiles = TRUE, maxInjections = 9999) {
     validObject(struct)
     if (length(struct@data@MS2Exp) == 0) {
         stop("This object doesn't have any ILs")
@@ -96,7 +95,7 @@ function(struct, id, file = "./InclusionList", mode = "both", maxOver = 5,
     }
     IL <- struct@data@MS2Exp[[id]]@IL@IL
     IL$IT <- defaultIT
-    plan <- injectionPlanner(IL, 10, maxOver, byMaxInt = TRUE,
+    plan <- injectionPlanner(IL, maxOver = maxOver, byMaxInt = TRUE,
                              injections = maxInjections,
                              mode = mode)
     if (sepFiles) {
@@ -130,9 +129,8 @@ function(struct, id, file = "./InclusionList", mode = "both", maxOver = 5,
 })
 
 
-injectionPlanner <- function(IL, injections, maxover, byMaxInt = TRUE,
-                             mode = "continuous", returnAll = FALSE) {
-    if (returnAll) {injections <- 1e4}
+injectionPlanner <- function(IL, injections, maxOver, byMaxInt = TRUE,
+                             mode = "continuous") {
     if (byMaxInt) {IL <- IL[order(-IL$MaxInt), ]}
     idx <- which(is.na(IL$start) | is.na(IL$end))  #NA depuration
     if (length(idx) != 0) {IL <- IL[-idx, ]}
@@ -157,7 +155,7 @@ injectionPlanner <- function(IL, injections, maxover, byMaxInt = TRUE,
             ok_entries <- c()
             for (i in seq_len(nrow(IL))) {
                 timeidx <- which(timeInt >= IL$start[i] & timeInt <= IL$end[i])
-                if (any(OL[timeidx] >= maxover)) {next}
+                if (any(OL[timeidx] >= maxOver)) {next}
                 ok_entries <- c(ok_entries, i)
                 OL[timeidx] <- OL[timeidx] + 1
             }
@@ -186,7 +184,8 @@ injectionPlanner <- function(IL, injections, maxover, byMaxInt = TRUE,
         if(mode == "both" & nrow(deep_IL) != 0){
             message(paste(nrow(deep_IL), "high IT scans could not be planned",
                           "within the continuous MS2 injections.",
-                          "Adding them separately."))
+                          "Adding them separately after injection",
+                          length(plan)))
             while (nrow(deep_IL) != 0 & injections > 0) {
                 timeInt <- seq(min(deep_IL$start, na.rm = TRUE),
                                max(deep_IL$end, na.rm = TRUE),
@@ -231,7 +230,7 @@ injectionPlanner <- function(IL, injections, maxover, byMaxInt = TRUE,
     if (nrow(IL) != 0) {
         message(paste0(nrow(IL), "ILs haven't been added to the injection plan",
                        " due to lack of space. Try again with more injections,",
-                       " more maxover or returnAll = TRUE"))
+                       " more maxOver or maxInjections"))
     }
     # print(plot(cumsum(sapply(plan, nrow))))
     # hist_data <- lapply(seq_along(plan), function(x){
