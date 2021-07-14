@@ -468,14 +468,22 @@ blankSubstraction <- function(Groups, blankPL){
 
         Groups <- Groups[-which(q == 0), ]  #ANN output
         Groups <- Groups[, -c("MLdata")]
-        Groups <- rbind(sure, Groups)
+
         }
     } else {
-        Groups <- sure
+        setkeyv(blankPL, "formv")
+        message("Preparing input for cosine similarity")
+        RES <- lapply(seq_len(nrow(Groups)), prepareNetInput, Groups, blankPL)
+        cosines <- sapply(RES, function(x){
+            philentropy::cosine_dist(x[1,] + 1e-12, x[2,] + 1e-12,
+                                     testNA = FALSE)
+        })
+        Groups <- Groups[cosines > 0.8, ]
         warning("A Keras installation was not found and ANN blank ",
-                "substraction was not performed. A rougher intensity ",
-                "quotient metric was applied instead.")
+                "substraction was not performed. A less-accurate ",
+                "cosine similarity score was applied instead.")
     }
+    Groups <- rbind(sure, Groups)
     return(Groups)
 }
 
