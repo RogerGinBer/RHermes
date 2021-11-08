@@ -32,8 +32,8 @@ manually calculating m/z’s and plotting XIC of different adducts: with
 our GUI you are just one click away from a metabolite-centric plot.
 
 For more info, check out the documentation
-[here](https://rogerginber.github.io/RHermes/) and our article preprint
-[here](https://www.biorxiv.org/content/10.1101/2021.03.08.434466v1.full.pdf)
+[here](https://rogerginber.github.io/RHermes/) and the Nature Methods article
+[here](https://www.nature.com/articles/s41592-021-01307-z)
 
 ## System requirements
 
@@ -162,8 +162,4 @@ Suggestions and bug reports are more than welcome at:
 
 Please cite this package as:
 
-HERMES: a molecular formula-oriented method to target the metabolome
-Roger Giné, Jordi Capellades, Josep M. Badia, Dennis Vughs, Michaela
-Schwaiger-Haber, Maria Vinaixa, Andrea M. Brunner, Gary J. Patti, Oscar
-Yanes bioRxiv 2021.03.08.434466; doi:
-<https://doi.org/10.1101/2021.03.08.434466>
+Giné, R., Capellades, J., Badia, J.M. et al. HERMES: a molecular-formula-oriented method to target the metabolome. Nat Methods 18, 1370–1376 (2021). https://doi.org/10.1038/s41592-021-01307-z
