@@ -464,9 +464,9 @@ blankSubstraction <- function(Groups, blankPL){
             organizeddata <- keras::array_reshape(organizeddata,
                                                 c(nrow(organizeddata), 400),
                                                 order = "C")  #ANN input
-        q <- model %>% keras::predict_classes(organizeddata)
+        q <- model %>% predict(organizeddata) %>% k_argmax()
 
-        Groups <- Groups[-which(q == 0), ]  #ANN output
+        Groups <- Groups[-which(q$numpy == 0), ]  #ANN output
         Groups <- Groups[, -c("MLdata")]
 
         }

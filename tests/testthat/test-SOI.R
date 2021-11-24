@@ -67,8 +67,8 @@ test_that("Blank substraction is configured and works",{
     organizeddata <- keras::array_reshape(organizeddata,
                                                 c(nrow(organizeddata), 400),
                                                 order = "C")  #ANN input
-    q <- model %>% keras::predict_classes(organizeddata)
-    expect_true(all(q == c(0,0,0)))
+    q <- model %>% predict(organizeddata) %>% k_argmax()
+    expect_true(all(q$numpy() == 0))
 })
 
 test_that("SOI plot works", {
