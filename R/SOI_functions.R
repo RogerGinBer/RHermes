@@ -433,6 +433,7 @@ parallelGroupShort <- function(i, LG, maxlen){
     return(NewGR)
 }
 
+#' @importFrom keras k_argmax array_reshape
 blankSubstraction <- function(Groups, blankPL){
     message("Blank substraction:")
     setkeyv(blankPL, c("formv", "rt"))
