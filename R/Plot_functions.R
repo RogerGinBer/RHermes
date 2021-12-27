@@ -455,7 +455,7 @@ function(struct, id, entry, plot = TRUE) {
             isoname <- paste0("[", atom, "]", 1)
             cur <- df[df$code == isoname, ]
             th <- cur$abundance[cur$class == "Theoretical"]
-            if (th < 30000) {
+            if (th[1] < 30000) {
                 return(NA)
             }
             exp <- cur$abundance[cur$class == "Experimental"]
