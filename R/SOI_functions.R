@@ -172,6 +172,15 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename) {
     if (any(Groups$length > maxlen)) {
         Groups <- groupShort(Groups, maxlen)
     }
+    
+    message("Number of scans:")
+    nscans <- apply(Groups, 1, function(x) {
+        d <- x["peaks"][[1]]
+        return(dim(d)[1])
+    })
+    Groups$nscans <- nscans
+    Groups <- Groups[Groups$nscans > 5, ]
+    
     ## Blank substraction
     if (useblank) {
         Groups <- blankSubstraction(Groups, blankPL)
@@ -200,14 +209,6 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename) {
     })
     Groups$MaxInt <- MaxI
     Groups <- Groups[Groups$MaxInt > 0, ]
-
-    message("Number of scans:")
-    nscans <- apply(Groups, 1, function(x) {
-        d <- x["peaks"][[1]]
-        return(dim(d)[1])
-    })
-    Groups$nscans <- nscans
-    Groups <- Groups[Groups$nscans > 2, ]
 
     message("Converting from ionic formula to F/A combinations:")
     Groups$anot <- lapply(Groups$formula, function(x) {
@@ -378,43 +379,43 @@ parallelGroupShort <- function(i, LG, maxlen){
         starts <- pks[,2]
         ends <- pks[,3]
         known_peak <- rep(TRUE, nrow(pks))
-    if (nrow(pks) > 1) {
-        for (i in seq_len(nrow(pks) - 1)) {
-            if (ends[i] < starts[i + 1]) {
-            starts <- c(starts, ends[i])
-            ends <- c(ends, starts[i + 1])
+        if (nrow(pks) > 1) {
+            for (i in seq_len(nrow(pks) - 1)) {
+                if (ends[i] < starts[i + 1]) {
+                starts <- c(starts, ends[i])
+                ends <- c(ends, starts[i + 1])
+                known_peak <- c(known_peak, FALSE)
+                }
+            }
+        }
+        if (min(ms1data[,1]) < min(starts)) {
+            ends <- c(ends, min(starts))
+            starts <- c(starts, min(ms1data[, 1]))
             known_peak <- c(known_peak, FALSE)
             }
-        }
-    }
-    if (min(ms1data[,1]) < min(starts)) {
-        ends <- c(ends, min(starts))
-        starts <- c(starts, min(ms1data[, 1]))
-        known_peak <- c(known_peak, FALSE)
-        }
-    if (max(ms1data[,1]) > max(ends)) {
-        starts <- c(starts, max(ends))
-        ends <- c(ends, max(ms1data[, 1]))
-        known_peak <- c(known_peak, FALSE)
-        }
-    if (any(!known_peak)) {
-        too_long <- ends - starts > maxlen
-        if (any(too_long & !known_peak)) {
-            for (i in which(too_long & !known_peak)) {
-            curstart <- starts[i]
-            curend <- ends[i]
-            times <- seq(from = curstart, to = curend,
-                        length.out = ceiling((curend - curstart) / maxlen) + 1)
-            starts <- c(starts, times[-length(times)])
-            ends <- c(ends, times[-1])
+        if (max(ms1data[,1]) > max(ends)) {
+            starts <- c(starts, max(ends))
+            ends <- c(ends, max(ms1data[, 1]))
+            known_peak <- c(known_peak, FALSE)
             }
-        starts <- starts[-which(too_long & !known_peak)]
-        ends <- ends[-which(too_long & !known_peak)]
+        if (any(!known_peak)) {
+            too_long <- ends - starts > maxlen
+            if (any(too_long & !known_peak)) {
+                for (i in which(too_long & !known_peak)) {
+                curstart <- starts[i]
+                curend <- ends[i]
+                times <- seq(from = curstart, to = curend,
+                        length.out = ceiling((curend - curstart) / maxlen) + 1)
+                starts <- c(starts, times[-length(times)])
+                ends <- c(ends, times[-1])
+                }
+            starts <- starts[-which(too_long & !known_peak)]
+            ends <- ends[-which(too_long & !known_peak)]
+            }
         }
-    }
-    NewGR <- data.table(start = starts, end = ends,
-                        length = ends - starts, formula = curGR$formula,
-                        peaks = curGR$peaks, mass = curGR$mass)
+        NewGR <- data.table(start = starts, end = ends,
+                            length = ends - starts, formula = curGR$formula,
+                            peaks = curGR$peaks, mass = curGR$mass)
     } else {
         #Divide long group into equal-sized smaller groups
         times <- seq(from = curGR[1, 1][[1]], to = curGR[1, 2][[1]],
@@ -433,16 +434,16 @@ parallelGroupShort <- function(i, LG, maxlen){
     return(NewGR)
 }
 
+#' @importFrom keras k_argmax array_reshape
 blankSubstraction <- function(Groups, blankPL){
     message("Blank substraction:")
     setkeyv(blankPL, c("formv", "rt"))
-
     message("First cleaning")
     toKeep <- lapply(seq_len(nrow(Groups)), firstCleaning, Groups, blankPL) %>%
         unlist()
     sure <- Groups[which(toKeep), ]
     if (any(toKeep)) {Groups <- Groups[-which(toKeep),]}
-    reticulate::py_available(initialize = TRUE)
+    reticulate::py_available(initialize = TRUE)  #Start Python connection
     if (reticulate::py_module_available("keras") &
         reticulate::py_module_available("tensorflow")) {
         model <- load_model_hdf5(system.file("extdata", "ImprovedModel.h5",
@@ -465,16 +466,28 @@ blankSubstraction <- function(Groups, blankPL){
             organizeddata <- keras::array_reshape(organizeddata,
                                                 c(nrow(organizeddata), 400),
                                                 order = "C")  #ANN input
-        q <- model %>% keras::predict_classes(organizeddata)
+        q <- model %>% predict(organizeddata) %>% k_argmax()
 
-        Groups <- Groups[-which(q == 0), ]  #ANN output
+        Groups <- Groups[-which(q$numpy == 0), ]  #ANN output
         Groups <- Groups[, -c("MLdata")]
+
         }
     } else {
-        warning(paste("A Keras installation was not found and ANN blank",
-                "substraction was not performed"))
+        setkeyv(blankPL, "formv")
+        message("Preparing input for cosine similarity")
+        RES <- lapply(seq_len(nrow(Groups)), prepareNetInput, Groups, blankPL)
+        cosines <- sapply(RES, function(x){
+            if(is.na(x)[1]){return(Inf)}
+            philentropy::cosine_dist(x[1,] + 1e-12, x[2,] + 1e-12,
+                                     testNA = FALSE)
+        })
+        Groups <- Groups[cosines < 0.8, ]
+        warning("A Keras installation was not found and ANN blank ",
+                "subtraction was not performed. A less-accurate ",
+                "cosine similarity score was applied instead.")
     }
     Groups <- rbind(sure, Groups)
+    return(Groups)
 }
 
 #'@importFrom stats IQR quantile
