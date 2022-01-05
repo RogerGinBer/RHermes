@@ -236,8 +236,8 @@ SOIServer <- function(id, struct){
                       style = "margin-top: 5px"
                       ))
             ),
-            numericInput(ns("numericval"), label = "Minimum SOI intensity", value = 0,
-                         min = 0, max = 1e5, step = 1000),
+            numericInput(ns("minfilter"), label = "Minimum SOI intensity", value = 0,
+                         min = 0, max = 5e5, step = 1000),
             fluidRow(
               actionButton(inputId = ns("soiClean"), label = "Start SOI Cleaning",
                            style = "text-align: center; background-color: #4d4263; color: #F0F0F0"),
@@ -247,11 +247,7 @@ SOIServer <- function(id, struct){
 
       }, ignoreNULL = TRUE,ignoreInit = TRUE, priority = 100)
 
-      observeEvent(input$minfilter,{
-        updateNumericInput(session, "numericval", value = input$minfilter)
-      })
-
-      observeEvent(input$soiClean,{
+      observeEvent(input$soiClean, {
         struct$dataset <- filterSOI(struct$dataset,
                             as.numeric(input$soiChoices),
                             as.numeric(input$minfilter),

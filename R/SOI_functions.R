@@ -707,7 +707,12 @@ setMethod("filterSOI", signature = c("RHermesExp", "numeric", "ANY", "ANY", "ANY
         ##Filter by maximum intensity
         intense_enough <- which(soilist$MaxInt > minint)
         soilist <- soilist[intense_enough, ]
-
+        if(nrow(soilist) == 0){
+            warning("No SOIs remaining after filtering by intensity. ",
+                    "Aborting filter")
+            return(struct)
+        }
+        
         ##Filter by isotopic fidelity
         if (isofidelity) {
             # Isotopic elution similarity
@@ -717,6 +722,12 @@ setMethod("filterSOI", signature = c("RHermesExp", "numeric", "ANY", "ANY", "ANY
             soilist <- soilist[good, ]
             with_isos <- intense_enough[good]
 
+            if(nrow(soilist) == 0){
+                warning("No SOIs remaining after filtering by isotopic elution",
+                        " similarity. Aborting filter")
+                return(struct)
+            }
+            
             # Isotopic pattern similarity
             message("Calculating isotopic fidelity metrics:")
             isodata <- lapply(with_isos, plotFidelity, struct = struct,
@@ -726,6 +737,12 @@ setMethod("filterSOI", signature = c("RHermesExp", "numeric", "ANY", "ANY", "ANY
             soilist$isofidelity <- cos
             soilist <- soilist[cos > minscore, ]
 
+            if(nrow(soilist) == 0){
+                warning("No SOIs remaining after filtering by isotopic ",
+                        "fidelity. Aborting filter")
+                return(struct)
+            }
+            
             rtmargin <- 20
             # Removing confirmed isotopic signals
             soilist <- soilist[order(-soilist$MaxInt), ]
