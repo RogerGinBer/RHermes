@@ -83,8 +83,6 @@ SOIPlotServer <- function(id, struct){
       struct$dataset@data@SOI
       },{
      if(struct$hasSOI){
-
-
        soiNames <- lapply(struct$dataset@data@SOI, function(x){
           parsed <-  strsplit(x@filename, "/")[[1]]
           return(parsed[length(parsed)])
@@ -104,7 +102,7 @@ SOIPlotServer <- function(id, struct){
                          value = c(0, ceiling(max(struct$dataset@data@SOI[[1]]@PlotDF$rt))))
        updatePickerInput(session, "ads", choices = struct$dataset@metadata@ExpParam@adlist$adduct,
                          selected = struct$dataset@metadata@ExpParam@adlist$adduct)
-     }else{
+     } else {
        updateSelectizeInput(session, "SOIcompselect", choices = "No file detected")
        updateSelectizeInput(session, "SOIformselect", choices = "No file detected")
        updateRadioButtons(session, "soifiles", choices = "")
@@ -120,6 +118,7 @@ SOIPlotServer <- function(id, struct){
       input$dynamicaxis
       input$ads
     },{
+    tryCatch({
       if(struct$hasSOI){
         if(input$SOIplotmode == "By compound name"){
           if(input$SOIcompselect == ""){return()}
@@ -158,6 +157,7 @@ SOIPlotServer <- function(id, struct){
                                                               ads = as.character(input$ads),
                                                              ))
       }
+    }, error = function(cond){warning("SOI plot failed")})
     }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
     observeEvent({
@@ -168,6 +168,7 @@ SOIPlotServer <- function(id, struct){
       input$RTinterval
       input$ads
     },{
+    tryCatch({
       if(struct$hasSOI){
         if(input$SOIplotmode == "By compound name"){
           if(input$SOIcompselect == ""){return()}
@@ -209,10 +210,8 @@ SOIPlotServer <- function(id, struct){
         )
         updateSelectizeInput(session, "choicesfidelity", choices = rows)
         updateSelectizeInput(session, "choicescos", choices = rows)
-
-
-
       }
+    }, error = function(cond){warning("Fidelity or SOI cosine choices update failed")})
       }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
 
@@ -235,7 +234,7 @@ SOIPlotServer <- function(id, struct){
                                                  "Veredict: ", isoresults[[3]], "\n",
                                                  "Isotopic similarity score: ", isoresults[[4]], "\n",
                                                  het_text))
-        }, error = function(e){message(e)})
+        }, error = function(cond){warning("Isotopic fidelity plot failed")})
 
       }
     }, ignoreNULL = TRUE, ignoreInit = TRUE)
@@ -254,7 +253,7 @@ SOIPlotServer <- function(id, struct){
                 output$cos_table <- renderDataTable(sois[order(cos, decreasing = TRUE), -c("length","width","peaks")],
                                                     options = list(scrollX = TRUE, autoWidth = TRUE))
 
-            }, error = function(e){message(e)})
+            }, error = function(cond){warning("SOI cosine similarity failed")})
 
         }
     }, ignoreNULL = TRUE, ignoreInit = TRUE)
