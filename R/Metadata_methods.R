@@ -147,12 +147,14 @@ function(struct, db = "hmdb", adcharge = 1, admult = 1, DBfile = "",
         stop("Please input a valid DB name")
     )
     struct@metadata@ExpParam@DB <- dbdata
+    
     #Set corresponding adduct table
     if(adductfile != ""){
-        struct@metadata@ExpParam@adlist <- tryCatch(
-            read.csv(adductfile),
-            error = function(cond){stop("Invalid csv address")
-        })
+        ad <- tryCatch(read.csv(adductfile), 
+                       error = function(cond){stop("Invalid csv address")})
+        check_adduct_validity(ad)
+        struct@metadata@ExpParam@adlist <- ad
+        
     } else {
         ad <- adductTables(adcharge, admult)
         ion <- struct@metadata@ExpParam@ion
@@ -177,6 +179,29 @@ function(struct, db = "hmdb", adcharge = 1, admult = 1, DBfile = "",
                                     admult))
     return(struct)
 })
+
+check_adduct_validity <- function(adduct_df){
+    adduct_fields <- c("adduct", "Charge", "Mult", "massdiff", "Ion_mode",
+                       "Formula_add", "Formula_ded")
+    missing <- !colnames(adduct_df) %in% adduct_fields
+    if(any(missing)){
+        stop("The following adduct fields are missing:",
+             colnames(adduct_df)[missing])
+    }
+    if(ncol(adduct_df) != 7){
+        warning("The number of adduct fields does not match with expectations")
+    }
+    if(colnames(adduct_df) != adduct_fields){
+        stop("The adduct fields aren't ordered correctly\n",
+             "Expected order: ", paste(adduct_fields, collapse ="/"))
+    }
+    if(nrow(adduct_df) == 0){
+        stop("No adduct rows in the dataframe")
+    }
+}
+
+
+
 
 #' @title addAd
 #' @description Adds new custom adducts to the RHermesExp adduct
