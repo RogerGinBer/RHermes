@@ -43,13 +43,14 @@
 #'@import magrittr
 #'@import tensorflow
 #'@import reticulate
-setGeneric("findSOI", function(struct, params, fileID, blankID = numeric(0)) {
+setGeneric("findSOI", function(struct, params, fileID, blankID = numeric(0),
+                               mode = "regular") {
     standardGeneric("findSOI")
 })
 
 #' @rdname findSOI
-setMethod("findSOI", c("RHermesExp", "ANY", "ANY", "ANY"),
-function(struct, params, fileID, blankID = numeric(0)) {
+setMethod("findSOI", c("RHermesExp", "ANY", "ANY", "ANY", "ANY"),
+function(struct, params, fileID, blankID = numeric(0), mode = "regular") {
     if (length(blankID) == 0) {
         blankID <- rep(0, length(fileID))
     } else if (length(blankID) < length(fileID)){
@@ -102,7 +103,7 @@ function(struct, params, fileID, blankID = numeric(0)) {
         struct@data@SOI <- c(struct@data@SOI,
                             PLprocesser(struct@data@PL[[idx]],
                             struct@metadata@ExpParam, cur, blankPL,
-                            struct@metadata@filenames[idx]
+                            struct@metadata@filenames[idx], mode
                             ))
         if (blankID[i] == 0) {
             struct <- setTime(struct,
@@ -120,12 +121,13 @@ function(struct, params, fileID, blankID = numeric(0)) {
 })
 
 #' @importFrom stats  approx  median  sd
-PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename) {
+PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename, mode = "regular") {
     ## Extracting info from S4 objects into local variables
     DataPL <- PL@peaklist
     h <- PL@header
     formulaDB <- ExpParam@ionF[[1]]
     FA_to_ion <- ExpParam@ionF[[2]]
+    ppm <- ExpParam@ppm
 
     params <- SOIParam@specs
     maxlen <- SOIParam@maxlen
@@ -141,53 +143,67 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename) {
     setkeyv(formulaDB, c("f"))
     setkeyv(FA_to_ion, c("ion"))
 
-    ## Density filtering
-    message("Starting density filtering: ")
-    GR <- apply(params, 1, function(x) {
-        densityProc(x, DataPL, h)
-    })
-    ## Grouping different filtered results
-    message("Now Grouping:")
-    Groups <- GR[[1]]
-    setkeyv(Groups, c("formula", "start", "end"))
-    if (length(GR) > 1) {
-        for (i in 2:length(GR)) {
-        Groups <- groupGrouper(GR, i, Groups)
+    if(mode == "regular"){
+        ## Density filtering
+        message("Starting density filtering: ")
+        GR <- apply(params, 1, function(x) {
+            densityProc(x, DataPL, h)
+        })
+        ## Grouping different filtered results
+        message("Now Grouping:")
+        Groups <- GR[[1]]
+        setkeyv(Groups, c("formula", "start", "end"))
+        if (length(GR) > 1) {
+            for (i in 2:length(GR)) {
+                Groups <- groupGrouper(GR, i, Groups)
+            }
         }
+        Groups <- distinct(Groups)
+    } else {
+        message("Starting Centwave-based SOI detection")
+        CWP <- CentWaveParam(ppm = ppm * 2,
+                             peakwidth = c(8,60), prefilter = c(0,100),
+                             snthresh = 0, noise = 0, fitgauss = FALSE,
+                             firstBaselineCheck = FALSE)
+        Groups <- calculateSOICentwave(filename, formulaDB, CWP, ppm = ppm)
     }
-    Groups <- distinct(Groups)
-
 
     ## Initial Peak Retrieval
-    message("Initial peak retrieval:")
-    peakscol <- lapply(seq_len(nrow(Groups)), retrievePeaks,
+    message("Retrieving datapoints from SOIs:")
+    Groups$peaks <- lapply(seq_len(nrow(Groups)), retrievePeaks,
                         Groups, DataPL)
-    Groups$peaks <- peakscol
-    ## Group Characterization
-    message("")
-    message("Starting group characterization:")
+
+
+    ## SOI Characterization
+    message("Starting SOI characterization:")
+
     message("Mass calculation:")
     setkeyv(Groups, "formula")
     Groups$mass <- formulaDB[.(Groups$formula),2]
-    if (any(Groups$length > maxlen)) {
-        Groups <- groupShort(Groups, maxlen)
-    }
-    
+
     message("Number of scans:")
-    nscans <- apply(Groups, 1, function(x) {
+    Groups$nscans <- apply(Groups, 1, function(x) {
         d <- x["peaks"][[1]]
         return(dim(d)[1])
     })
-    Groups$nscans <- nscans
     Groups <- Groups[Groups$nscans > 5, ]
-    
+
+    if (any(Groups$length > maxlen) & mode == "regular") {
+        Groups <- groupShort(Groups, maxlen)
+        Groups$nscans <- apply(Groups, 1, function(x) {
+            d <- x["peaks"][[1]]
+            return(dim(d)[1])
+        })
+        Groups <- Groups[Groups$nscans > 5, ]
+    }
+
     ## Blank substraction
     if (useblank) {
         Groups <- blankSubstraction(Groups, blankPL)
         if (nrow(Groups) == 0) {return(RHermesSOI())}
     }
+
     ## Rest of characterization
-    message("")
     message("Width calculation:")
     width <- apply(Groups, 1, function(x) {
         d <- x["peaks"][[1]]
@@ -219,7 +235,8 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename) {
 
     message("Calculating chaos:")
     Groups$chaos <- lapply(Groups$peaks, function(x) {
-        rho_chaos(x, nlevels = 10, fillGaps = TRUE)
+        tryCatch({rho_chaos(x, nlevels = 10, fillGaps = TRUE)},
+                    error = function(cond){return(0)})
     }) %>% as.numeric()
 
     setkeyv(Groups, c("formula"))
@@ -339,6 +356,32 @@ groupGrouper <- function(GR, i, Groups){
     return(res)
 }
 
+#' @importFrom MSnbase readMSData
+calculateSOICentwave <- function(filename, DB, CentWaveParam, ppm){
+    msdata <- readMSData(filename, mode = "onDisk")
+    pks <- findChromPeaks(msdata, CentWaveParam)
+    pks <- as.data.frame(chromPeaks(pks))
+    pks$anot <- lapply(pks$mz, function(mz){
+        range <- mz * c(1 - ppm * 1e-6,
+                        1 + ppm * 1e-6)
+        DB$f[between(DB$m, range[1], range[2])]
+    })
+    pks <- pks[sapply(pks$anot, length) > 0, ]
+    soi <- lapply(seq_len(nrow(pks)), function(i){
+        peak <- pks[i, ]
+        data.frame(start = peak$rtmin,
+                   end = peak$rtmax,
+                   length = peak$rtmax - peak$rtmin,
+                   formula = peak$anot[[1]])
+    })
+    soi <- do.call(rbind, soi)
+    soi <- as.data.table(soi)
+    return(soi)
+}
+
+
+
+
 retrievePeaks <- function(i, Groups, PL){
     x <- Groups[i, ]
     rtmin <- x[1, 1]
@@ -353,14 +396,15 @@ groupShort <- function(Groups, maxlen, BPPARAM = bpparam()){
     message("Shortening and selecting long groups:")
     SG <- filter(Groups, length <= maxlen)
     LG <- filter(Groups, length > maxlen)
-    LG <- lapply(seq_len(nrow(LG)), parallelGroupShort, LG,
-                maxlen)
+    LG <- lapply(seq_len(nrow(LG)), parallelGroupShort, LG, maxlen)
     LG <- do.call(rbind, LG)
     return(rbind(SG, LG))
 }
 
+
+#Experimental Centwave approach to SOI partitioning
+
 parallelGroupShort <- function(i, LG, maxlen){
-    #Experimental Centwave approach to SOI partitioning
     ms1data <- LG$peaks[[i]]
     curGR <- LG[i,]
     tryCatch({
@@ -371,8 +415,11 @@ parallelGroupShort <- function(i, LG, maxlen){
                             snthresh = 0, noise = 0, fitgauss = FALSE,
                             firstBaselineCheck = FALSE)
         )
-    }, error = function(cond){})
+    }, error = function(cond){
+        pks <- data.frame() #To avoid problems, act as if no peaks found
+    })
 
+    #If XCMS detects any peak
     if (nrow(pks) != 0) {
         pks <- as.data.frame(pks)
         pks <- pks[order(pks[,2]), ]
@@ -397,7 +444,8 @@ parallelGroupShort <- function(i, LG, maxlen){
             starts <- c(starts, max(ends))
             ends <- c(ends, max(ms1data[, 1]))
             known_peak <- c(known_peak, FALSE)
-            }
+        }
+        #Split remaining long traces into smaller ones
         if (any(!known_peak)) {
             too_long <- ends - starts > maxlen
             if (any(too_long & !known_peak)) {
@@ -417,7 +465,7 @@ parallelGroupShort <- function(i, LG, maxlen){
                             length = ends - starts, formula = curGR$formula,
                             peaks = curGR$peaks, mass = curGR$mass)
     } else {
-        #Divide long group into equal-sized smaller groups
+        #Divide long traces into equal-sized smaller traces
         times <- seq(from = curGR[1, 1][[1]], to = curGR[1, 2][[1]],
                     length.out = ceiling(curGR[1, 3][[1]] / maxlen) + 1)
         deltat <- times[2] - times[1]
@@ -425,8 +473,7 @@ parallelGroupShort <- function(i, LG, maxlen){
                             length = deltat, formula = curGR$formula,
                             peaks = curGR$peaks, mass = curGR$mass)
     }
-
-    #Reestructuration of the groups: data point 'splitting'
+    #Data point redistribution within each new SOI
     NewGR[, "peaks"] <- apply(NewGR, 1, function(x) {
         pks <- x[5][[1]]
         return(pks[between(pks$rt, x[1][[1]], x[2][[1]]), ])
@@ -649,7 +696,7 @@ rho_chaos <- function(data, nlevels = 20, fillGaps = TRUE){
         nr <- nrow(data)
         #Filling 1-gaps
         if(fillGaps){
-            for(i in seq_len(nr-2)){
+            for(i in seq_len(nr - 2)){
                 if(data$above[i] & !data$above[i+1] & data$above[i+2]){
                     data$above[i+1] <- TRUE
                 }
@@ -712,7 +759,7 @@ setMethod("filterSOI", signature = c("RHermesExp", "numeric", "ANY", "ANY", "ANY
                     "Aborting filter")
             return(struct)
         }
-        
+
         ##Filter by isotopic fidelity
         if (isofidelity) {
             # Isotopic elution similarity
@@ -727,7 +774,7 @@ setMethod("filterSOI", signature = c("RHermesExp", "numeric", "ANY", "ANY", "ANY
                         " similarity. Aborting filter")
                 return(struct)
             }
-            
+
             # Isotopic pattern similarity
             message("Calculating isotopic fidelity metrics:")
             isodata <- lapply(with_isos, plotFidelity, struct = struct,
@@ -742,7 +789,7 @@ setMethod("filterSOI", signature = c("RHermesExp", "numeric", "ANY", "ANY", "ANY
                         "fidelity. Aborting filter")
                 return(struct)
             }
-            
+
             rtmargin <- 20
             # Removing confirmed isotopic signals
             soilist <- soilist[order(-soilist$MaxInt), ]
