@@ -57,6 +57,10 @@ duplicateSOI <- function(struct, id){
 #' These are all stored in /app/www/SOIFilterParams.csv, feel free to
 #' locally change them or add new ones for your use (if you know what
 #' you're doing).
+#' @param mode Whether SOI detection should use the regular density-based
+#' algorithm or xcms peak detection for defining the SOIs
+#' @param cwp A CentWaveParam object used for either SOI detection (xcms mode)
+#' or long SOI splitting (regular mode)
 #' @return A SoiParam object
 #' @examples
 #' if(FALSE){
@@ -64,19 +68,24 @@ duplicateSOI <- function(struct, id){
 #' par2 <- getSOIpar('triple-x') #Etc. etc.
 #' }
 #'@export
-setGeneric("getSOIpar", function(tag = "double") {
+setGeneric("getSOIpar", function(tag = "double", mode = "regular", cwp = NA) {
     standardGeneric("getSOIpar")
 })
 #' @rdname getSOIpar
-setMethod("getSOIpar", c("ANY"), function(tag = "double") {
+setMethod("getSOIpar", c("ANY", "ANY", "ANY"),
+          function(tag = "double", mode = "regular", cwp = NA) {
     temp <- read.csv2(system.file("extdata", "SOITemplates.csv",
                                     package = "RHermes"))
     specdf <- filter(temp, .data$name == tag)[, seq(2, 6)]
     if (nrow(specdf) == 0) {
         stop("No templated was found with that ID", call. = FALSE, )
     }
-    return(SOIParam(specs = specdf[, seq(1, 3)], maxlen = specdf[1, 4],
-        minint = specdf[1, 5]))
+    obj <- SOIParam(specs = specdf[, seq(1, 3)],
+                    maxlen = specdf[1, 4],
+                    minint = specdf[1, 5],
+                    mode = mode)
+    if(is(cwp, "CentWaveParam")) obj@cwp <- cwp
+    return(obj)
 })
 
 
