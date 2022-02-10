@@ -69,10 +69,26 @@ ExpParam <- setClass("ExpParam", slots = list(ppm = "numeric",
 #'@return A SOIParam object
 #'@examples SOIParam()
 #'@export SOIParam
-SOIParam <- setClass("SOIParam", slots = list(specs = "data.frame",
-    maxlen = "numeric", minint = "numeric", blanksub = "logical",
-    blankname = "character"), prototype = list(specs = data.frame(),
-    maxlen = 30, minint = 1000, blanksub = FALSE, blankname = "None"))
+SOIParam <- setClass("SOIParam",
+    slots = list(specs = "data.frame",
+                maxlen = "numeric",
+                minint = "numeric",
+                blanksub = "logical",
+                blankname = "character",
+                mode = "character",
+                cwp = "CentWaveParam"
+                ),
+    prototype = list(specs = data.frame(),
+                maxlen = 30,
+                minint = 1000,
+                blanksub = FALSE,
+                blankname = "None",
+                mode = "regular",
+                cwp = xcms::CentWaveParam(ppm = 6,
+                                    peakwidth = c(8,60), prefilter = c(0,100),
+                                    snthresh = 0, noise = 0, fitgauss = FALSE,
+                                    firstBaselineCheck = FALSE)
+                ))
 
 
 

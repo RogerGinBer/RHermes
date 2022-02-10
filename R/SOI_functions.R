@@ -43,14 +43,13 @@
 #'@import magrittr
 #'@import tensorflow
 #'@import reticulate
-setGeneric("findSOI", function(struct, params, fileID, blankID = numeric(0),
-                               mode = "regular") {
+setGeneric("findSOI", function(struct, params, fileID, blankID = numeric(0)) {
     standardGeneric("findSOI")
 })
 
 #' @rdname findSOI
-setMethod("findSOI", c("RHermesExp", "ANY", "ANY", "ANY", "ANY"),
-function(struct, params, fileID, blankID = numeric(0), mode = "regular") {
+setMethod("findSOI", c("RHermesExp", "ANY", "ANY", "ANY"),
+function(struct, params, fileID, blankID = numeric(0)) {
     if (length(blankID) == 0) {
         blankID <- rep(0, length(fileID))
     } else if (length(blankID) < length(fileID)){
@@ -103,7 +102,7 @@ function(struct, params, fileID, blankID = numeric(0), mode = "regular") {
         struct@data@SOI <- c(struct@data@SOI,
                             PLprocesser(struct@data@PL[[idx]],
                             struct@metadata@ExpParam, cur, blankPL,
-                            struct@metadata@filenames[idx], mode
+                            struct@metadata@filenames[idx]
                             ))
         if (blankID[i] == 0) {
             struct <- setTime(struct,
@@ -121,7 +120,7 @@ function(struct, params, fileID, blankID = numeric(0), mode = "regular") {
 })
 
 #' @importFrom stats  approx  median  sd
-PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename, mode = "regular") {
+PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename) {
     ## Extracting info from S4 objects into local variables
     DataPL <- PL@peaklist
     h <- PL@header
@@ -133,6 +132,7 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename, mode = "
     maxlen <- SOIParam@maxlen
     noise <- SOIParam@minint
     useblank <- SOIParam@blanksub
+    mode <- tryCatch(SOIParam@mode, error = function(cond){"regular"})
 
     ## Setting up PeakList
     DataPL <- as.data.table(DataPL)
@@ -161,11 +161,8 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename, mode = "
         Groups <- distinct(Groups)
     } else {
         message("Starting Centwave-based SOI detection")
-        CWP <- CentWaveParam(ppm = ppm * 2,
-                             peakwidth = c(8,60), prefilter = c(0,100),
-                             snthresh = 0, noise = 0, fitgauss = FALSE,
-                             firstBaselineCheck = FALSE)
-        Groups <- calculateSOICentwave(filename, formulaDB, CWP, ppm = ppm)
+        cwp <- SOIParam@cwp
+        Groups <- calculateSOICentwave(filename, formulaDB, cwp, ppm = ppm)
     }
 
     ## Initial Peak Retrieval
