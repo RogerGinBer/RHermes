@@ -189,7 +189,7 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename, mode = "
     Groups <- Groups[Groups$nscans > 5, ]
 
     if (any(Groups$length > maxlen) & mode == "regular") {
-        Groups <- groupShort(Groups, maxlen)
+        Groups <- groupShort(Groups[,1:6], maxlen)
         Groups$nscans <- apply(Groups, 1, function(x) {
             d <- x["peaks"][[1]]
             return(dim(d)[1])
