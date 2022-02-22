@@ -849,8 +849,8 @@ parallelIsoCos <- function(i, soilist, PL, isothr){
     }
     for (j in unique(cur$isov)) {
         if (j == "M0") {next}
-        cos <- cosineSim(pattern = cur[which(cur$isov == "M0"), ],
-                                query = cur[which(cur$isov == j),])
+        cos <- cosineSim(pattern = as.data.frame(cur[which(cur$isov == "M0"), c("rt", "rtiv")]),
+                            query = as.data.frame(cur[which(cur$isov == j), c("rt", "rtiv")]))
         if (!is.na(cos) & cos > isothr) {
         count <- count + 1
         hitdf <- rbind(hitdf, data.frame(iso = j,

@@ -1,38 +1,39 @@
+# Column 1 -> RT, column 2 -> intensity
 cosineSim <- function(pattern, query, nscans = 5) {
     #Only scans found on both pattern and query are selected
-    sametime <- which(query$rt %in% pattern$rt)
+    sametime <- which(query[,1] %in% pattern[,1])
     if (length(sametime) < nscans) {return(0)}
     query <- query[sametime, ]
 
-    sametime <- which(pattern$rt %in% query$rt)
+    sametime <- which(pattern[,1] %in% query[,1])
     if (length(sametime) < nscans) {return(0)}
     pattern <- pattern[sametime, ]
 
-    pattern <- dplyr::distinct(pattern[order(pattern$rt), ])
-    query <- dplyr::distinct(query[order(query$rt), ])
-    dotprod <- sum(pattern$rtiv * query$rtiv)
-    scaling <- sqrt(sum(pattern$rtiv^2)) * sqrt(sum(query$rtiv^2))
+    pattern <- dplyr::distinct(pattern[order(pattern[,1]), ])
+    query <- dplyr::distinct(query[order(query[,1]), ])
+    dotprod <- sum(pattern[,2] * query[,2])
+    scaling <- sqrt(sum(pattern[,2]^2)) * sqrt(sum(query[,2]^2))
     return(dotprod/scaling)
 }
 
 
 pearsonSim <- function(pattern, query, nscans = 5) {
     #Only scans found on both pattern and query are selected
-    sametime <- which(query$rt %in% pattern$rt)
+    sametime <- which(query[,1] %in% pattern[,1])
     if (length(sametime) < nscans) {return(0)}
     query <- query[sametime, ]
 
-    sametime <- which(pattern$rt %in% query$rt)
+    sametime <- which(pattern[,1] %in% query[,1])
     if (length(sametime) < nscans) {return(0)}
     pattern <- pattern[sametime, ]
 
-    pattern <- dplyr::distinct(pattern[order(pattern$rt), ])
-    query <- dplyr::distinct(query[order(query$rt), ])
+    pattern <- dplyr::distinct(pattern[order(pattern[,1]), ])
+    query <- dplyr::distinct(query[order(query[,1]), ])
 
-    num <- sum((pattern$rtiv - mean(pattern$rtiv)) * (query$rtiv -
-        mean(query$rtiv)))
-    denom <- sqrt(sum((pattern$rtiv - mean(pattern$rtiv))^2) *
-        sum((query$rtiv - mean(query$rtiv))^2))
+    num <- sum((pattern[,2] - mean(pattern[,2])) * (query[,2] -
+        mean(query[,2])))
+    denom <- sqrt(sum((pattern[,2] - mean(pattern[,2]))^2) *
+        sum((query[,2] - mean(query[,2]))^2))
     return(num/denom)
 }
 

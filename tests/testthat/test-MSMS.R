@@ -1,9 +1,15 @@
 context("Functional MS2 identification")
 
 test_that("cosineSim works", {
-    cosine <- cosineSim(data.frame(rt = seq(1,10), rtiv = seq(1,10)^2),
-                    data.frame(rt = seq(1,10), rtiv = seq(1,10)^3))
+    cosine <- cosineSim(data.frame(rt = seq(1,10), int = seq(1,10)^2),
+                    data.frame(rt = seq(1,10), int = seq(1,10)^3))
     expect_equal(cosine, 0.986387, tolerance = 1e-4)
+})
+
+test_that("pearsonSim works", {
+    pearson <- pearsonSim(data.frame(rt = seq(1,10), int = seq(1,10)^2),
+                        data.frame(rt = seq(1,10), int = seq(1,10)^3))
+    expect_equal(pearson, 0.9871796626, tolerance = 1e-4)
 })
 
 test_that("Compounds are identified", {

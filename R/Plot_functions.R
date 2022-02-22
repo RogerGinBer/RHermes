@@ -598,9 +598,11 @@ function(struct, ms2id, entryid) {
         return(list(p_bymz = ggplotly(ggplot()), p_bygroup = ggplotly(ggplot()),
                     net = NA, pks = data.frame()))
     }
-    ss <- generate_ss(entryid, MS2list = ms2data, contaminant = 173.5,
+    header <- ms2data[[entryid]][[1]]
+    data <- ms2data[[entryid]][[2]]
+    ss <- generate_ss_continuous_ms2(header, data, contaminant = 173.5,
                         delta = 0.1, fs = character(), idx = numeric(),
-                        to_plot = TRUE)
+                        to_plot = TRUE, curentry = 123)
     soi <- ss$soi
     members <- ss$members
     net <- ss$net
@@ -641,11 +643,11 @@ function(struct, ms2id, entryid) {
     }
 
     p_bymz <- ggplot(soi) +
-                geom_point(aes(x = .data$rt, y = .data$rtiv,
+                geom_point(aes(x = .data$rt, y = .data$int,
                                 color = as.factor(.data$mz)))+
                 xlim(xlim) + theme_minimal()
     p_bygroup <- ggplot(soi) +
-                geom_point(aes(x = .data$rt, y = .data$rtiv,
+                geom_point(aes(x = .data$rt, y = .data$int,
                                 color = as.factor(.data$member)))+
                 xlim(xlim) + theme_minimal()
 

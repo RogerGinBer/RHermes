@@ -387,6 +387,9 @@ function(struct, id, file) {
     ms2$hits <- lapply(ms2$hits, function(x) {
         gsub(pattern = "\t", replacement = "", x = x, )
     })
+    ms2$anot <- unlist(ms2$anot)
+    ms2$hits <- unlist(ms2$hits)
+    
     write.csv(ms2, file = file)
 })
 
