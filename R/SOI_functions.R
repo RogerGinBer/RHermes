@@ -247,8 +247,8 @@ PLprocesser <- function(PL, ExpParam, SOIParam, blankPL = NA, filename) {
     output <- RHermesSOI(SOIList = Groups, PlotDF = as.data.table(plist),
                         SOIParam = SOIParam, filename = filename)
 
-        return(output)
-    }
+    return(output)
+}
 
 densityProc <- function(x, DataPL, h){
     rtbin <- x[1]
@@ -376,16 +376,13 @@ calculateSOICentwave <- function(filename, DB, CentWaveParam, ppm){
     return(soi)
 }
 
-
-
-
-retrievePeaks <- function(i, Groups, PL){
+retrievePeaks <- function(i, Groups, PL, delta = 0){
     x <- Groups[i, ]
     rtmin <- x[1, 1]
     rtmax <- x[1, 2]
     f <- x[1, 4]
-    pks <- PL[.(f)] %>% filter(., .data$rt > rtmin[[1]] &
-                                .data$rt < rtmax[[1]])
+    pks <- PL[.(f)] 
+    pks <- filter(pks, between(pks$rt, rtmin[[1]] - delta, rtmax[[1]] + delta))
     return(pks[, c(1, 2, 5)])
 }
 
@@ -481,6 +478,7 @@ parallelGroupShort <- function(i, LG, maxlen){
 #' @importFrom keras k_argmax array_reshape
 blankSubstraction <- function(Groups, blankPL){
     message("Blank substraction:")
+    blankPL <- blankPL[blankPL$isov == "M0", ]
     setkeyv(blankPL, c("formv", "rt"))
     message("First cleaning")
     toKeep <- lapply(seq_len(nrow(Groups)), firstCleaning, Groups, blankPL) %>%
@@ -536,15 +534,9 @@ blankSubstraction <- function(Groups, blankPL){
 
 #'@importFrom stats IQR quantile
 firstCleaning <- function(i, Groups, blankPL){
-    cur <- Groups[i, ]
-    st <- cur$start
-    end <- cur$end
-    f <- cur$formula
+    peaks <- Groups$peaks[[i]]
     deltat <- 10
-    peaks <- cur$peaks[[1]]
-    blankpks <- blankPL[.(f)] %>% filter(., .data$rt >= st - deltat &
-                                            .data$rt <= end + deltat &
-                                            .data$isov == "M0")
+    blankpks <- retrievePeaks(i, Groups, blankPL, deltat)
     blankpks <- distinct(blankpks[, c(1, 2)])
     if (nrow(blankpks) < 5) {return(TRUE)} #No blank signals
 
@@ -585,9 +577,7 @@ prepareNetInput <- function(i, Groups, blankPL){
                                                     length.out = Npoints),
                                         rule = 1, ties = min))
         smooth_pks[is.na(smooth_pks[, "y"]), "y"] <- 0
-        blankpks <- blankPL[.(f)] %>% filter(., .data$rt >= st - deltat &
-                                                .data$rt <= end + deltat &
-                                                .data$isov == "M0")
+        blankpks <- retrievePeaks(i, Groups, blankPL, deltat)
         blankpks <- distinct(blankpks[, c(1, 2)])
         if (length(unique(blankpks$rt)) < 2) {
             blankpks <- data.frame(rt = c(st, end), rtiv = c(0, 0))
