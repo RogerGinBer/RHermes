@@ -40,7 +40,7 @@ test_that("Blank substraction is configured and works",{
     #Does the model work as intended?
     blank <- data.table(rt = seq(0,20,0.2),
                         rtiv = rnorm(101, 10, 3),
-                        formv = "foo", isov = "M0")
+                        formv = "foo", isov = "M0", mz = 100)
     setkeyv(blank, "formv")
     group <- dplyr::tibble(start = c(0,10), end = c(10,20),
                         peaks = list(

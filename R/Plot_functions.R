@@ -188,7 +188,7 @@ function(struct, id, formula, ads = NA, rtrange= c(0, 1e4), dynamicaxis = TRUE,
                 "Is everything OK?")
     }
     datafile <- struct@data@PL[[plid]]@peaklist
-    datafile <- datafile[.data$isov == "M0", ]
+    datafile <- datafile[datafile$isov == "M0", ]
     Class <- NULL; isov <- NULL  #To appease R CMD Check "no visible binding"
     datafile[, Class := "Sample"]
 
@@ -314,7 +314,7 @@ function(struct, id, entry, plot = TRUE) {
     #Extract SOI and PL information from the selected SOI list
     SOI <- struct@data@SOI[[id]]
     fname <- SOI@filename
-    correspondingPL <- which(struct@metadata@filenames == fname)
+    correspondingPL <- which(struct@metadata@filenames == fname)[1]
     PL <- struct@data@PL[[correspondingPL]]@peaklist
 
     #Filter the PL to the selected SOI region
