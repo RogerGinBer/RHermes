@@ -617,7 +617,7 @@ preparePlottingDF <- function(i, Groups){
 }
 
 parallelFilter <- function(anot, ScanResults, bins, timebin){
-    data <- as.vector(ScanResults[.(anot), "rt"])
+    data <- ScanResults[.(anot), "rt"][[1]]
     mint <- min(data)
     maxt <- max(data)
     res <- rep(0, length(bins))
