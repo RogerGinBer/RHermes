@@ -60,16 +60,17 @@ PLPlotUI <- function(id){
                         radioButtons(ns("PLfiles_raw"), "Select which PL to use: ", choices = "", 1, inline = TRUE)
                   ),
                 column(8,
-                    numericInput(ns("targetmz"), "Target mz:", value = 200, min = 0, max = 5000),
-                    numericInput(ns("mztol"), "mz tolerance", value = 0.5, min = 0, max = 5000, step = 0.001),
-                    sliderInput(ns("RTinterval"), label = "Select an RT interval:",
-                                min = 0, max = 1800, value = c(0,1800)),
-                    column(6, actionButton(ns("addConfig"), "Add mz")),
-                    column(6, actionButton(ns("remConfig"), "Remove mz"))
+                    numericInput(ns("targetmz"), "Target mz:", value = 118.08626, min = 0, max = 5000),
+                    column(4, switchInput(ns("mzmetric"), "Use ppm?", value = TRUE, onLabel = "ppm", offLabel = "absolute")),
+                    column(8, numericInput(ns("mztol"), "mz tolerance", value = 3, min = 0, max = 5000, step = 0.001)),
+                    sliderInput(ns("RTinterval_raw"), label = "Select an RT interval:",
+                                min = 0, max = 1800, value = c(0,1800))
                 )
             ), width = 12),
             width = "100%"),
-        plotlyOutput(outputId = ns("RawMS1Plot"), height = "800px")
+        hr(),
+        plotlyOutput(outputId = ns("RawMS1Plot"), height = "1200px"),
+
     )
   )
 }
@@ -142,26 +143,49 @@ PLPlotServer <- function(id, struct){
 
 
       observeEvent({
-          input$PLfiles
-          input$RTinterval
+          input$RTinterval_raw
           input$targetmz
+          input$mzmetric
           input$mztol
           input$PLfiles_raw
       },{
           if(struct$hasPL){
-              d <- struct$dataset@data@PL[[as.numeric(input$PLfiles)]]@raw
+              d <- struct$dataset@data@PL[[as.numeric(input$PLfiles_raw)]]@raw
               if(is.data.frame(d) & nrow(d) > 0){
                     target <- as.numeric(input$targetmz)
-                    tol <- as.numeric(input$mztol)
+                    if (input$mzmetric){
+                        tol <- as.numeric(input$mztol) * target * 1e-6
+                    } else {
+                        tol <- as.numeric(input$mztol)
+                    }
                     d <- filter(d, between(mz, target - tol, target + tol) &
-                                  between(rt, as.numeric(input$RTinterval[[1]]),
-                                          as.numeric(input$RTinterval[[2]])))
-
-                    output$RawMS1Plot <- renderPlotly(
-                        ggplotly(ggplot(d) +
-                                     geom_point(aes(x=rt, y=mz, color = rtiv))
-                                 )
+                                  between(rt, as.numeric(input$RTinterval_raw[[1]]),
+                                          as.numeric(input$RTinterval_raw[[2]])))
+                    if(nrow(d) < 1e5){
+                        p1 <- ggplotly(ggplot(d) +
+                                           geom_point(aes(x=rt, y=mz, color = log10(rtiv)))+
+                                           labs(color = "log10(Intensity)") +
+                                           scale_colour_gradient(low = "#CFB7E5", high = "#15004D") +
+                                           xlab("Retention time (s)") +
+                                           ylab("m/z")
                         )
+                        
+                        p2 <- ggplotly(ggplot(d) +
+                                         geom_point(aes(x=rt, y=log10(rtiv), color = mz)) +
+                                         labs(color = "mz") +
+                                         scale_colour_gradient(low = "#CFB7E5", high = "#15004D") +
+                                         xlab("Retention time (s)") +
+                                         ylab("Intensity")
+                        )
+                                       
+                        output$RawMS1Plot <- renderPlotly(
+                            subplot(p1, p2, nrows=2, shareX = TRUE)
+                        )
+
+                    } else {
+                        warning("Too many datapoints in PlotRawMS1. ",
+                                "Try a lower mz width")
+                    } 
               }
           }
 

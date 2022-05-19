@@ -96,8 +96,6 @@ MS2Server <- function(id, struct){
         }
       }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
-
-
       return(toReturn)
     }
   )

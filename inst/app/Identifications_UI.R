@@ -58,7 +58,7 @@ IdentServer <- function(id, struct) {
                             div(dataTableOutput(ns("hitstable")), style = "margin-top: 30px;"),
 
                             circle = TRUE, status = "info",
-                            icon = icon("gear"), width = "auto",
+                            icon = icon("cog"), width = "auto",
 
                             tooltip = tooltipOptions(title = "Check all hits for a given entry")
                         ),

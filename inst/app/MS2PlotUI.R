@@ -85,9 +85,9 @@ MS2PlotUI <- function(id) {
                        conditionalPanel("input.rawset.includes('Raw data plot')",
                                         ns = ns,
                                         conditionalPanel("input.bymz", ns = ns,
-                                                         plotlyOutput(ns("rawMSMS_bymz"))),
+                                                         plotlyOutput(ns("rawMSMS_bymz"), height = "800")),
                                         conditionalPanel("!input.bymz", ns = ns,
-                                                         plotlyOutput(ns("rawMSMS_bygroup"))),
+                                                         plotlyOutput(ns("rawMSMS_bygroup"), height = "800")),
                        ),
                        conditionalPanel("input.rawset.includes('Network')",
                                         ns = ns, visNetworkOutput(ns("rawss"))),
@@ -180,8 +180,43 @@ MS2PlotServer <- function(id, struct) {
         tryCatch({
           rawplots <- plotRawMS2(struct$dataset,
                                  as.numeric(input$id), as.numeric(input$selectILentry))
-          output$rawMSMS_bymz <- renderPlotly(rawplots[["p_bymz"]])
-          output$rawMSMS_bygroup <- renderPlotly(rawplots[["p_bygroup"]])
+          rtrange <- range(rawplots$p_bymz$data$rt)
+
+          filtermz <- IL(struct$dataset, as.numeric(input$id))@ILParam@filtermz
+          mzprec <- IL(struct$dataset, as.numeric(input$id))@IL$mass[as.numeric(input$selectILentry)]
+          mzrange <- c(mzprec - filtermz, mzprec + filtermz)
+          
+          original_file <- SOI(struct$dataset,
+              IL(struct$dataset, as.numeric(input$id))@SOInum)@filename
+          original_PL <- which(vapply(struct$dataset@data@PL, function(x) {
+              return(x@filename == original_file)
+          }, logical(1)))[1]
+          original_PL <- PL(struct$dataset, original_PL)
+          
+          annotated_scans <- filter(original_PL@peaklist,
+                                    between(rt, rtrange[1], rtrange[2]) &
+                                    between(mz, mzrange[1], mzrange[2]))
+          raw_scans <- filter(original_PL@raw,
+                              between(rt, rtrange[1], rtrange[2]) &
+                              between(mz, mzrange[1], mzrange[2]))
+          suppressWarnings({
+              ms1plot <- ggplot() + 
+                  geom_point(aes(x=rt, y=rtiv, mz = mz), data = raw_scans, color = "grey") + 
+                  geom_point(aes(x=rt, y=rtiv, color = formv, mz = mz), data = annotated_scans) +
+                  labs(color = "Ion. Formula") + 
+                  ggtitle("Above: continuous MS2 scans<br>Below: MS1 data within isolation window")+
+                  theme_minimal()
+          })
+          
+          output$rawMSMS_bymz <- renderPlotly(
+              subplot(rawplots[["p_bymz"]], ggplotly(ms1plot), nrows = 2,
+                      shareX = TRUE)
+          )
+          output$rawMSMS_bygroup <- renderPlotly(
+              subplot(rawplots[["p_bygroup"]], ggplotly(ms1plot), nrows = 2,
+                      shareX = TRUE)
+          )
+          
           output$rawpks <- renderTable(rawplots[["pks"]])
           if (is(rawplots[["net"]], "visNetwork")) {
             output$rawss <- renderVisNetwork(rawplots[["net"]])
@@ -195,6 +230,7 @@ MS2PlotServer <- function(id, struct) {
       input$selectident
       input$id
     },{
+    tryCatch({
       ms2 <- struct$dataset@data@MS2Exp[[as.numeric(input$id)]]
       sslist <- ms2@Ident[["MS2Features"]]
       if(is.data.frame(sslist) & !is.na(as.numeric(input$selectident))){
@@ -206,8 +242,10 @@ MS2PlotServer <- function(id, struct) {
           }
         }
       }
+    }, error = function(cond){})
     }, ignoreNULL = TRUE, ignoreInit = TRUE, priority = 50)
 
+    #Identification plot (against MS2 DB hits)
     observeEvent({
       input$selectident
       input$selecthits
@@ -215,20 +253,23 @@ MS2PlotServer <- function(id, struct) {
     }, {
       if (input$selectident != "" & !is.na(input$selectident) &
           length(input$selecthits) != 0) {
-        ms2 <- struct$dataset@data@MS2Exp[[as.numeric(input$id)]]
-        sslist <- ms2@Ident[["MS2Features"]]
-        with_hits <- which(vapply(sslist$results,
-                                  function(x){is.data.frame(x)},
-                                  logical(1)))
-        if(as.numeric(input$selectident) %in% with_hits){
-          identplots <- plotMirror(struct$dataset,
-                                   as.numeric(input$id), as.numeric(input$selectident),
-                                   input$selecthits, mode = "hits")
-          output$mirrorplot <- renderPlotly(identplots)
-        }
+        tryCatch({
+            ms2 <- struct$dataset@data@MS2Exp[[as.numeric(input$id)]]
+            sslist <- ms2@Ident[["MS2Features"]]
+            with_hits <- which(vapply(sslist$results,
+                                      function(x){is.data.frame(x)},
+                                      logical(1)))
+            if(as.numeric(input$selectident) %in% with_hits){
+              identplots <- plotMirror(struct$dataset,
+                                       as.numeric(input$id), as.numeric(input$selectident),
+                                       input$selecthits, mode = "hits")
+              output$mirrorplot <- renderPlotly(identplots)
+            }
+        }, error = function(cond){warning("Identity plot failed")})
       }
     }, ignoreNULL = TRUE, ignoreInit = TRUE, priority = -2)
 
+    #Pairwise MS2 spectrum plot
     observeEvent({
       input$selectident2
       input$otherss
@@ -247,6 +288,7 @@ MS2PlotServer <- function(id, struct) {
       }
     }, ignoreNULL = TRUE, ignoreInit = TRUE, priority = -2)
 
+    #Single MS2 spectrum plot
     observeEvent({
       input$selectss
       input$id
@@ -295,9 +337,9 @@ plotMirror <- function(struct, id, ssnumber, patform, mode = "hits") {
             } else {
                 refspec <- pattern[[x]][[index]]
                 spec_energy <- names(pattern[[x]])[index]
-                name <- strsplit(patform, split = "#")[[patform == x]][[3]]
+                comp_name <- strsplit(patform, split = "#")[[which(patform == x)[1]]][3]
                 a <- list(
-                    text = paste(name, spec_energy),
+                    text = paste(comp_name, spec_energy),
                     font = f,
                     xref = "paper",
                     yref = "paper",

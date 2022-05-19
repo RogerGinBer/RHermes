@@ -176,23 +176,33 @@ function(struct, id, formula, ads = NA, rtrange= c(0, 1e4), dynamicaxis = TRUE,
         }
     }
 
-    #Importing SOI list data
+    #Import SOI list data
     plist <- struct@data@SOI[[id]]@PlotDF
     filen <- struct@data@SOI[[id]]@filename
     plid <- which(vapply(struct@data@PL, function(x) {
         return(x@filename == filen)
-    }, logical(1)))[1]
-
+    }, logical(1)))
+    if(length(plid) > 1){
+        plid <- plid[1]
+        warning("More than one PL matched with the SOI filename. ", 
+                "Is everything OK?")
+    }
     datafile <- struct@data@PL[[plid]]@peaklist
-    datafile <- datafile[.data$isov == "M0", ]
+    datafile <- datafile[datafile$isov == "M0", ]
     Class <- NULL; isov <- NULL  #To appease R CMD Check "no visible binding"
     datafile[, Class := "Sample"]
 
-    #Importing blank data if blank subtraction was performed on the SOI list
+    #Import blank data if blank subtraction was performed on the SOI list
     if(struct@data@SOI[[id]]@SOIParam@blanksub){
-        blankid <- which(struct@metadata@filenames ==
-                            struct@data@SOI[[id]]@SOIParam@blankname)
-        if(length(blankid) > 1) blankid <- blankid[1]
+        blankname <- struct@data@SOI[[id]]@SOIParam@blankname
+        blankid <- which(vapply(struct@data@PL, function(x) {
+            return(x@filename == blankname)
+        }, logical(1)))[1]
+        if(length(blankid) > 1) {
+            blankid <- blankid[1]
+            warning("More than one PL matched with the blank file. ",
+                    "Is everything OK?")
+        }
         blankfile <- struct@data@PL[[blankid]]@peaklist
         blankfile <- blankfile[isov == "M0", ]
         blankfile[, Class := "Blank"]
@@ -304,7 +314,7 @@ function(struct, id, entry, plot = TRUE) {
     #Extract SOI and PL information from the selected SOI list
     SOI <- struct@data@SOI[[id]]
     fname <- SOI@filename
-    correspondingPL <- which(struct@metadata@filenames == fname)
+    correspondingPL <- which(struct@metadata@filenames == fname)[1]
     PL <- struct@data@PL[[correspondingPL]]@peaklist
 
     #Filter the PL to the selected SOI region
