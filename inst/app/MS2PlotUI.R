@@ -193,20 +193,26 @@ MS2PlotServer <- function(id, struct) {
           }, logical(1)))[1]
           original_PL <- PL(struct$dataset, original_PL)
           
-          annotated_scans <- filter(original_PL@peaklist,
-                                    between(rt, rtrange[1], rtrange[2]) &
-                                    between(mz, mzrange[1], mzrange[2]))
-          raw_scans <- filter(original_PL@raw,
-                              between(rt, rtrange[1], rtrange[2]) &
-                              between(mz, mzrange[1], mzrange[2]))
+          annotated_scans <- dplyr::filter(original_PL@peaklist,
+                                           between(rt, rtrange[1], rtrange[2]) &
+                                           between(mz, mzrange[1], mzrange[2]))
           suppressWarnings({
               ms1plot <- ggplot() + 
-                  geom_point(aes(x=rt, y=rtiv, mz = mz), data = raw_scans, color = "grey") + 
                   geom_point(aes(x=rt, y=rtiv, color = formv, mz = mz), data = annotated_scans) +
                   labs(color = "Ion. Formula") + 
                   ggtitle("Above: continuous MS2 scans<br>Below: MS1 data within isolation window")+
                   theme_minimal()
           })
+          
+          raw_scans <- original_PL@raw
+          if(nrow(raw_scans) != 0){
+              raw_scans <- dplyr::filter(original_PL@raw,
+                                         between(rt, rtrange[1], rtrange[2]) &
+                                         between(mz, mzrange[1], mzrange[2]))
+              ms1plot <- ms1plot + 
+                  geom_point(aes(x=rt, y=rtiv, mz = mz), data = raw_scans, color = "grey")
+              
+          } 
           
           output$rawMSMS_bymz <- renderPlotly(
               subplot(rawplots[["p_bymz"]], ggplotly(ms1plot), nrows = 2,
