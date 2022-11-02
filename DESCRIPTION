@@ -1,9 +1,14 @@
 Package: RHermes
 Title: Improving metabolome characterization using molecular formula databases
 Version: 0.99.0
-Authors@R: c(person("Roger", "Gine", email = "alrgibe9@gmail.com", role = c("aut", "cre")),
-            person("Jordi", "Capellades", role = "ctb"),
-            person("Jordi", "Rofes", role = "ctb"))
+Authors@R: 
+    c(person("Roger", "Gine", email = "roger.gine@estudiants.urv.cat",
+             role = c("aut", "cre"),
+             comment = c(ORCID = "0000-0003-0288-9619")),
+      person("Jordi", "Capellades", role = "ctb",
+             comment = c(ORCID = "0000-0002-6502-8202")),
+      person("Jordi", "Rofes", role = "ctb",
+             comment = c(ORCID = "0000-0002-3914-0233")))
 Description: RHermes is a broad-scoped targeted metabolomics package to identify
   compounds from biological and environmental samples using a context-specific
   database of formulas and adducts. RHermes offers a comprehensive and 
@@ -20,11 +25,11 @@ Imports:
 	BiocParallel,
 	dplyr,
 	enviPat,
+	MSnbase,
 	mzR,
 	xcms,
+	MetaboCoreUtils,
 	reticulate,
-	keras,
-	tensorflow,
 	ggplot2,
 	plotly,
 	methods,
@@ -48,5 +53,4 @@ Imports:
 Suggests:
     readxl,
     knitr,
-    testthat,
-    covr
+    testthat

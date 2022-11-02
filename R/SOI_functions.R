@@ -38,10 +38,8 @@
 #'
 #'@export
 #'
-#'@importFrom keras load_model_hdf5 predict_classes
 #'@importFrom dplyr distinct filter
 #'@import magrittr
-#'@import tensorflow
 #'@import reticulate
 setGeneric("findSOI", function(struct, params, fileID, blankID = numeric(0)) {
     standardGeneric("findSOI")
@@ -86,9 +84,6 @@ function(struct, params, fileID, blankID = numeric(0)) {
                 params@blanksub <- FALSE)
         }
         if (blankID[i] != 0) {
-            reticulate::py_available(initialize = TRUE)
-            reticulate::py_module_available("keras")
-            reticulate::py_module_available("tensorflow")
             cur@blanksub <- TRUE
             cur@blankname <- struct@data@PL[[blankID[i]]]@filename
             blankPL <- struct@data@PL[[blankID[i]]]@peaklist
@@ -475,7 +470,6 @@ parallelGroupShort <- function(i, LG, maxlen){
     return(NewGR)
 }
 
-#' @importFrom keras k_argmax array_reshape
 blankSubstraction <- function(Groups, blankPL){
     message("Blank substraction:")
     blankPL <- blankPL[blankPL$isov == "M0", ]
@@ -485,49 +479,15 @@ blankSubstraction <- function(Groups, blankPL){
         unlist()
     sure <- Groups[which(toKeep), ]
     if (any(toKeep)) {Groups <- Groups[-which(toKeep),]}
-    reticulate::py_available(initialize = TRUE)  #Start Python connection
-    if (reticulate::py_module_available("keras") &
-        reticulate::py_module_available("tensorflow")) {
-        model <- load_model_hdf5(system.file("extdata", "ImprovedModel.h5",
-                                        package = "RHermes"))  #ANN
-        setkeyv(blankPL, "formv")
-
-        message("Preparing input for ANN")
-        RES <- lapply(seq_len(nrow(Groups)), prepareNetInput, Groups, blankPL)
-        Groups$MLdata <- RES
-        NAgroups <- do.call(rbind, lapply(RES, function(x){is.na(x[1])}))
-
-        if (any(NAgroups)) {
-            Groups <- Groups[-which(NAgroups), ]
-            RES <- RES[-which(NAgroups)]
-        }
-        organizeddata <- do.call(rbind, lapply(RES, function(x) {
-            return(c(x[1, ], x[2, ]))
-        }))
-        if (nrow(organizeddata) != 0) {
-            organizeddata <- keras::array_reshape(organizeddata,
-                                                c(nrow(organizeddata), 400),
-                                                order = "C")  #ANN input
-        q <- model %>% predict(organizeddata) %>% k_argmax()
-
-        Groups <- Groups[-which(q$numpy == 0), ]  #ANN output
-        Groups <- Groups[, -c("MLdata")]
-
-        }
-    } else {
-        setkeyv(blankPL, "formv")
-        message("Preparing input for cosine similarity")
-        RES <- lapply(seq_len(nrow(Groups)), prepareNetInput, Groups, blankPL)
-        cosines <- sapply(RES, function(x){
-            if(is.na(x)[1]){return(Inf)}
-            philentropy::cosine_dist(x[1,] + 1e-12, x[2,] + 1e-12,
-                                     testNA = FALSE)
-        })
-        Groups <- Groups[cosines < 0.8, ]
-        warning("A Keras installation was not found and ANN blank ",
-                "subtraction was not performed. A less-accurate ",
-                "cosine similarity score was applied instead.")
-    }
+    setkeyv(blankPL, "formv")
+    message("Preparing input for cosine similarity")
+    RES <- lapply(seq_len(nrow(Groups)), prepareNetInput, Groups, blankPL)
+    cosines <- sapply(RES, function(x){
+        if(is.na(x)[1]){return(Inf)}
+        philentropy::cosine_dist(x[1,] + 1e-12, x[2,] + 1e-12,
+                                 testNA = FALSE)
+    })
+    Groups <- Groups[cosines < 0.8, ]
     Groups <- rbind(sure, Groups)
     return(Groups)
 }

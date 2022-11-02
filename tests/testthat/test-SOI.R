@@ -16,26 +16,8 @@ test_that("SOI generation works",{
     expect_equal(nrow(myHermes@data@SOI[[2]]@SOIList), 11)
 })
 
-test_that("Blank substraction is configured and works",{
-    #Skip on bioconductor because this part requires that the user previously
-    #configures Keras and Tensorflow.
-    skip_on_bioc()
-    library(reticulate)
-    library(keras)
+test_that("Blank substraction is configured and works", {
     library(data.table)
-
-    #Has Python, Keras and Tensorflow
-    skip_if(!py_available(initialize = TRUE))
-    expect(py_module_available("keras"), failure_message = "No Keras")
-    expect(py_module_available("tensorflow"), failure_message = "No TensorFlow")
-
-    #Can load the model
-    model <- load_model_hdf5(system.file("extdata",
-                                    "ImprovedModel.h5",
-                                    package = "RHermes"))
-    expect(is(model, "python.builtin.object"),
-        failure_message = "Model doesn't load")
-
     set.seed(1234)
     #Does the model work as intended?
     blank <- data.table(rt = seq(0,20,0.2),
@@ -59,16 +41,6 @@ test_that("Blank substraction is configured and works",{
     expect_false(RHermes:::firstCleaning(1, group, blank)) #Blank-like
     expect_true(RHermes:::firstCleaning(2, group, blank)) #Totally different
 
-    #Check that the interpolation works and the network generates the right
-    #result (0, meaning sample and blank are the "same")
-    organizeddata <- RHermes:::prepareNetInput(1, group, blank)
-    organizeddata <- c(organizeddata[1, ], organizeddata[2, ])
-    organizeddata <- rbind(organizeddata,organizeddata,organizeddata)
-    organizeddata <- keras::array_reshape(organizeddata,
-                                                c(nrow(organizeddata), 400),
-                                                order = "C")  #ANN input
-    q <- model %>% predict(organizeddata) %>% k_argmax()
-    expect_true(all(q$numpy() == 0))
 })
 
 test_that("SOI plot works", {

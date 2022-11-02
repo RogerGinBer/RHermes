@@ -106,13 +106,13 @@ MS2PlotServer <- function(id, struct) {
   moduleServer(id, function(input, output, session) {
     # observeEvent({},{}, ignoreNULL = TRUE, ignoreInit = TRUE)
 
-    ####Updates to buttons, selections, etc.####
+    #### Updates to buttons, selections, etc. ####
     observeEvent({
       struct$hasMS2
       struct$dataset@data@MS2Exp
     }, {
       if (struct$hasMS2) {
-        #Determine which have ms2 data
+        ## Determine which have ms2 data
         whichMS2 <- vapply(struct$dataset@data@MS2Exp,
                            function(ms2) {
                              return(length(ms2@MS2Data) != 0)
@@ -136,25 +136,54 @@ MS2PlotServer <- function(id, struct) {
     {
       ms2 <- struct$dataset@data@MS2Exp[[as.numeric(input$id)]]
       sslist <- ms2@Ident[["MS2Features"]]
+      
+      
+      ## Identification against DB mirror plot selector
       with_hits <- which(vapply(sslist$results,
                                 function(x){is.data.frame(x)},
                                 logical(1)))
-      original_IL <- unique(sslist$ILentry)
       updateSelectizeInput(session, "selectident",
                            choices = as.character(with_hits), server = TRUE,
                            selected = as.character(with_hits[1]),
                            options = list(maxOptions = 50000))
+      
+      ## Raw MS2 plot selector
+      original_IL <- unique(sslist$ILentry)
+      ## Add some useful info to IL labels       
+      entries_list <- as.list(as.character(original_IL))
+      if (length(original_IL != 0)){
+          labels <- lapply(original_IL, function(id){
+              entries <- sslist[sslist$ILentry == id, ]
+              paste(id,
+                    "RT:", round(min(entries$start), 2), "-", round(max(entries$end),2),
+                    "mz:", round(mean(entries$precmass), 4))
+          })
+          names(entries_list) <- labels
+      }
       updateSelectizeInput(session, "selectILentry",
-                           choices = as.character(original_IL),
-                           selected = as.character(original_IL[1]),
+                           choices = entries_list,
+                           selected = entries_list[1],
                            server = TRUE, options = list(maxOptions = 50000))
+      
+      
+      
+      #MS2 spectra plotter and mirror plot among MS2 spectra
+      spectra_info <- paste(seq_len(nrow(sslist)),
+                            "RT:", round(sslist$start, 2), round(sslist$apex, 2), round(sslist$end, 2),
+                            "mz:", round(sslist$precmass, 4))
+      spectra_list <- as.list(seq_len(nrow(sslist)))
+      names(spectra_list) <- spectra_info
+                             
+      
       updateSelectizeInput(session, "selectident2",
-                           choices = as.character(seq_len(nrow((sslist)[1]))), server = TRUE,
-                           selected = as.character(1),
+                           choices = spectra_list,
+                           server = TRUE,
+                           selected = NULL,
                            options = list(maxOptions = 50000))
       updateSelectizeInput(session, "selectss",
-                           choices = as.character(seq_len(nrow((sslist)[1]))), server = TRUE,
-                           selected = as.character(1),
+                           choices = spectra_list,
+                           server = TRUE,
+                           selected = NULL,
                            options = list(maxOptions = 50000))
 
     }, ignoreNULL = TRUE, ignoreInit = TRUE, priority = 50)
@@ -163,11 +192,16 @@ MS2PlotServer <- function(id, struct) {
       ms2 <- struct$dataset@data@MS2Exp[[as.numeric(input$id)]]
       sslist <- ms2@Ident[["MS2Features"]]
 
-      otherss <- seq_len(nrow(sslist))[-as.numeric(input$selectident2)]
-
+      spectra_info <- paste(seq_len(nrow(sslist)),
+                            "RT:", round(sslist$start, 2), round(sslist$apex, 2), round(sslist$end, 2),
+                            "mz:", round(sslist$precmass, 4))
+      spectra_list <- as.list(seq_len(nrow(sslist)))
+      names(spectra_list) <- spectra_info
+      
+      #Remove picker1 selection from picker2's options
       updatePickerInput(session, "otherss",
-                        choices = as.character(otherss),
-                        selected = as.character(otherss[1]))
+                        choices = spectra_list[-as.numeric(input$selectident2)],
+                        selected = NULL)
     }, ignoreNULL = TRUE, ignoreInit = TRUE
     )
 
@@ -193,21 +227,27 @@ MS2PlotServer <- function(id, struct) {
           }, logical(1)))[1]
           original_PL <- PL(struct$dataset, original_PL)
           
-          annotated_scans <- filter(original_PL@peaklist,
-                                    between(rt, rtrange[1], rtrange[2]) &
-                                    between(mz, mzrange[1], mzrange[2]))
-          raw_scans <- filter(original_PL@raw,
-                              between(rt, rtrange[1], rtrange[2]) &
-                              between(mz, mzrange[1], mzrange[2]))
+          annotated_scans <- dplyr::filter(original_PL@peaklist,
+                                           between(rt, rtrange[1], rtrange[2]) &
+                                           between(mz, mzrange[1], mzrange[2]))
           suppressWarnings({
               ms1plot <- ggplot() + 
-                  geom_point(aes(x=rt, y=rtiv, mz = mz), data = raw_scans, color = "grey") + 
                   geom_point(aes(x=rt, y=rtiv, color = formv, mz = mz), data = annotated_scans) +
                   labs(color = "Ion. Formula") + 
                   ggtitle("Above: continuous MS2 scans<br>Below: MS1 data within isolation window")+
                   theme_minimal()
           })
           
+          raw_scans <- original_PL@raw
+          if(nrow(raw_scans) != 0){
+              raw_scans <- dplyr::filter(original_PL@raw,
+                                         between(rt, rtrange[1], rtrange[2]) &
+                                         between(mz, mzrange[1], mzrange[2]))
+              raw_scans <- dplyr::anti_join(raw_scans, annotated_scans)
+              ms1plot <- ms1plot + 
+                  geom_point(aes(x=rt, y=rtiv, mz = mz, color = "Unknown"), data = raw_scans)
+              
+          } 
           output$rawMSMS_bymz <- renderPlotly(
               subplot(rawplots[["p_bymz"]], ggplotly(ms1plot), nrows = 2,
                       shareX = TRUE)
@@ -221,7 +261,12 @@ MS2PlotServer <- function(id, struct) {
           if (is(rawplots[["net"]], "visNetwork")) {
             output$rawss <- renderVisNetwork(rawplots[["net"]])
           }
-        }, error = function(e){message("Raw MS2 plot failed")})
+        }, error = function(e){
+            sendSweetAlert(session = session, title = "Error",
+                           text = "Raw MS2 plot failed, meaning no enough points were acquired for this entry",
+                           type = "warning")
+            message("Raw MS2 plot failed")
+        })
 
       }
     }, ignoreNULL = TRUE, ignoreInit = TRUE, priority = -1)

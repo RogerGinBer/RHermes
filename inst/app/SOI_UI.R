@@ -279,9 +279,7 @@ SOIServer <- function(id, struct){
               tags$li(tags$b("Maximum SOI RT"), ": The algorithm will split long SOIs (larger than the selected value),
                       into smaller ones. Longer values take shorter (since there aren't as many SOI entries), but blank
                       substraction problems can arise and it's not really worth it. Better left as default."),
-              tags$li(tags$b("Blank Substraction"), ": Whether to perform Blank Substraction (Optional but recommended).",
-                      tags$b("Important:"), "The blank substraction step requires setting up Keras and Tensorflow first.
-                      If you haven't done it please check the package Readme file to see how to do it.")
+              tags$li(tags$b("Blank Substraction"), ": Whether to perform Blank Substraction (Optional but recommended).")
             ),
             tags$p("To generate the SOI list (or lists) you have to set up the desired parameters and click \"Add selected config\".
             When you do so, you will see that the input parameters appear in the box below the button. You can either add more configs
