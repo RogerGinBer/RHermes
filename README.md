@@ -8,8 +8,8 @@
 [![Codecov test
 coverage](https://codecov.io/gh/RogerGinBer/RHermes/branch/master/graph/badge.svg?token=HL73R4GHFJ)](https://codecov.io/gh/RogerGinBer/RHermes?branch=master)
 
+[![R-CMD-check](https://github.com/RogerGinBer/RHermes/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/RogerGinBer/RHermes/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
-
 <img align = "right" style = "padding-left: 10%; padding-bottom: 10%; padding-top: 2%" 
 width = "250px" height = "285px" src = "https://i.postimg.cc/Tw9SvJ11/sticker-No-Bioc.png">
 
