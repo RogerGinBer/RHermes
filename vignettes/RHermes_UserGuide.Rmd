@@ -324,21 +324,6 @@ RHermesGUI()
 ```
 And the app should start in your default browser.
 
-## Advanced functionality 
-### Parallelization
-Another parameter you want to set up (especially if you're dealing with
-many formulas and adducts - say >10K formulas) is a custom parallel
-backend. 
-
-RHermes functions use your default backend (bpparam()), but you can set any
-backend you like with register(). You can use setCluster to automatically 
-select an appropiate backend based on your OS and RAM.
-
-```{r}
-BiocParallel::register(setCluster()) 
-```
-
-
 ## Session Info
 
 ```{r}
