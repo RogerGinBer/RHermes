@@ -14,7 +14,6 @@ vignette: |
 ---
 
 ```{r setup, include=FALSE}
-BiocParallel::register(BiocParallel::SerialParam())
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message = FALSE)
 knitr::opts_chunk$set(collapse = TRUE)
 library(plotly)

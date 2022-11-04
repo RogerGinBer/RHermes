@@ -22,7 +22,6 @@ biocViews: MassSpectrometry, Metabolomics, GUI
 BugReports: https://github.com/RogerGinBer/RHermes/issues
 Depends: R (>= 3.5.0)
 Imports:
-	BiocParallel,
 	dplyr,
 	enviPat,
 	MSnbase,
