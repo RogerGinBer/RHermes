@@ -99,7 +99,7 @@ multiplicity <= 2 (for instance [2M+H]+, [M+2H]2+ and so on).
 You may also just select a subset of adducts using with `adlist` param:
 ```{r}
 myHermes <- setDB(myHermes, db = "hmdb", admult = 2, adcharge = 2,
-                  adlist = c("M+H", "M+Na", "M+K", "M+2H", "2M+H"))
+                  adlist = c("[M+H]+", "[M+Na]+", "[M+K]+", "[M+NH4]+", "[2M+H]+"))
 ```
 
 
@@ -112,16 +112,18 @@ new adduct profiles with addAd() and remove them with remAd():
 
 ```{r}
 #We will manually add the "M+2H" adduct
-myHermes <- addAd(myHermes, name = "M+2H", deltam = 2*1.00727600, ch = 2,
+myHermes <- addAd(myHermes, name = "[M+2H]2+", deltam = 2*1.00727600, ch = 2,
                     mult = 1, toadd = "H2")
 
 #For instance, remove adducts of unused solvents
 myHermes <- remAd(myHermes, c("M+DMSO+H", "M+IsoProp+H"))
 
 ```
+
 ```{r eval=FALSE}
 adlist(myHermes)
 ```
+
 ```{r echo=FALSE}
 knitr::kable(adlist(myHermes))
 ```
