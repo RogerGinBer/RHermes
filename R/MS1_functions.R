@@ -70,10 +70,15 @@ function(struct, files, labelled = FALSE) {
 
 
 preprocessing <- function(struct){
-    F_DB <- struct@metadata@ExpParam@DB[,c("MolecularFormula", "EnviPatMass")]
-    #Could break if colname isn't exactly "MolecularFormula"
-    F_DB <- dplyr::distinct_at(F_DB, "MolecularFormula",
-                                .keep_all = T)
+    ## Fix to keep backwards compatibility with already processed files
+    if("EnviPatMass" %in% colnames(DB(struct))){
+        colnames(struct@metadata@ExpParam@DB)[colnames(DB(struct)) == "EnviPatMass"] <- "ExactMass"
+    }
+    if (!all(c("MolecularFormula", "ExactMass") %in% colnames(DB(struct)))){
+        stop("DB does not have the columns MolecularFormula and ExactMass, please rerun setDB")
+    }
+    F_DB <- struct@metadata@ExpParam@DB[,c("MolecularFormula", "ExactMass")]
+    F_DB <- dplyr::distinct_at(F_DB, "MolecularFormula", .keep_all = T)
     colnames(F_DB) <- c("fms", "m")
 
     IF_DB <- IonicForm(F_DB, struct@metadata@ExpParam@adlist)
@@ -86,26 +91,27 @@ preprocessing <- function(struct){
     return(list(IF_DB, IC))
 }
 
+#'@importFrom data.table data.table
 import_and_filter <- function(lf, minpks = 20, noise = 1000) {
-    #Opening the connection to a single mzML file
+    ## Open the connection to a single mzML file
     fileml <- mzR::openMSfile(lf)
     plist <- mzR::peaks(fileml)
     h <- mzR::header(fileml)
 
-    #Filtering header
+    ## Filter empty headers 
     h <- h[, -which(vapply(h, function(x) all(x == 0), FUN.VALUE = logical(1)))]
     if (any(h$peaksCount < minpks)) {
-        #Removing scans with very very few peaks detected
+        #Remove scans with very very few peaks detected
         plist <- plist[-which(h$peaksCount < minpks)]
         h <- h[-which(h$peaksCount < minpks), ]
     }
-    #Removing all MS>1 scans
+    #Remove all MS>1 scans
     if(any(h$msLevel != 1)){
         plist <- plist[-which(h$msLevel != 1)]
         h <- h[-which(h$msLevel != 1), ]
     }
     raw <- lapply(seq_along(plist), function(x) {
-        #Extracting raw data into a DT
+        #Extract raw data into a DT
         rpeaks <- plist[[x]]
         rt <- h$retentionTime[x]
         return(data.table(mz = rpeaks[, 1], rtiv = rpeaks[, 2], rt = rt))
@@ -125,13 +131,14 @@ IonicForm <- function(F_DB, Ad_DB) {
     return(list(db, connections))
 }
 
+#' @importFrom MetaboCoreUtils addElements subtractElements
 calculate_ionic_forms <- function(i, F_DB, Ad_DB){
     f <- as.character(F_DB$fms[i])
     j <- apply(Ad_DB, 1, function(x) {
         current_f <- f
         if (x[3] != 1) current_f <- multform(current_f, as.numeric(x[3]))
-        if (x[6] != "FALSE") current_f <- sumform(current_f, x[6])
-        if (x[7] != "FALSE") current_f <- subform(current_f, x[7])
+        if (x[6] != "FALSE") current_f <- addElements(current_f, x[6])
+        if (x[7] != "FALSE") current_f <- subtractElements(current_f, x[7])
         if (is.na(current_f)) return(NA)
 
         ch <- ifelse(x[5] == "positive", "+", "-")
@@ -164,90 +171,6 @@ calculate_ionic_forms <- function(i, F_DB, Ad_DB){
     return(list(db, con))
 }
 
-sumform <- function(f1, f2) {
-    f1 <- tryCatch({
-        CHNOSZ::count.elements(f1)
-    }, error = function(cond){return(NA)})
-    if (any(is.na(f1))) return(NA)
-    n1 <- names(f1)
-    f2 <- CHNOSZ::count.elements(f2)
-    n2 <- names(f2)
-    interAB <- n1[which(n1 %in% n2)]
-    if (length(interAB) != 0) {
-        s1 <- vapply(interAB, function(x) {
-            f1[[x]] + f2[[x]]
-        }, numeric(1))
-        names(s1) <- interAB
-    } else {
-        s1 <- integer()
-    }
-    uniqueA <- n1[which(!(n1 %in% n2))]
-    if (length(uniqueA) != 0) {s1 <- c(s1, f1[uniqueA])}
-    uniqueB <- n2[which(!(n2 %in% n1))]
-    if (length(uniqueB) != 0) {s1 <- c(s1, f2[uniqueB])}
-    alln <- unique(c(n1, n2))
-    alln <- alln[!(alln %in% c("C", "H"))]
-    ord <- c()
-    if ("C" %in% unique(c(n1, n2))) {ord <- c("C")}
-    if ("H" %in% unique(c(n1, n2))) {ord <- c(ord, "H")}
-    ord <- c(ord, sort(alln))
-    s1 <- s1[ord]
-
-    output <- paste0(mapply(function(x, y) {
-        if (y == 1) {
-            return(x)
-        }
-        return(paste0(x, y))
-    }, names(s1), s1), collapse = "")
-
-    return(output)
-}
-
-subform <- function(f1, f2) {
-    f1 <- tryCatch({
-        CHNOSZ::count.elements(f1)
-    }, error = function(cond){return(NA)})
-    if (any(is.na(f1))) {return(NA)}
-    n1 <- names(f1)
-    f2 <- CHNOSZ::count.elements(f2)
-    n2 <- names(f2)
-    interAB <- n1[which(n1 %in% n2)]
-    if (length(interAB) < length(n2)) {return(NA)}
-    if (length(interAB) != 0) {
-        s1 <- vapply(interAB, function(x) {
-            res <- ifelse(f1[[x]] - f2[[x]] > 0, f1[[x]] - f2[[x]], NA)
-        }, numeric(1))
-        if (any(is.na(s1))) {return(NA)}
-        if (any(s1 == 0)) {
-            n1 <- n1[which(n1 %in% n2)[s1 != 0]]
-            n2 <- n2[which(n2 %in% n1)[s1 != 0]]
-            s1 <- s1[s1 != 0]
-        }
-        names(s1) <- interAB
-    } else {
-        s1 <- integer()
-    }
-    uniqueA <- n1[which(!(n1 %in% n2))]
-    if (length(uniqueA) != 0) {s1 <- c(s1, f1[uniqueA])}
-    uniqueB <- n2[which(!(n2 %in% n1))]
-    if (length(uniqueB) != 0) {s1 <- c(s1, f2[uniqueB])}
-    alln <- unique(c(n1, n2))
-    alln <- alln[!(alln %in% c("C", "H"))]
-    ord <- c()
-    if ("C" %in% unique(c(n1, n2))) {ord <- c("C")}
-    if ("H" %in% unique(c(n1, n2))) {ord <- c(ord, "H")}
-    ord <- c(ord, sort(alln))
-    s1 <- s1[ord]
-
-    output <- paste0(mapply(function(x, y) {
-        if (y == 1) {
-            return(x)
-        }
-        return(paste0(x, y))
-    }, names(s1), s1), collapse = "")
-
-    return(output)
-}
 
 multform <- function(f, k) {
     f <- CHNOSZ::count.elements(f)
@@ -333,7 +256,7 @@ isocalc_parallel <- function(x, kTHR, resol_factor, isotopecode, isOrbi){
     } else {
         limitfactor <- 2 * kTHR * x[1, 1]/resol_factor
     }
-    breaks <- which(diff(x[,1]) > 5*median(diff(x[,1]))) #Find iso clusters
+    breaks <- which(diff(x[,1]) > 5 * median(diff(x[,1]))) #Find iso clusters
     breaks <- data.frame(st = c(1, breaks + 1), end = c(breaks, nrow(x)))
     clust <- lapply(seq_len(nrow(breaks)), function(i){
         x[seq(breaks$st[i], breaks$end[i]), , drop = FALSE]

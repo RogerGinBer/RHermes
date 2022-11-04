@@ -182,7 +182,7 @@ jobs:
 
           ## For running the checks
           message(paste('****', Sys.time(), 'installing rcmdcheck and BiocCheck ****'))
-          install.packages(c("rcmdcheck", "BiocCheck", "webshot"), repos = gha_repos) # Added webshot for compiling vignettes with plotly HTML elements
+          install.packages(c("rcmdcheck", "BiocCheck", "webshot", "markdown"), repos = gha_repos) # Added webshot for compiling vignettes with plotly HTML elements
           webshot::install_phantomjs()
 
           ## Pass #1 at installing dependencies

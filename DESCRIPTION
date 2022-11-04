@@ -16,7 +16,7 @@ Description: RHermes is a broad-scoped targeted metabolomics package to identify
   the package offers an easy-to-use GUI to process and visualize the data. 
 License: GPL-3
 Encoding: UTF-8
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.0
 VignetteBuilder: knitr
 biocViews: MassSpectrometry, Metabolomics, GUI
 BugReports: https://github.com/RogerGinBer/RHermes/issues

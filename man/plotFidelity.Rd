@@ -33,7 +33,7 @@ Plots the selected SOI isotopic profile and a
 \examples{
 \dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
                              package = "RHermes"))}
-p <- plotFidelity(struct, 1, 9)
+p <- plotFidelity(struct, 1, 8)
 }
 \seealso{
 Other plots: 

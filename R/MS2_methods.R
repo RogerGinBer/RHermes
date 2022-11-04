@@ -96,6 +96,8 @@ exportMGF <- function(struct, id, file, whichSpec = NA) {
 #' @author Jordi Capellades
 #' @inheritParams exportMSP
 #' @param fname Name of the output file, without the .mzML termination
+#' @param collisionEnergy Numeric. Desired collision energy (in %NCE, eV, or any
+#'   other unit)
 #' @description  Exports the superspectra of a given MS2Exp ID into an
 #' mzML format file. Warning! The retention time information is not
 #' included in the mzML file.
