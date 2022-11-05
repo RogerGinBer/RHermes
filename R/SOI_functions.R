@@ -349,6 +349,8 @@ groupGrouper <- function(GR, i, Groups){
 }
 
 #' @importFrom MSnbase readMSData
+#' @importFrom xcms findChromPeaks chromPeaks
+#' @importFrom data.table as.data.table
 calculateSOICentwave <- function(filename, DB, CentWaveParam, ppm){
     msdata <- readMSData(filename, mode = "onDisk")
     pks <- findChromPeaks(msdata, CentWaveParam)

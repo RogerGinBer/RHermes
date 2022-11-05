@@ -7,9 +7,11 @@
 
 [![Codecov test
 coverage](https://codecov.io/gh/RogerGinBer/RHermes/branch/master/graph/badge.svg?token=HL73R4GHFJ)](https://codecov.io/gh/RogerGinBer/RHermes?branch=master)
-
-[![R-CMD-check](https://github.com/RogerGinBer/RHermes/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/RogerGinBer/RHermes/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/RogerGinBer/RHermes/actions/workflows/check-bioc.yml/badge.svg)](https://github.com/RogerGinBer/RHermes/actions/workflows/check-bioc.yml)
+[![Lifecycle:
+experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
+
 <img align = "right" style = "padding-left: 10%; padding-bottom: 10%; padding-top: 2%" 
 width = "250px" height = "285px" src = "https://i.postimg.cc/Tw9SvJ11/sticker-No-Bioc.png">
 
