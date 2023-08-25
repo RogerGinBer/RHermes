@@ -65,9 +65,9 @@ inclusionList <- function(struct, params, id) {
             which(oSoi$start==y$start &
                       oSoi$end==y$end &
                       oSoi$mass==y$mass &
-                      oSoi$formula==y$formula)
+                      oSoi$formula==y$formula)[1]
         }))
-    } else {
+    }else{
         GL <- oSoi[, c("start", "end", "formula", "mass", "MaxInt", "anot")]
         GL$originalSOI <- seq_len(nrow(GL))
     }
@@ -107,21 +107,21 @@ inclusionList <- function(struct, params, id) {
     }, character(1))
     GL$entrynames <- unlist(GL$entrynames)
 
-    PL_id <- which(struct@metadata@filenames == SoiList@filename)[1]
+    PL_id <- which(struct@metadata@filenames %in% SoiList@filename)[1]
     raw <- PL(struct, PL_id)@raw
     if(nrow(raw) != 0){
-        # GL$XIC <- lapply(seq_len(nrow(GL)), function(x){
-        #     cur <- GL[x,]
-        #     # mzs <- c(min(cur$mass) * (1 - ppm * 1e-6),
-        #     # max(cur$mass) * (1 + ppm * 1e-6))
-        #     # mzs <- c(min(cur$mass) - filtermz,
-        #              # max(cur$mass) + filtermz)
-        #     mzs <- c(min(cur$jointentries[[1]]$mass) * (1 - ppm * 1e-6),
-        #              max(cur$jointentries[[1]]$mass) * (1 + ppm * 1e-6))
-        #     calculate_XIC_estimation(raw,
-        #                              mzs,
-        #                              c(cur$start, cur$end))
-        # })
+        GL$XIC <- lapply(seq_len(nrow(GL)), function(x){
+            cur <- GL[x,]
+            # mzs <- c(min(cur$mass) * (1 - ppm * 1e-6),
+            # max(cur$mass) * (1 + ppm * 1e-6))
+            # mzs <- c(min(cur$mass) - filtermz,
+                     # max(cur$mass) + filtermz)
+            mzs <- c(min(cur$jointentries[[1]]$mass) * (1 - ppm * 1e-6),
+                     max(cur$jointentries[[1]]$mass) * (1 + ppm * 1e-6))
+            calculate_XIC_estimation(raw,
+                                     mzs,
+                                     c(cur$start, cur$end))
+        })
     }
     GL <- RHermesIL(IL = as.data.table(GL[, -5]), annotation = GL$jointentries,
                     SOInum = id, ILParam = params)
@@ -175,8 +175,8 @@ GLgroup <- function(GL, rtmargin, ppm) {
         idx <- which(between(GL$start, st - rtmargin, end + rtmargin) &
                     between(GL$end, st - rtmargin, end + rtmargin) &
                     between(GL$mass, m - m * ppm/1e+06, m + m * ppm/1e+06))
-        
         if(rtmargin <= 0){idx <- 1}
+
         out <- c(out, list(GL[idx, ]))
         GL <- GL[-idx, ]
         if (nrow(GL) == 0) {

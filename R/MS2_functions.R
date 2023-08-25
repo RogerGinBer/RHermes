@@ -207,7 +207,6 @@ CliqueMSMS <- function(MS2Exp, idx, contaminant = 173.5, delta = 0.1,
                 return(sub(pattern = " ", replacement = "", x = res))
             }) %>% unlist() %>% unique()
         })
-
     #MS2 processing function selection
     processingFun <- switch(sstype,
                   "regular" = generate_ss_continuous_ms2,

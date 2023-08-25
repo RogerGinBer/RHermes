@@ -38,7 +38,7 @@ ExtraInfo_UI <- function(id){
                sidebarPanel(
                  div(radioButtons(inputId = ns("MS2files"), label = "Select inclusion list with MS2 data:",
                                   choices = "", selected = ""),
-                     selectInput(ns("MS2ILentry"), "Select IL entry to check:", choices = "", selected = ""),
+                     selectizeInput(ns("MS2ILentry"), "Select IL entry to check:", choices = NULL),
                      style = "margin-left: 5%; margin-top: 3%"), width = "AUTO"),
                sidebarPanel(
                  plotlyOutput(ns("MS2raw")),
@@ -155,7 +155,7 @@ ExtraInfoServer <- function(id, struct){
       },{
         if(struct$hasMS2){
           numMS2entry <- seq_along(struct$dataset@data@MS2Exp[[as.numeric(input$MS2files)]]@MS2Data)
-          updateSelectInput(session, "MS2ILentry", choices = numMS2entry, selected = numMS2entry[1])
+          updateSelectizeInput(session, "MS2ILentry", choices = numMS2entry, selected = numMS2entry[1], server = TRUE)
         }
       })
 

@@ -64,7 +64,8 @@ PLPlotUI <- function(id){
                     column(4, switchInput(ns("mzmetric"), "Use ppm?", value = TRUE, onLabel = "ppm", offLabel = "absolute")),
                     column(8, numericInput(ns("mztol"), "mz tolerance", value = 3, min = 0, max = 5000, step = 0.001)),
                     sliderInput(ns("RTinterval_raw"), label = "Select an RT interval:",
-                                min = 0, max = 1800, value = c(0,1800))
+                                min = 0, max = 1800, value = c(0,1800)),
+                    sliderInput(ns("Intensity_raw"), "Select a log10 intensity range:", min = 0, max = 10, step = 0.05, value=c(0,10))
                 )
             ), width = 12),
             width = "100%"),
@@ -148,6 +149,7 @@ PLPlotServer <- function(id, struct){
           input$mzmetric
           input$mztol
           input$PLfiles_raw
+          input$Intensity_raw
       },{
           if(struct$hasPL){
               d <- struct$dataset@data@PL[[as.numeric(input$PLfiles_raw)]]@raw
@@ -159,13 +161,17 @@ PLPlotServer <- function(id, struct){
                         tol <- as.numeric(input$mztol)
                     }
                     d <- filter(d, between(mz, target - tol, target + tol) &
-                                  between(rt, as.numeric(input$RTinterval_raw[[1]]),
-                                          as.numeric(input$RTinterval_raw[[2]])))
+                                   between(rt,
+                                           as.numeric(input$RTinterval_raw[[1]]),
+                                           as.numeric(input$RTinterval_raw[[2]])),
+                                   between(log10(rtiv),
+                                           as.numeric(input$Intensity_raw[[1]]),
+                                           as.numeric(input$Intensity_raw[[2]])))
                     if(nrow(d) < 1e5){
                         p1 <- ggplotly(ggplot(d) +
                                            geom_point(aes(x=rt, y=mz, color = log10(rtiv)))+
                                            labs(color = "log10(Intensity)") +
-                                           scale_colour_gradient(low = "#CFB7E5", high = "#15004D") +
+                                           scale_color_viridis_c(option = "inferno") +
                                            xlab("Retention time (s)") +
                                            ylab("m/z")
                         )
@@ -173,7 +179,7 @@ PLPlotServer <- function(id, struct){
                         p2 <- ggplotly(ggplot(d) +
                                          geom_point(aes(x=rt, y=log10(rtiv), color = mz)) +
                                          labs(color = "mz") +
-                                         scale_colour_gradient(low = "#CFB7E5", high = "#15004D") +
+                                         scale_color_viridis_c(option = "inferno") +
                                          xlab("Retention time (s)") +
                                          ylab("Intensity")
                         )

@@ -9,7 +9,6 @@ test_that("Raw data can be loaded",{
 })
 
 test_that("ScanSearch works",{
-    BiocParallel::register(BiocParallel::SerialParam())
     myHermes <- readRDS(system.file("extdata",
                                     "exampleObject.rds",
                                     package = "RHermes"))
@@ -22,7 +21,6 @@ test_that("ScanSearch works",{
 })
 
 test_that("Labelled proc works",{
-    BiocParallel::register(BiocParallel::SerialParam())
     myHermes <- readRDS(system.file("extdata",
                                     "exampleObject.rds",
                                     package = "RHermes"))
