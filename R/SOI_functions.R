@@ -349,6 +349,8 @@ groupGrouper <- function(GR, i, Groups){
 }
 
 #' @importFrom MSnbase readMSData
+#' @importFrom xcms findChromPeaks chromPeaks
+#' @importFrom data.table as.data.table
 calculateSOICentwave <- function(filename, DB, CentWaveParam, ppm){
     msdata <- readMSData(filename, mode = "onDisk")
     pks <- findChromPeaks(msdata, CentWaveParam)
@@ -969,7 +971,6 @@ generateDiffDB <- function(DB, formulas, polarity = 1){
 }
 
 #' @rawNamespace import(data.table, except = between)
-#' @importFrom BiocParallel bplapply
 anotateISF <- function(SL, DB, polarity = 1){
     DB$df_spectra <- as.data.table(DB$df_spectra)
     DB$df_metabolite <- as.data.table(DB$df_metabolite)
@@ -981,9 +982,8 @@ anotateISF <- function(SL, DB, polarity = 1){
     setkeyv(DB$df_metabolite, c("REFformula"))
     setkeyv(DB$list_fragments, c("ID_spectra"))
 
-    SL$ISF <- bplapply(seq_len(nrow(SL)), anotateParallelISF,
-                        SL = SL, DB = DB, polarity = polarity,
-                        BPPARAM  = bpparam())
+    SL$ISF <- lapply(seq_len(nrow(SL)), anotateParallelISF,
+                        SL = SL, DB = DB, polarity = polarity)
     return(SL)
 }
 
@@ -1105,7 +1105,6 @@ cleanupISF <- function(SL){
 #' removed. If using justAnnotate = TRUE, the ISF aren't removed.
 #' @seealso plotISF
 #' @export
-#' @importFrom BiocParallel bplapply
 #' @examples
 #' if(FALSE){
 #'     #You need a MS2 Database with the proper format

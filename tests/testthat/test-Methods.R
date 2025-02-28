@@ -18,7 +18,7 @@ test_that("RHermesExp methods work", {
                       toadd = "Cs")
     expect_warning(addAd(myHermes, "M+Cs", deltam = 132.905, ch = 0,  mult = 1,
                       toadd = "Cs"))
-    remAd(myHermes, "M-H")
+    remAd(myHermes, "[M-H]-")
     expect_warning(remAd(myHermes, "M+2Rb"))
 })
 

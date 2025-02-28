@@ -217,40 +217,6 @@ RHermesMS2Exp <- setClass("RHermesMS2Exp", slots = list(IL = "RHermesIL",
     MS2Data = "list", Ident = "list"))
 
 
-#' @title setCluster
-#' @description Returns the most appropriate BiocParallel backend for RHermes
-#'   according to your OS and RAM. It is entirely optional, but recommended
-#'   nonetheless.
-#' @author Roger Gine
-#' @import BiocParallel
-#' @examples
-#' BiocParallel::register(setCluster()) #Registers the most appropriate backend
-#' @return A BiocParallel backend
-#' @export
-setCluster <- function(){
-    if (Sys.info()[1] == "Windows") {
-        ram <- system2("wmic", args =  "OS get FreePhysicalMemory /Value",
-                        stdout = TRUE)
-        ram <- ram[grepl("FreePhysicalMemory", ram)]
-        ram <- gsub("FreePhysicalMemory=", "", ram, fixed = TRUE)
-        ram <- gsub("\r", "", ram, fixed = TRUE)
-        ram <- as.integer(ram)
-
-        #Suppose max 2GB per worker
-        nwork <- min(floor(ram/2e6), BiocParallel::snowWorkers())
-        if (nwork <= 1) {
-            warning(paste("Maybe you have too little available RAM.",
-                            "Proceeding with SerialParam()"))
-            return(backend <- BiocParallel::SerialParam(progressbar = TRUE))
-        }
-        return(backend <- BiocParallel::SnowParam(nwork, progressbar = TRUE))
-    } else {
-        backend <- BiocParallel::MulticoreParam(
-            BiocParallel::multicoreWorkers() - 2,
-            progressbar = TRUE)
-    }
-    return(backend)
-}
 
 #'@title RHermesMeta
 #'@description The metadata storage class. It holds the experimental parameters,

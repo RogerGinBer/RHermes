@@ -12,7 +12,7 @@ exportIL(
   mode = "both",
   maxOver = 5,
   defaultIT = 100,
-  sepFiles = FALSE,
+  sepFiles = TRUE,
   maxInjections = 9999
 )
 
@@ -23,7 +23,7 @@ exportIL(
   mode = "both",
   maxOver = 5,
   defaultIT = 100,
-  sepFiles = FALSE,
+  sepFiles = TRUE,
   maxInjections = 9999
 )
 }
@@ -53,8 +53,7 @@ aplicable in Orbitrap instruments and for "continuous" and "both" modes).
 Defaults to 100ms.}
 
 \item{sepFiles}{Logical, whether to generate a single csv file or multiple
-csvs, each corresponding to each injection/chromatographic run. From our
-experience with an Orbitrap Fusion, separate csvs will simplify the task.}
+csvs, each corresponding to each injection/chromatographic run.}
 
 \item{maxInjections}{Numeric, the maximum number of planned injections to
 export. Defaults to 9999 to export all of them.}

@@ -302,7 +302,7 @@ function(struct, id, formula, ads = NA, rtrange= c(0, 1e4), dynamicaxis = TRUE,
 #'@examples
 #'\dontshow{struct <- readRDS(system.file("extdata", "exampleObject.rds",
 #'                              package = "RHermes"))}
-#'p <- plotFidelity(struct, 1, 9)
+#'p <- plotFidelity(struct, 1, 8)
 #'@export
 setGeneric("plotFidelity", function(struct, id, entry, plot = TRUE) {
     standardGeneric("plotFidelity")

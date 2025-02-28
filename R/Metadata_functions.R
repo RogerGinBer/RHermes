@@ -1,37 +1,43 @@
 adductTables <- function(ch_max = 1, mult_max = 1) {
-    data(adducts, package = "enviPat", envir = environment())
-    adducts$Mass[49] <- adducts$Mass[49] * (-1)  #Fixed wrong one
-
-    negative.envi <- adducts[which(adducts$Ion_mode == "negative"), ]
-    positive.envi <- adducts[which(adducts$Ion_mode == "positive"), ]
-
-    ad_positive <- which(
-        positive.envi$Charge %in% as.character(seq(ch_max)) &
-        positive.envi$Mult %in% seq(mult_max)
-    )
-    ad_negative <- which(
-        negative.envi$Charge %in% as.character(seq(from = -1, to = -ch_max)) &
-        negative.envi$Mult %in% seq(mult_max)
-    )
-
-    positive.envi <- positive.envi[ad_positive, ]
-    negative.envi <- negative.envi[ad_negative, ]
-
-    negative.ad <- negative.envi[, -c(2, 9)]
-    colnames(negative.ad)[c(1, 4)] <- c("adduct", "massdiff")
-    negative.ad$massdiff <- negative.ad$massdiff * abs(negative.ad$Charge)
-
-    positive.ad <- positive.envi[, -c(2, 9)]
-    colnames(positive.ad)[c(1, 4)] <- c("adduct", "massdiff")
-    positive.ad$massdiff <- positive.ad$massdiff * abs(positive.ad$Charge)
-
-    return(list(negative.ad, positive.ad))
+    ads <- adducts_MetaboCore_to_Hermes()
+    ads <- filter(ads, abs(Charge) <= ch_max)
+    ads <- filter(ads, abs(Mult) <= mult_max)
+    return(list(ads[ads$Ion_mode == "negative", ],
+                ads[ads$Ion_mode == "positive", ]))
 }
 
+#' @importFrom MetaboCoreUtils adducts
+adducts_MetaboCore_to_Hermes <- function(){
+    ads <- rbind(MetaboCoreUtils::adducts("positive"),
+                 MetaboCoreUtils::adducts("negative"))
+    
+    #Reorder columns
+    ads <- ads[,c("name", "charge", "mass_multi", "mass_add", "positive",
+                  "formula_add", "formula_sub")]
+    
+    #Adapt names and format
+    names(ads) <- c("adduct", "Charge", "Mult", "massdiff", "Ion_mode",
+                    "Formula_add", "Formula_ded")
+    ads$Ion_mode <- ifelse(ads$Ion_mode, "positive", "negative")
+    ads$Mult <- ads$Mult * abs(ads$Charge)
+    ads$massdiff <- ads$massdiff * abs(ads$Charge)
+    
+    #Adapt atoms to add and subtract
+    incomplete <- grepl("[A-Za-z]$", ads$Formula_add)
+    ads$Formula_add[incomplete] <- paste0(ads$Formula_add[incomplete], "1")
+    
+    incomplete <- grepl("[A-Za-z]$", ads$Formula_ded)
+    ads$Formula_ded[incomplete] <- paste0(ads$Formula_ded[incomplete], "1")
+    ads$Formula_ded[ads$Formula_ded == ""] <- "C0"
+    
+    ads
+}
+
+
 #' @importFrom utils data read.csv read.csv2 write.csv
-database_importer <- function(template = "hmdb",
-                                filename = "./app/www/norman.xls",
-                                minmass = 70, maxmass = 750, keggpath = "") {
+database_importer <- function(template = "custom",
+                                filename,
+                                minmass = 50, maxmass = 1200, keggpath = "") {
     if (template == "hmdb") {
         db <- read.csv(system.file("extdata", "hmdb.csv", package = "RHermes"))
         db <- db[!grepl("\\.", db$MolecularFormula), ]
@@ -43,21 +49,21 @@ database_importer <- function(template = "hmdb",
     } else if (template == "custom") {
         if (grepl(pattern = "csv", x = filename)) {
             db <- read.csv(filename)
-            if(ncol(db) == 1){
+            if (ncol(db) == 1){
                 db <- read.csv2(filename)
             }
         } else {
             db <- readxl::read_excel(filename)
         }
         if (!all(c("MolecularFormula", "Name") %in% names(db))) {
-            stop("The colnames aren't adequate. The file must contain the
+            stop("The colnames are not correct. The file must contain the
             'MolecularFormula' and 'Name' columns at least")
         }
     } else if (template == "kegg_p") {
-        suppressWarnings(
+        suppressWarnings({
             splitpath <- split(seq_along(keggpath),
                                 seq_len(ceiling(length(keggpath)/10)))
-        )
+        })
         comp <- lapply(splitpath, function(x) {
             pathdata <- KEGGREST::keggGet(keggpath[x])
             lapply(pathdata, function(y) {
@@ -65,8 +71,8 @@ database_importer <- function(template = "hmdb",
             })
         })
         comp <- unique(unlist(comp))
-        suppressWarnings(splitcomp <- split(seq_along(comp),
-                                            seq_len(ceiling(length(comp)/10))))
+        suppressWarnings({splitcomp <- split(seq_along(comp),
+                                            seq_len(ceiling(length(comp)/10)))})
         db <- lapply(splitcomp, function(x) {
             data <- KEGGREST::keggGet(comp[x])
             data <- lapply(data, function(y) {
@@ -82,6 +88,9 @@ database_importer <- function(template = "hmdb",
         'norman' and 'custom'")
     }
 
+    #Clean molecule names
+    db$Name <- gsub('[^[:graph:][:space:]]', '', db$Name)
+    
     #Clean molecular formulas that contain unknown elements
     db <- db[grepl("^C.?.?", db$MolecularFormula), ]
     db <- db[!grepl("[", db$MolecularFormula, fixed = TRUE), ]
@@ -91,28 +100,22 @@ database_importer <- function(template = "hmdb",
     db <- db[!grepl(".", db$MolecularFormula, fixed = TRUE), ]
     db <- db[!grepl(")", db$MolecularFormula, fixed = TRUE), ]
     db$MolecularFormula <- as.character(db$MolecularFormula)
-
-    #Calculate M0 mass from formula
-    isotopes <- NULL #To appease R CMD Check "no visible binding"
-    data(isotopes, package = "enviPat", envir = environment())
-    db$EnviPatMass <- lapply(db$MolecularFormula, function(x) {
-        res <- tryCatch(enviPat::isopattern(isotopes, x, threshold = 99,
-                                        verbose = FALSE),
-                        error = function(cond){NA})
-        # Isotopes should be loaded first
-        if (is.matrix(res[[1]])) {
-            res <- res[[1]][1, 1]
-            res <- as.numeric(unname(res))
-            return(res)
-        } else {
-            return(NA)
-        }
-    })
-    if (any(is.na(db$EnviPatMass))) {
-        db <- db[!is.na(db$EnviPatMass), ]
+    
+    # Clean deuterium in the formulae and substitute by [2H]
+    db$MolecularFormula <- gsub(pattern = "D([0-9]*)",
+                                replacement = "\\[2H\\1\\]",
+                                x = db$MolecularFormula)
+    
+    #Calculate exact mass from formula
+    db$ExactMass <- MetaboCoreUtils::calculateMass(db$MolecularFormula)
+    if (any(is.na(db$ExactMass))) {
+        invalid <- which(is.na(db$ExactMass))
+        warning("Careful, some of the molecular formulas were not valid, first 10 are:",
+                db$MolecularFormula[invalid[seq(1, min(10, length(invalid)))]])
+        db <- db[!invalid, ]
     }
-    db$EnviPatMass <- as.numeric(db$EnviPatMass)
-    db <- filter(db, dplyr::between(as.numeric(db$EnviPatMass),
-                                        minmass, maxmass))
+    db$ExactMass <- as.numeric(db$ExactMass)
+    db <- dplyr::filter(db, dplyr::between(as.numeric(db$ExactMass),
+                                    minmass, maxmass))
     return(db)
 }

@@ -65,7 +65,7 @@ inclusionList <- function(struct, params, id) {
             which(oSoi$start==y$start &
                       oSoi$end==y$end &
                       oSoi$mass==y$mass &
-                      oSoi$formula==y$formula)
+                      oSoi$formula==y$formula)[1]
         }))
     }else{
         GL <- oSoi[, c("start", "end", "formula", "mass", "MaxInt", "anot")]
@@ -107,7 +107,7 @@ inclusionList <- function(struct, params, id) {
     }, character(1))
     GL$entrynames <- unlist(GL$entrynames)
 
-    PL_id <- which(struct@metadata@filenames == SoiList@filename)[1]
+    PL_id <- which(struct@metadata@filenames %in% SoiList@filename)[1]
     raw <- PL(struct, PL_id)@raw
     if(nrow(raw) != 0){
         GL$XIC <- lapply(seq_len(nrow(GL)), function(x){

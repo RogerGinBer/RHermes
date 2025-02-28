@@ -4,7 +4,7 @@
 \alias{exportmzML}
 \title{exportmzML}
 \usage{
-exportmzML(struct, id, fname, whichSpec = NA)
+exportmzML(struct, id, fname, whichSpec = NA, collisionEnergy = 35)
 }
 \arguments{
 \item{struct}{RHermesExp object}
@@ -14,6 +14,9 @@ exportmzML(struct, id, fname, whichSpec = NA)
 \item{fname}{Name of the output file, without the .mzML termination}
 
 \item{whichSpec}{Which entries to export. Defaults to all of them.}
+
+\item{collisionEnergy}{Numeric. Desired collision energy (in %NCE, eV, or any
+other unit)}
 }
 \value{
 An .mzML file

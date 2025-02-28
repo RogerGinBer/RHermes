@@ -189,19 +189,21 @@ MS2PlotServer <- function(id, struct) {
     }, ignoreNULL = TRUE, ignoreInit = TRUE, priority = 50)
 
     observeEvent({input$selectident2},{
-      ms2 <- struct$dataset@data@MS2Exp[[as.numeric(input$id)]]
-      sslist <- ms2@Ident[["MS2Features"]]
-
-      spectra_info <- paste(seq_len(nrow(sslist)),
-                            "RT:", round(sslist$start, 2), round(sslist$apex, 2), round(sslist$end, 2),
-                            "mz:", round(sslist$precmass, 4))
-      spectra_list <- as.list(seq_len(nrow(sslist)))
-      names(spectra_list) <- spectra_info
-      
-      #Remove picker1 selection from picker2's options
-      updatePickerInput(session, "otherss",
-                        choices = spectra_list[-as.numeric(input$selectident2)],
-                        selected = NULL)
+        if(input$selectident2 != ""){
+            ms2 <- struct$dataset@data@MS2Exp[[as.numeric(input$id)]]
+            sslist <- ms2@Ident[["MS2Features"]]
+            
+            spectra_info <- paste(seq_len(nrow(sslist)),
+                                  "RT:", round(sslist$start, 2), round(sslist$apex, 2), round(sslist$end, 2),
+                                  "mz:", round(sslist$precmass, 4))
+            spectra_list <- as.list(seq_len(nrow(sslist)))
+            names(spectra_list) <- spectra_info
+            
+            #Remove picker1 selection from picker2's options
+            updatePickerInput(session, "otherss",
+                              choices = spectra_list[-as.numeric(input$selectident2)],
+                              selected = NULL)
+        }
     }, ignoreNULL = TRUE, ignoreInit = TRUE
     )
 

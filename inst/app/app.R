@@ -11,16 +11,14 @@ library(RHermes)
 library(data.table, quietly = TRUE)
 library(enviPat)
 library(igraph)
-require(mzR)
-require(magrittr)
-require(CHNOSZ)
-require(ggplot2)
-library(keras)
+library(mzR)
+library(magrittr)
+library(CHNOSZ)
+library(ggplot2)
 library(plotly)
 library(visNetwork)
 library(KEGGREST)
 library(slickR)
-library(BiocParallel)
 library(DT)
 
 header <- dashboardHeader(
@@ -42,7 +40,6 @@ sidebar <- dashboardSidebar(
              menuSubItem("MS2 Exploration", tabName = "MS2plot")
     ),
     menuItem("Tables", tabName = "extra", icon = icon("table")),
-    menuItem("Settings", tabName = "sett", icon = icon("file-alt")),
     menuItem("Loading/Saving", tabName = "IO", icon = icon("save")),
     div(actionButton("shutdown", label="Shutdown app", icon = icon("power-off"),
                  style ="background-color: #222d32; color: #b8c7ce; border-color: #b8c7ce; border-width:1px"),
@@ -100,7 +97,6 @@ body <- dashboardBody(
     tabItem(tabName = "MS2plot", MS2PlotUI("MS2PlotUI")),
     tabItem(tabName = "ident", Ident_UI("Identifications")),
     tabItem(tabName = "extra", ExtraInfo_UI("ExtraInfo_UI")),
-    tabItem(tabName = "sett", Settings_UI("Settings_UI")),
     tabItem(tabName = "IO", IO_UI("IO_UI"))
   )
 )
@@ -168,11 +164,6 @@ server <- function(input, output, session){
   MS2PlotServer("MS2PlotUI", struct = struct)
   IdentServer("Identifications", struct = struct)
   ExtraInfoServer("ExtraInfo_UI", struct = struct)
-
-  setResults <- SettingsServer("Settings_UI", struct = struct)
-  observeEvent(setResults$trigger, {
-    struct$dataset <- setResults$dataset
-  }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
   observeEvent(input$shutdown, {shiny::stopApp()})
 }

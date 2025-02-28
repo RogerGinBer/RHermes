@@ -297,7 +297,7 @@ CliqueMSMS <- function(MS2Exp, idx, contaminant = 173.5, delta = 0.1,
     #Main function
     if (sstype == "regular") {
         suppressWarnings(
-            RES <- bplapply(seq_along(idx), generate_ss, BPPARAM = bpparam(),
+            RES <- lapply(seq_along(idx), generate_ss,
                             MS2list, contaminant, delta, fs, idx, FALSE)
         )
         RES <- do.call(rbind, RES)
