@@ -69,12 +69,14 @@ function(struct, files, labelled = FALSE) {
 })
 
 
+#' @importFrom dplyr rename distinct_at
 preprocessing <- function(struct){
     ## Fix to keep backwards compatibility with already processed files
-    if("EnviPatMass" %in% colnames(DB(struct))){
-        colnames(struct@metadata@ExpParam@DB)[colnames(DB(struct)) == "EnviPatMass"] <- "ExactMass"
+    if ("EnviPatMass" %in% colnames(DB(struct)) &
+       (!"ExactMass" %in% colnames(DB(struct)))) {
+        dplyr::rename(DB(struct), "ExactMass" = "EnviPatMass")
     }
-    if (!all(c("MolecularFormula", "ExactMass") %in% colnames(DB(struct)))){
+    if (!all(c("MolecularFormula", "ExactMass") %in% colnames(DB(struct)))) {
         stop("DB does not have the columns MolecularFormula and ExactMass, please rerun setDB")
     }
     F_DB <- struct@metadata@ExpParam@DB[,c("MolecularFormula", "ExactMass")]
