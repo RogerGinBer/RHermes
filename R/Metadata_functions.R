@@ -25,6 +25,8 @@ adducts_MetaboCore_to_Hermes <- function(){
     #Adapt atoms to add and subtract
     incomplete <- grepl("[A-Za-z]$", ads$Formula_add)
     ads$Formula_add[incomplete] <- paste0(ads$Formula_add[incomplete], "1")
+    ads$Formula_add[ads$Formula_add == ""] <- "C0"
+    
     
     incomplete <- grepl("[A-Za-z]$", ads$Formula_ded)
     ads$Formula_ded[incomplete] <- paste0(ads$Formula_ded[incomplete], "1")
@@ -33,7 +35,8 @@ adducts_MetaboCore_to_Hermes <- function(){
     ads
 }
 
-
+#' @importFrom readxl read_excel
+#' @importFrom KEGGREST keggGet
 #' @importFrom utils data read.csv read.csv2 write.csv
 database_importer <- function(template = "custom",
                                 filename,
@@ -42,7 +45,7 @@ database_importer <- function(template = "custom",
         db <- read.csv(system.file("extdata", "hmdb.csv", package = "RHermes"))
         db <- db[!grepl("\\.", db$MolecularFormula), ]
     } else if (template == "norman") {
-        db <- readxl::read_excel(system.file("extdata", "norman.xlsx",
+        db <- read_excel(system.file("extdata", "norman.xlsx",
                                                 package = "RHermes"))
         names(db)[names(db) == "MOLECULAR_FORMULA"] <- "MolecularFormula"
         names(db)[names(db) == "NAME"] <- "Name"
@@ -53,7 +56,7 @@ database_importer <- function(template = "custom",
                 db <- read.csv2(filename)
             }
         } else {
-            db <- readxl::read_excel(filename)
+            db <- read_excel(filename)
         }
         if (!all(c("MolecularFormula", "Name") %in% names(db))) {
             stop("The colnames are not correct. The file must contain the
@@ -65,7 +68,7 @@ database_importer <- function(template = "custom",
                                 seq_len(ceiling(length(keggpath)/10)))
         })
         comp <- lapply(splitpath, function(x) {
-            pathdata <- KEGGREST::keggGet(keggpath[x])
+            pathdata <- keggGet(keggpath[x])
             lapply(pathdata, function(y) {
                 names(y$COMPOUND)
             })
@@ -74,10 +77,11 @@ database_importer <- function(template = "custom",
         suppressWarnings({splitcomp <- split(seq_along(comp),
                                             seq_len(ceiling(length(comp)/10)))})
         db <- lapply(splitcomp, function(x) {
-            data <- KEGGREST::keggGet(comp[x])
+            data <- keggGet(comp[x])
             data <- lapply(data, function(y) {
-                c(y[1], gsub(y[2][[1]][[1]], pattern = ";", replacement = ""),
-                    y[3])
+                c(y[[1]],
+                  gsub(y[2][[1]][[1]], pattern = ";", replacement = "")[[1]],
+                  y[[3]])
             })
             as.data.frame(do.call(rbind, data))
         })
@@ -89,6 +93,7 @@ database_importer <- function(template = "custom",
     }
 
     #Clean molecule names
+    db$Name <- iconv(db$Name, from = "UTF-8", to = "ASCII", sub = "?")
     db$Name <- gsub('[^[:graph:][:space:]]', '', db$Name)
     
     #Clean molecular formulas that contain unknown elements
