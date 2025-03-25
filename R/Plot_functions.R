@@ -458,27 +458,10 @@ function(struct, id, entry, plot = TRUE) {
         cos <- 1 - philentropy::dice_dist(eint,tint, testNA = F)
     }
 
-    ##Other atom checks
-    toCheck <- c("37Cl", "81Br", "34S")
-    otherChecks <- lapply(toCheck, function(atom) {
-        if (any(grepl(pattern = atom, x = df$code))) {
-            isoname <- paste0("[", atom, "]", 1)
-            cur <- df[df$code == isoname, ]
-            th <- cur$abundance[cur$class == "Theoretical"]
-            if (th[1] < 30000) {
-                return(NA)
-            }
-            exp <- cur$abundance[cur$class == "Experimental"]
-            return(data.table::between(exp, th * 0.5, th * 1.5))
-        } else {
-            return(NA)
-        }
-    })
-    names(otherChecks) <- toCheck
     if (plot) {
-        return(list(p3, numC, carbonCheck, cos, otherChecks))
+        return(list(p3, numC, carbonCheck, cos))
     } else {
-        return(list(numC, carbonCheck, cos, otherChecks))
+        return(list(numC, carbonCheck, cos))
     }
 })
 

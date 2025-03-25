@@ -222,18 +222,9 @@ SOIPlotServer <- function(id, struct){
         tryCatch({
           isoresults <- plotFidelity(struct$dataset, as.numeric(input$soifiles), selected)
           output$fplot <- renderPlotly(isoresults[[1]])
-
-          heteroatoms <- isoresults[[5]]
-          heteroatoms <- heteroatoms[!is.null(heteroatoms)]
-          if(length(heteroatoms) != 0){
-            het_text <- paste0(names(heteroatoms), heteroatoms, collapse = "\n")
-          } else {
-            het_text <- ""
-          }
           output$valoration <- renderText(paste0("Calculated number of carbon atoms: ", isoresults[[2]], "\n",
                                                  "Veredict: ", isoresults[[3]], "\n",
-                                                 "Isotopic similarity score: ", isoresults[[4]], "\n",
-                                                 het_text))
+                                                 "Isotopic similarity score: ", isoresults[[4]]))
         }, error = function(cond){warning("Isotopic fidelity plot failed")})
 
       }
