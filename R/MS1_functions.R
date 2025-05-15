@@ -156,10 +156,7 @@ calculate_ionic_forms <- function(i, F_DB, Ad_DB){
     good <- which(!is.na(j))
     j <- j[!is.na(j)]
     if(length(j) == 0){return()}
-    envi <- strsplit(j, split = "[", fixed = TRUE) %>%
-        vapply(function(x) {x[[2]]}, FUN.VALUE = character(1)) %>%
-        strsplit(j, split = "]", fixed = TRUE) %>%
-        vapply(function(x) {x[[1]]}, FUN.VALUE = character(1))
+    envi <- gsub("^.*\\[|\\].*$", "", j)
 
 
     charge <- abs(as.numeric(Ad_DB[good, 2]))
