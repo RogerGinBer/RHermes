@@ -191,7 +191,7 @@ check_adduct_validity <- function(adduct_df){
     if(ncol(adduct_df) != 7){
         warning("The number of adduct fields does not match with expectations")
     }
-    if(colnames(adduct_df) != adduct_fields){
+    if(!identical(colnames(adduct_df),adduct_fields)){
         stop("The adduct fields aren't ordered correctly\n",
              "Expected order: ", paste(adduct_fields, collapse ="/"))
     }
