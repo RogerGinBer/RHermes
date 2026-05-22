@@ -117,7 +117,7 @@ database_importer <- function(template = "custom",
         invalid <- which(is.na(db$ExactMass))
         warning("Careful, some of the molecular formulas were not valid, first 10 are:",
                 db$MolecularFormula[invalid[seq(1, min(10, length(invalid)))]])
-        db <- db[!invalid, ]
+        db <- db[!is.na(db$ExactMass), ]
     }
     db$ExactMass <- as.numeric(db$ExactMass)
     db <- dplyr::filter(db, dplyr::between(as.numeric(db$ExactMass),
